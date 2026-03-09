@@ -1,0 +1,76 @@
+# Default values for ack-kube-queue.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+global:
+  # pull image by aliyun vpc network
+  pullImageByVPCNetwork: true
+  # the prefix of all image
+  imagePrefix: registry-vpc.__ACK_REGION_ID__.aliyuncs.com
+  # the cluster profile
+  clusterProfile: __ACK_CLUSTER_PROFILE__
+  # the cluster type
+  clusterType: __ACK_CLUSTER_TYPE__
+
+tolerations: []
+isNeedNotebookExtension: false
+oversellrate: 1
+qps: 50
+burst: 50
+jobRunningTimeout: "0"
+jobBackoffTime: "0"
+
+installation:
+  namespace: kube-queue
+  roleListGroups:
+    - '*'
+
+admissionCheckController:
+  enabled: true
+  image:
+    repository: acs/prevreq-controller
+    tag: v1.0.0-aliyun-d31082a1
+
+controller:
+  image:
+    repository: acs/kube-queue
+    tag: v1.1.0-aliyun.140877e3
+  # resources of kube-queue-controller container
+  queueGroupPlugin: elasticquota
+  enableBlockingMode: false
+  enableStrictPriority: false
+  enableVisibilityServer: false
+  enableResourceCheckWithScheduler: false
+  defaultPreemptible: true
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+extension:
+  ray:
+    enable: false
+  jobextensions:
+    tag: v1.1.0-aliyun-2eb5c73f
+  tf:
+    enable: false
+  pytorch:
+    enable: false
+  batchjob:
+    enable: true
+  argo:
+    enable: false
+  spark:
+    enable: false
+  mpi:
+    enable: false
+
+pluginConfigs: 
+  apiVersion: scheduling.k8s.io/v1
+  kind: KubeQueueConfiguration
+  pluginConfigs:
+    ElasticQuota: 
+      checkHungryQuota: false

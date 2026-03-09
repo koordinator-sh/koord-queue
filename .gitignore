@@ -6,7 +6,7 @@
 /dist/
 
 # used for the code generators only
-/vendor/
+# /vendor/
 
 # macOS
 .DS_Store
@@ -19,3 +19,5 @@
 *.sublime-project
 *.sublime-workspace
 *~
+
+__pycache__/

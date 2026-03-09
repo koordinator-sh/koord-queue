@@ -1,0 +1,1564 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": "-- Grafana --",
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": 191,
+    "iteration": 1690858406242,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "collapsed": false,
+        "datasource": null,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 20,
+        "panels": [],
+        "title": "各Quota资源使用量",
+        "type": "row"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 1
+        },
+        "id": 6,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "dequeued_quota_usage_by_quota{job=\"kube-queue-exporter\",resource=\"cpu\"}/1000",
+            "interval": "",
+            "legendFormat": "{{quota}}/资源使用量",
+            "refId": "A"
+          }
+        ],
+        "title": "已出队CPU资源量By Quota",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "none"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 1
+        },
+        "id": 8,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "dequeued_quota_usage_by_namespace{job=\"kube-queue-exporter\",resource=\"cpu\"}",
+            "interval": "",
+            "legendFormat": "{{namespace}}/资源使用量",
+            "refId": "A"
+          }
+        ],
+        "title": "已出队CPU资源量By Namespace",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 9
+        },
+        "id": 24,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "dequeued_quota_usage_by_quota{job=\"kube-queue-exporter\",resource=\"memory\"}",
+            "interval": "",
+            "legendFormat": "{{quota}}/资源使用量",
+            "refId": "A"
+          }
+        ],
+        "title": "已出队Memory资源量By Quota",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 9
+        },
+        "id": 25,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "dequeued_quota_usage_by_namespace{job=\"kube-queue-exporter\",resource=\"memory\"}",
+            "interval": "",
+            "legendFormat": "{{namespace}}/资源使用量",
+            "refId": "A"
+          }
+        ],
+        "title": "已出队Memory资源量By Namespace",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 17
+        },
+        "id": 26,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "dequeued_quota_usage_by_quota{job=\"kube-queue-exporter\",resource=\"$Resource\",quota=\"$Quota\"}",
+            "interval": "",
+            "legendFormat": "{{quota}}/{{resource}}/资源使用量",
+            "refId": "A"
+          }
+        ],
+        "title": "已出队$Resource资源量By Quota",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 17
+        },
+        "id": 27,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "dequeued_quota_usage_by_namespace{job=\"kube-queue-exporter\",resource=\"$Resource\", namespace=\"$Namespace\"}",
+            "interval": "",
+            "legendFormat": "{{namespace}}/{{resource}}/资源使用量",
+            "refId": "A"
+          }
+        ],
+        "title": "出队$Resource资源量By Namespace",
+        "type": "timeseries"
+      },
+      {
+        "collapsed": false,
+        "datasource": null,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 25
+        },
+        "id": 29,
+        "panels": [],
+        "title": "Kube Queue任务数",
+        "type": "row"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 26
+        },
+        "id": 30,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "queueunits_by_job_type{job=\"kube-queue-exporter\"}",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "任务数量-{{namespace}}-{{type}}",
+            "refId": "A"
+          }
+        ],
+        "title": "KubeQueue各用户任务数",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 26
+        },
+        "id": 31,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "sum(irate(queueunits_coming_rate_by_job_type{job=\"kube-queue-exporter\", status=\"Enqueued\"}[$interval])) by (namespace)",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "入队速度-{{namespace}}",
+            "refId": "B"
+          },
+          {
+            "exemplar": true,
+            "expr": "sum(irate(queueunits_coming_rate_by_job_type{job=\"kube-queue-exporter\", status=\"Enqueued\"}[$interval])) by (namespace, type)",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "入队速度-{{namespace}}-{{type}}",
+            "refId": "C"
+          }
+        ],
+        "title": "KubeQueue各用户任务入队速度",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 34
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "queueunits_in_active_queue{job=\"kube-queue-exporter\"}",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "{{queue}}/Active队列任务数",
+            "refId": "A"
+          },
+          {
+            "exemplar": true,
+            "expr": "queueunits_in_backoff_queue{job=\"kube-queue-exporter\"}",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "{{queue}}/Backoff队列任务数",
+            "refId": "B"
+          }
+        ],
+        "title": "KubeQueue各队列任务数",
+        "type": "timeseries"
+      },
+      {
+        "collapsed": false,
+        "datasource": null,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 42
+        },
+        "id": 12,
+        "panels": [],
+        "title": "Kube Queue Controller调度指标",
+        "type": "row"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 43
+        },
+        "id": 10,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "rate(job_schedule_attempts{job=\"kube-queue-exporter\",result=\"scheduled\"}[5m])",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "成功调度速度",
+            "refId": "B"
+          },
+          {
+            "exemplar": true,
+            "expr": "rate(job_schedule_attempts{job=\"kube-queue-exporter\",result=\"unschedulable\"}[5m])",
+            "interval": "",
+            "legendFormat": "调度失败速度",
+            "refId": "A"
+          }
+        ],
+        "title": "KubeQueue调度速度",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "__systemRef": "hideSeriesFrom",
+              "matcher": {
+                "id": "byNames",
+                "options": {
+                  "mode": "exclude",
+                  "names": [
+                    "端到端耗时p99"
+                  ],
+                  "prefix": "All except:",
+                  "readOnly": true
+                }
+              },
+              "properties": [
+                {
+                  "id": "custom.hideFrom",
+                  "value": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 43
+        },
+        "id": 2,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "histogram_quantile(0.99, sum(rate(job_scheduling_algorithm_latency_bucket{job=\"kube-queue-exporter\",}[$interval])) by (le))",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "调度算法耗时p99",
+            "refId": "A"
+          },
+          {
+            "exemplar": true,
+            "expr": "histogram_quantile(0.99, sum(rate(job_scheduling_e2e_latency_bucket{job=\"kube-queue-exporter\"}[$interval])) by (le))",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "端到端耗时p99",
+            "refId": "B"
+          }
+        ],
+        "title": "KubeQueue调度延迟p99",
+        "type": "timeseries"
+      },
+      {
+        "collapsed": false,
+        "datasource": null,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 51
+        },
+        "id": 14,
+        "panels": [],
+        "title": "各组件资源使用量",
+        "type": "row"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 52
+        },
+        "id": 16,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "hidden",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "irate(process_cpu_seconds_total{job=\"kube-queue-exporter\"}[$interval])*100",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        ],
+        "title": "Ack Kube Queue Controller CPU使用量",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 52
+        },
+        "id": 18,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "hidden",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "process_resident_memory_bytes{job=\"kube-queue-exporter\"}",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        ],
+        "title": "Ack Kube Controller Memory使用量",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "reqps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 60
+        },
+        "id": 32,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"2..\"}[$interval])) by (method)",
+            "interval": "",
+            "legendFormat": "2xx-{{method}}",
+            "refId": "A"
+          },
+          {
+            "exemplar": true,
+            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"3..\"}[$interval])) by (method)",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "3xx-{{method}}",
+            "refId": "B"
+          },
+          {
+            "exemplar": true,
+            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"4..\"}[$interval])) by (method)",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "4xx-{{method}}",
+            "refId": "C"
+          },
+          {
+            "exemplar": true,
+            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"5..\"}[$interval])) by (method)",
+            "hide": false,
+            "interval": "",
+            "legendFormat": "5xx-{{method}}",
+            "refId": "D"
+          }
+        ],
+        "title": "Kube API Request Latency",
+        "type": "timeseries"
+      },
+      {
+        "datasource": "test_1605956643380684_91f14b",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "s"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 60
+        },
+        "id": 33,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "single"
+          }
+        },
+        "targets": [
+          {
+            "exemplar": true,
+            "expr": "histogram_quantile(0.99, sum(rate(rest_client_request_duration_seconds_bucket{job=\"kube-queue-exporter\"}[$interval])) by (verb,le,host))",
+            "interval": "",
+            "legendFormat": "",
+            "refId": "A"
+          }
+        ],
+        "title": "Kube API Request Latency",
+        "type": "timeseries"
+      }
+    ],
+    "schemaVersion": 32,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "auto": false,
+          "auto_count": 30,
+          "auto_min": "10s",
+          "current": {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          "description": null,
+          "error": null,
+          "hide": 0,
+          "label": null,
+          "name": "interval",
+          "options": [
+            {
+              "selected": true,
+              "text": "5m",
+              "value": "5m"
+            },
+            {
+              "selected": false,
+              "text": "10m",
+              "value": "10m"
+            },
+            {
+              "selected": false,
+              "text": "30m",
+              "value": "30m"
+            },
+            {
+              "selected": false,
+              "text": "1h",
+              "value": "1h"
+            },
+            {
+              "selected": false,
+              "text": "6h",
+              "value": "6h"
+            },
+            {
+              "selected": false,
+              "text": "12h",
+              "value": "12h"
+            },
+            {
+              "selected": false,
+              "text": "1d",
+              "value": "1d"
+            },
+            {
+              "selected": false,
+              "text": "7d",
+              "value": "7d"
+            },
+            {
+              "selected": false,
+              "text": "14d",
+              "value": "14d"
+            },
+            {
+              "selected": false,
+              "text": "30d",
+              "value": "30d"
+            }
+          ],
+          "query": "5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+          "queryValue": "",
+          "refresh": 2,
+          "skipUrlSync": false,
+          "type": "interval"
+        },
+        {
+          "allValue": null,
+          "current": {
+            "selected": false,
+            "text": "yueming-test",
+            "value": "yueming-test"
+          },
+          "datasource": "test_1605956643380684_91f14b",
+          "definition": "dequeued_quota_usage_by_namespace",
+          "description": null,
+          "error": null,
+          "hide": 0,
+          "includeAll": false,
+          "label": null,
+          "multi": false,
+          "name": "Namespace",
+          "options": [],
+          "query": {
+            "query": "dequeued_quota_usage_by_namespace",
+            "refId": "StandardVariableQuery"
+          },
+          "refresh": 1,
+          "regex": ".*namespace=\\\"([A-Za-z0-9\\-]+)\\\".*",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allValue": null,
+          "current": {
+            "selected": false,
+            "text": "root",
+            "value": "root"
+          },
+          "datasource": "test_1605956643380684_91f14b",
+          "definition": "dequeued_quota_usage_by_quota",
+          "description": null,
+          "error": null,
+          "hide": 0,
+          "includeAll": false,
+          "label": null,
+          "multi": false,
+          "name": "Quota",
+          "options": [],
+          "query": {
+            "query": "dequeued_quota_usage_by_quota",
+            "refId": "StandardVariableQuery"
+          },
+          "refresh": 1,
+          "regex": ".*quota=\\\"([A-Za-z0-9\\-]+)\\\".*",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        },
+        {
+          "allValue": null,
+          "current": {
+            "selected": false,
+            "text": "cpu",
+            "value": "cpu"
+          },
+          "datasource": "test_1605956643380684_91f14b",
+          "definition": "dequeued_quota_usage_by_quota",
+          "description": null,
+          "error": null,
+          "hide": 0,
+          "includeAll": false,
+          "label": null,
+          "multi": false,
+          "name": "Resource",
+          "options": [],
+          "query": {
+            "query": "dequeued_quota_usage_by_quota",
+            "refId": "StandardVariableQuery"
+          },
+          "refresh": 1,
+          "regex": ".*resource=\\\"([A-Za-z0-9\\-/\\.]+)\\\".*",
+          "skipUrlSync": false,
+          "sort": 0,
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-15m",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "AckKubeQueue",
+    "uid": "VhwsfAqVz",
+    "version": 4
+  }

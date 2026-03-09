@@ -1,0 +1,9 @@
+go 1.24.2
+
+toolchain go1.24.2
+
+use (
+	.
+)
+
+replace github.com/kube-queue/api => gitlab.alibaba-inc.com/eml/kubequeue-api v0.0.12

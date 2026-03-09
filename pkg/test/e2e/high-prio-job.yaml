@@ -1,0 +1,36 @@
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: test-group-high-prio
+preemptionPolicy: Never
+value: 3
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-3
+  namespace: test-group
+  labels:
+    quota.scheduling.alibabacloud.com/name: "child-1"
+  annotations:
+    kube-queue/queue-name: test-queue
+spec:
+  suspend: true
+  completions: 2
+  parallelism: 2
+  template:
+    spec:
+      priorityClassName: test-group-high-prio
+      priority: 3
+      schedulerName: ack-scheduler
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["sleep",  "inf"]
+        resources:
+          requests:
+            cpu: 1
+          limits:
+            cpu: 1
+      restartPolicy: Never

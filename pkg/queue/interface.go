@@ -17,9 +17,14 @@
 package queue
 
 import (
+	"context"
+	"sync"
+
 	"github.com/kube-queue/kube-queue/pkg/framework"
+	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
 
 	schedv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
 )
 
 // MultiSchedulingQueue is interface of Multi Scheduling Queue.
@@ -27,27 +32,25 @@ type MultiSchedulingQueue interface {
 	Add(*schedv1alpha1.Queue) error
 	Delete(*schedv1alpha1.Queue) error
 	Update(*schedv1alpha1.Queue, *schedv1alpha1.Queue) error
-	SortedQueue() []SchedulingQueue
-	GetQueueByName(name string) (SchedulingQueue, bool)
+	// map of queueUnit to queue will be cleared in this func
+	AddUnitsFindNoQueue(q *framework.QueueUnitInfo)
+	SortedQueue() []*Queue
+	GetQueueByName(name string) (*Queue, bool)
+	GetAllQueues() map[string]*Queue
+	GetQueueNameByQueueUnit(*schedv1alpha1.QueueUnit) (string, error)
+	// Record queueUnits' queue name to cache
+	SetQueueForQueueUnit(qu *schedv1alpha1.QueueUnit, qName string)
+	// Obtain queueUnits' queue name from cache
+	GetQueueForQueueUnit(qu *schedv1alpha1.QueueUnit) string
 	Run()
+	Start(ctx context.Context)
 	Close()
-}
+	FixQueues()
+	GetQueueDebugInfo() map[string]queuepolicies.QueueDebugInfo
+	GetUserQuotaDebugInfo() map[string]queuepolicies.UserQuotaDebugInfo
 
-// SchedulingQueue is interface of Single Scheduling Queue.
-type SchedulingQueue interface {
-	Add(*schedv1alpha1.QueueUnit) error
-	// AddUnschedulableIfNotPresent inserts a queue unit that cannot be scheduled into
-	// the queue, unless it is already in the queue. If there has been a recent move
-	// request, then the queue unit is put in `podBackoffQ`.
-	AddUnschedulableIfNotPresent(*framework.QueueUnitInfo) error
-	Delete(*schedv1alpha1.QueueUnit) error
-	Update(*schedv1alpha1.QueueUnit, *schedv1alpha1.QueueUnit) error
-	Pop() (*framework.QueueUnitInfo, error)
-	Name() string
-	QueueInfo() *framework.QueueInfo
-	Length() int
-	Run()
-	GetRunStatus() bool
-	SetRunStatus(bool)
-	Close()
+	Complete(*apiv1alpha1.QueueUnit)
+	// When there are queues added or deleted, event will be sent to scheduler to start
+	// a new goroutine to schedule the queue.
+	QueueChan() *sync.Cond
 }

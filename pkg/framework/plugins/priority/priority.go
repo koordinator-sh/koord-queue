@@ -17,6 +17,7 @@
 package priority
 
 import (
+	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
 	"github.com/kube-queue/kube-queue/pkg/framework"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -35,13 +36,13 @@ func (p *Priority) Name() string {
 	return Name
 }
 
-func (p *Priority) MultiQueueLess(q1 *framework.QueueInfo, q2 *framework.QueueInfo) bool {
+func (p *Priority) MultiQueueLess(q1 *v1alpha1.Queue, q2 *v1alpha1.Queue) bool {
 	var p1, p2 int32 = 0, 0
-	if q1.Queue.Spec.Priority != nil {
-		p1 = *(q1.Queue.Spec.Priority)
+	if q1.Spec.Priority != nil {
+		p1 = *(q1.Spec.Priority)
 	}
-	if q2.Queue.Spec.Priority != nil {
-		p2 = *(q2.Queue.Spec.Priority)
+	if q2.Spec.Priority != nil {
+		p2 = *(q2.Spec.Priority)
 	}
 	return p1 > p2
 }

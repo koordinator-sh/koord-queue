@@ -61,13 +61,13 @@ func QueueUnitToKey(qu *framework.QueueUnitInfo) string {
 }
 
 // Reserve resource for the given QueueUnitInfo
-func (rq *ResourceQuota) Reserve(ctx context.Context, qu *framework.QueueUnitInfo) *framework.Status {
+func (rq *ResourceQuota) Reserve(ctx context.Context, qu *framework.QueueUnitInfo, ads map[string]framework.Admission) *framework.Status {
 	rq.Lock()
 	defer rq.Unlock()
 
 	key := QueueUnitToKey(qu)
 	if _, exist := rq.quRecord[key]; exist {
-		return framework.NewStatus(framework.Error, fmt.Sprintf(ErrQueueUnitAlreadyReservedTemplate, key))
+		return framework.NewStatus(framework.Error, fmt.Sprintf(ErrQueueUnitAlreadyReservedTemplate, key), nil)
 	}
 
 	ns := qu.Unit.Namespace
@@ -87,11 +87,11 @@ func (rq *ResourceQuota) Reserve(ctx context.Context, qu *framework.QueueUnitInf
 	rq.reserved[ns] = reservedNS
 	rq.quRecord[key] = nil
 
-	return framework.NewStatus(framework.Success, "")
+	return framework.NewStatus(framework.Success, "", ads)
 }
 
 // Unreserve resource for the given QueueUnitInfo
-func (rq *ResourceQuota) Unreserve(ctx context.Context, qu *framework.QueueUnitInfo) {
+func (rq *ResourceQuota) Unreserve(ctx context.Context, qu *framework.QueueUnitInfo, ads map[string]framework.Admission) {
 	rq.Lock()
 	defer rq.Unlock()
 
@@ -162,23 +162,23 @@ func SelectResourceQuota(rqs []*corev1.ResourceQuota, ns string) (*corev1.Resour
 }
 
 // Filter returns Status with success if there are enough resource left for the given QueueUnitInfo
-func (rq *ResourceQuota) Filter(ctx context.Context, qu *framework.QueueUnitInfo) *framework.Status {
+func (rq *ResourceQuota) Filter(ctx context.Context, qu *framework.QueueUnitInfo, ads map[string]framework.Admission) *framework.Status {
 	// TODO: maybe there is a nil when locating the namespace; validate this QueueUnit first
 	ns := qu.Unit.Spec.ConsumerRef.Namespace
 
 	// Locate corresponding ResourceQuota
 	rqs, err := rq.rqLister.ResourceQuotas(ns).List(labels.Everything())
 	if err != nil {
-		return framework.NewStatus(framework.Error, err.Error())
+		return framework.NewStatus(framework.Error, err.Error(), nil)
 	}
 	basket, err := SelectResourceQuota(rqs, ns)
 	if err != nil {
-		return framework.NewStatus(framework.Error, err.Error())
+		return framework.NewStatus(framework.Error, err.Error(), nil)
 	}
 	if basket.Spec.Hard == nil {
-		return framework.NewStatus(framework.Error, fmt.Sprintf(ErrResourceQuotaStatusHardNilTemplate, basket.GetName()))
+		return framework.NewStatus(framework.Error, fmt.Sprintf(ErrResourceQuotaStatusHardNilTemplate, basket.GetName()), nil)
 	}
-
+	// TODO: 如果要支持Scale和重建，需要把这里改成支持ads的模式
 	// Check if there are enough resource quota left for this unit
 	for rName, rQuantity := range qu.Unit.Spec.Resource {
 		basketQuantity, found := basket.Spec.Hard[rName]
@@ -189,11 +189,11 @@ func (rq *ResourceQuota) Filter(ctx context.Context, qu *framework.QueueUnitInfo
 		reservedQuantity.Add(rQuantity)
 		if basketQuantity.Cmp(reservedQuantity) < 0 {
 			return framework.NewStatus(framework.Error,
-				fmt.Sprintf(ErrResourceQuotaInsufficientTemplate, rName, basket.GetName(), reservedQuantity.Value(), basketQuantity.Value(), rQuantity.Value()))
+				fmt.Sprintf(ErrResourceQuotaInsufficientTemplate, rName, basket.GetName(), reservedQuantity.Value(), basketQuantity.Value(), rQuantity.Value()), nil)
 		}
 	}
 
-	return framework.NewStatus(framework.Success, "")
+	return framework.NewStatus(framework.Success, "", ads)
 }
 
 // New initializes a new plugin and returns it.

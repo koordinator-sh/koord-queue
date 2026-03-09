@@ -1,0 +1,50 @@
+apiVersion: scheduling.sigs.k8s.io/v1beta1
+kind: ElasticQuotaTree
+metadata:
+  name: elasticquotatree
+  namespace: kube-system # 只有kube-system下才会生效
+spec:
+  root:
+    name: root # Root节点的Max必须等于Min
+    max:
+      cpu: 9999
+      memory: 40Gi
+    min:
+      cpu: 9999
+      memory: 40Gi
+    children: # 配置第二级
+      - name: root.a
+        max:
+          cpu: 20
+          memory: 40Gi
+        min:
+          cpu: 12
+          memory: 20Gi
+        namespaces:
+        - namespacea
+      - name: root.b
+        max:
+          cpu: 200
+          memory: 40Gi
+        min:
+          cpu: 12
+          memory: 20Gi
+        children: # 配置第三级
+          - name: root.b.1
+            namespaces: # 配置对应的Namespace
+              - testpreemptotherquota-55672144352713192
+            max:
+              cpu: 140
+              memory: 20Gi
+            min:
+              cpu: 6
+              memory: 10Gi
+          - name: root.b.2
+            namespaces: # 配置对应的Namespace
+              - namespaceb2
+            max:
+              cpu: 4
+              memory: 20Gi
+            min:
+              cpu: 2
+              memory: 10Gi

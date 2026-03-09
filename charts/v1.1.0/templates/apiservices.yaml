@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-queue-visibility-server
+  namespace: kube-queue
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+    - name: visibility
+      port: 443
+      protocol: TCP
+      targetPort: 8082
+  selector:
+    control-plane: kube-queue-controller
+    kube-queue-leader: "true"
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/name: kube-queue
+    control-plane: controller-manager
+  name: v1alpha1.visibility.kube-queue.x-k8s.io
+spec:
+  group: visibility.kube-queue.x-k8s.io
+  groupPriorityMinimum: 100
+  insecureSkipTLSVerify: true
+  service:
+    name: kube-queue-visibility-server
+    namespace: kube-queue
+  version: v1alpha1
+  versionPriority: 100

@@ -1,0 +1,90 @@
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  annotations:
+    scheduling.x-k8s.io/suspend: "true"
+  generation: 1
+  labels:
+    app: pytorchjob
+  name: pytorch-e2e-test
+  namespace: kube-queue-e2e-test
+spec:
+  cleanPodPolicy: None
+  pytorchReplicaSpecs:
+    Master:
+      replicas: 1
+      restartPolicy: Never
+      template:
+        metadata:
+          labels:
+            app: pytorchjob
+          name: pytorch-test
+        spec:
+          schedulerName: default-scheduler
+          containers:
+          - command:
+            - sh
+            - -c
+            - sleep 1h
+            env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            - name: gpus
+              value: "0"
+            - name: workers
+              value: "8"
+            image: centos:7
+            imagePullPolicy: Always
+            name: pytorch
+            resources:
+              limits:
+                cpu: "30"
+              requests:
+                cpu: "1"
+            volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+            workingDir: /root
+          volumes:
+          - emptyDir:
+              medium: Memory
+              sizeLimit: 2Gi
+            name: dshm
+    Worker:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            app: pytorchjob
+          name: pytorch-test
+        spec:
+          containers:
+          - command:
+            - sh
+            - -c
+            - sleep 1h
+            env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: void
+            - name: gpus
+              value: "0"
+            - name: workers
+              value: "8"
+            image: centos:7
+            imagePullPolicy: Always
+            name: pytorch
+            resources:
+              limits:
+                cpu: "20"
+              requests:
+                cpu: "1"
+            volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+            workingDir: /root
+          volumes:
+          - emptyDir:
+              medium: Memory
+              sizeLimit: 2Gi
+            name: dshm

@@ -1,4 +1,12 @@
-COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
+GOOS=${TARGETOS}
+ifeq ($(GOOS),)
+GOOS=$(shell uname -s | tr A-Z a-z)
+endif
+GOARCH=${TARGETARCH}
+ifeq ($(GOARCH),)
+GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
+endif
+# COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
 BUILDENVVAR=CGO_ENABLED=0
 
 .PHONY: all
@@ -9,7 +17,7 @@ build: build-queue
 
 .PHONY: build-queue
 build-queue: fixcodec
-	$(COMMONENVVAR) $(BUILDENVVAR) go build -ldflags '-w' -o bin/kube-queue cmd/main.go	
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(BUILDENVVAR) go build -ldflags '-w' -o bin/kube-queue cmd/main.go	
 
 .PHONY: fixcodec
 	hack/fix-codec-factory.sh

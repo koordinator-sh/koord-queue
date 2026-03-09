@@ -1,0 +1,6 @@
+tfjob:
+  runningTimeout: 1m
+pytorchjob:
+  runningTimeout: 1m
+notebook:
+  runningTimeout: 1m
