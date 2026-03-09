@@ -7,10 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/kube-queue/kube-queue/pkg/controller"
-	"github.com/kube-queue/kube-queue/pkg/visibility/apis"
-	generatedopenapi "github.com/kube-queue/kube-queue/pkg/visibility/apis/openapi"
-	visibilityv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/visibility/apis"
+	generatedopenapi "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/openapi"
+	visibilityv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 
 	utilversion "k8s.io/apimachinery/pkg/util/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
@@ -41,7 +41,7 @@ func CreateAndStartVisibilityServer(ctx context.Context, ctrl *controller.Contro
 	}
 
 	if err := apis.Install(visibilityServer, ctrl); err != nil {
-		logger.Fatalf("Unable to install visibility.kube-queue.x-k8s.io API: %v", err)
+		logger.Fatalf("Unable to install visibility.koord-queue.x-k8s.io API: %v", err)
 		os.Exit(1)
 	}
 
@@ -80,8 +80,8 @@ func newVisibilityServerConfig(conf *rest.Config) *genericapiserver.RecommendedC
 	c.Config.EffectiveVersion = basecompatibility.NewEffectiveVersion(binaryVersion, false, binaryVersion, binaryVersion.SubtractMinor(2))
 	c.Config.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(generatedopenapi.GetOpenAPIDefinitions, openapinamer.NewDefinitionNamer(apis.Scheme))
 	c.Config.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(generatedopenapi.GetOpenAPIDefinitions, openapinamer.NewDefinitionNamer(apis.Scheme))
-	c.Config.OpenAPIConfig.Info.Title = "Kube-queue visibility-server"
-	c.Config.OpenAPIV3Config.Info.Title = "Kube-queue visibility-server"
+	c.Config.OpenAPIConfig.Info.Title = "Koord-queue visibility-server"
+	c.Config.OpenAPIV3Config.Info.Title = "Koord-queue visibility-server"
 	c.Config.OpenAPIConfig.Info.Version = version
 	c.Config.OpenAPIV3Config.Info.Version = version
 

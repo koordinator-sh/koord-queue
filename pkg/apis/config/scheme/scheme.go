@@ -17,8 +17,8 @@ limitations under the License.
 package scheme
 
 import (
-	"github.com/kube-queue/kube-queue/pkg/apis/config"
-	v1 "github.com/kube-queue/kube-queue/pkg/apis/config/v1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
+	v1 "github.com/koordinator-sh/koord-queue/pkg/apis/config/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"

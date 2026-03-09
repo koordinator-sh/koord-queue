@@ -26,8 +26,8 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"
-	scheme "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/scheme"
-	v1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	scheme "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/scheme"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
 )
 
 // PodGroupsGetter has a method to return a PodGroupInterface.

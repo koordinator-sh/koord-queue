@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"testing"
 
-	queuev1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	queuev1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 func TestEquals(t *testing.T) {

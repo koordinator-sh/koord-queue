@@ -27,7 +27,7 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
-	v1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	v1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
 )
 
 // FakeElasticQuotaTrees implements ElasticQuotaTreeInterface

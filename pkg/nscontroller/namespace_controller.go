@@ -37,8 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/go-logr/logr"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	elasticquotatree "github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	elasticquotatree "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
 )
 
 // NamespaceReconciler reconciles a Namespace object

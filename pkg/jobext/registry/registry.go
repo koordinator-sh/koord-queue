@@ -1,8 +1,8 @@
 package registry
 
 import (
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/handles"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/handles"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"

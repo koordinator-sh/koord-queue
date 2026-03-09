@@ -36,7 +36,7 @@ type QueueUnitsSummaryApplyConfiguration struct {
 func QueueUnitsSummary() *QueueUnitsSummaryApplyConfiguration {
 	b := &QueueUnitsSummaryApplyConfiguration{}
 	b.WithKind("QueueUnitsSummary")
-	b.WithAPIVersion("visibility.kube-queue.x-k8s.io/v1alpha1")
+	b.WithAPIVersion("visibility.koord-queue.x-k8s.io/v1alpha1")
 	return b
 }
 

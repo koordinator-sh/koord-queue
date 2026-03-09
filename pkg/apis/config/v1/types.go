@@ -10,7 +10,7 @@ import (
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type KubeQueueConfiguration struct {
+type KoordQueueConfiguration struct {
 	metav1.TypeMeta `json:",inline"`
 
 	PluginConfigs map[string]runtime.RawExtension `json:"pluginConfigs,omitempty"`
@@ -30,7 +30,7 @@ type ElasticQuotaArgs struct {
 }
 
 // DecodeNestedObjects decodes plugin args for known types.
-func (c *KubeQueueConfiguration) DecodeNestedObjects(d runtime.Decoder) error {
+func (c *KoordQueueConfiguration) DecodeNestedObjects(d runtime.Decoder) error {
 	var strictDecodingErrs []error
 	for name, data := range c.PluginConfigs {
 		gvk := SchemeGroupVersion.WithKind(name + "Args")
@@ -60,7 +60,7 @@ func (c *KubeQueueConfiguration) DecodeNestedObjects(d runtime.Decoder) error {
 }
 
 // EncodeNestedObjects encodes plugin args.
-func (c *KubeQueueConfiguration) EncodeNestedObjects(e runtime.Encoder) error {
+func (c *KoordQueueConfiguration) EncodeNestedObjects(e runtime.Encoder) error {
 	for _, data := range c.PluginConfigs {
 		if data.Object == nil {
 			continue

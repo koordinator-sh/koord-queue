@@ -6,18 +6,18 @@ import (
 	"testing"
 	"time"
 
-	queuev1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/cmd/app/options"
-	"github.com/kube-queue/kube-queue/pkg/controller"
-	"github.com/kube-queue/kube-queue/pkg/controllers"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
-	elasticquotatree "github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota"
-	"github.com/kube-queue/kube-queue/pkg/queue/multischedulingqueue"
-	"github.com/kube-queue/kube-queue/pkg/scheduler"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils/queueunits"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
+	queuev1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/controllers"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	elasticquotatree "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/multischedulingqueue"
+	"github.com/koordinator-sh/koord-queue/pkg/scheduler"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils/queueunits"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -60,7 +60,7 @@ func TestAdmissionCheck(t *testing.T) {
 		if !ok {
 			return nil, nil
 		}
-		return []string{qu.Annotations["kube-queue/quota-fullname"]}, nil
+		return []string{qu.Annotations["koord-queue/quota-fullname"]}, nil
 	}})
 	queueUnitInformerFactory.Scheduling().V1alpha1().Queues().Lister()
 
@@ -116,7 +116,7 @@ func TestAdmissionCheck(t *testing.T) {
 			Name: "ad2",
 		},
 	}
-	defaultQueue, err = cli.SchedulingV1alpha1().Queues("kube-queue").Update(context.Background(), defaultQueue, metav1.UpdateOptions{})
+	defaultQueue, err = cli.SchedulingV1alpha1().Queues("koord-queue").Update(context.Background(), defaultQueue, metav1.UpdateOptions{})
 	if err != nil {
 		t.Error(err)
 	}

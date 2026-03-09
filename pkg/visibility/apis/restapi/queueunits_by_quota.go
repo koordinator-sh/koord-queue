@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/kube-queue/kube-queue/pkg/controller"
-	"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"

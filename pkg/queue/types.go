@@ -14,13 +14,13 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	schedv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	externalv1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
-	"github.com/kube-queue/kube-queue/pkg/utils"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	schedv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 )
 
 // Queue is a Queue wrapper with additional information related to the Queue
@@ -100,7 +100,7 @@ func (q *Queue) GetQueueImplForTest() queuepolicies.SchedulingQueue {
 }
 
 func (q *Queue) sync() {
-	if _, ok := q.queue.Annotations["kube-queue/disable-show-queue-items"]; ok {
+	if _, ok := q.queue.Annotations["koord-queue/disable-show-queue-items"]; ok {
 		if q.stopCtx != nil {
 			q.stopCtx()
 			q.stopCtx = nil
@@ -109,7 +109,7 @@ func (q *Queue) sync() {
 		return
 	}
 	needRestart := false
-	if t, ok := q.queue.Annotations["kube-queue/queue-items-refresh-interval"]; ok {
+	if t, ok := q.queue.Annotations["koord-queue/queue-items-refresh-interval"]; ok {
 		i, err := time.ParseDuration(t)
 		if err == nil {
 			q.interval = i

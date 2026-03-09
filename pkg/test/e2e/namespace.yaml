@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   annotations:
-    kube-queue/available-quota: "child-1"
+    koord-queue/available-quota: "child-1"
   labels:
     kubernetes.io/metadata.name: test-group
   name: test-group

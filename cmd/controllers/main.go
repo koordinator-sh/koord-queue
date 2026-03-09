@@ -1,7 +1,7 @@
 package main
 
 /*
-Copyright 2024 The Kube-Queue Authors.
+Copyright 2024 The Koord-Queue Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,15 +43,15 @@ import (
 	schv1alpha1 "sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	elasticquotatree "github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota"
-	admissioncontroller "github.com/kube-queue/kube-queue/pkg/jobext/admission"
-	networkv1alpha1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/networkaware/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/registry"
-	"github.com/kube-queue/kube-queue/pkg/jobext/reservation"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
-	"github.com/kube-queue/kube-queue/pkg/nscontroller"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	elasticquotatree "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
+	admissioncontroller "github.com/koordinator-sh/koord-queue/pkg/jobext/admission"
+	networkv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/networkaware/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/registry"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/reservation"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
+	"github.com/koordinator-sh/koord-queue/pkg/nscontroller"
 	"gopkg.in/yaml.v3"
 )
 
@@ -119,7 +119,7 @@ func main() {
 	flag.StringVar(&opt.MetricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to")
 	flag.StringVar(&opt.ProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to")
 	flag.BoolVar(&opt.LeaderElect, "leader-elect", false, "Enable leader election for controller manager")
-	flag.StringVar(&opt.LeaderNamespace, "leader-namespace", "kube-queue", "Namespace of the leader election resource")
+	flag.StringVar(&opt.LeaderNamespace, "leader-namespace", "koord-queue", "Namespace of the leader election resource")
 
 	// Job Extensions flags
 	flag.BoolVar(&opt.EnableJobExtensions, "enable-job-extensions", true, "Enable job extension controllers")
@@ -167,9 +167,9 @@ func run(cfg *rest.Config, opt *ControllerOptions) error {
 	framework.EnableNetworkAware = opt.EnableNetworkAware
 	framework.EnablePodReclaim = opt.EnablePodReclaim
 
-	leaderElectionID := "kube-queue-controllers"
+	leaderElectionID := "koord-queue-controllers"
 	if opt.EnableJobExtensions && opt.EnabledExtensions != "" {
-		leaderElectionID = "kube-queue-controllers-" + strings.ReplaceAll(opt.EnabledExtensions, ",", "-")
+		leaderElectionID = "koord-queue-controllers-" + strings.ReplaceAll(opt.EnabledExtensions, ",", "-")
 	}
 
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{

@@ -23,8 +23,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -138,14 +138,14 @@ func (j *Job) Priority(ctx context.Context, obj client.Object) (string, *int32) 
 
 func (j *Job) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*batchv1.Job)
-	if job.Annotations["kube-queue/job-has-enqueued"] != "" {
+	if job.Annotations["koord-queue/job-has-enqueued"] != "" {
 		return nil
 	}
 	if job.Annotations == nil {
 		job.Annotations = map[string]string{}
 	}
-	job.Annotations["kube-queue/job-has-enqueued"] = "true"
-	job.Annotations["kube-queue/job-enqueue-timestamp"] = time.Now().String()
+	job.Annotations["koord-queue/job-has-enqueued"] = "true"
+	job.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 	// template in job is immutable
 	// util.SetPodTemplateSpec(&job.Spec.Template, job.Namespace, job.Name, job.Name, j.QueueUnitSuffix())
 	return cli.Update(ctx, job)
@@ -160,7 +160,7 @@ func (j *Job) Suspend(ctx context.Context, obj client.Object, cli client.Client)
 	if job.Annotations == nil {
 		job.Annotations = map[string]string{}
 	}
-	job.Annotations["kube-queue/job-dequeue-timestamp"] = ""
+	job.Annotations["koord-queue/job-dequeue-timestamp"] = ""
 	return cli.Update(ctx, job)
 }
 
@@ -173,7 +173,7 @@ func (j *Job) Resume(ctx context.Context, obj client.Object, cli client.Client) 
 	if job.Annotations == nil {
 		job.Annotations = map[string]string{}
 	}
-	job.Annotations["kube-queue/job-dequeue-timestamp"] = time.Now().String()
+	job.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 
 	return cli.Update(ctx, job)
 }
@@ -203,15 +203,15 @@ func (j *Job) GetJobStatus(ctx context.Context, obj client.Object, cli client.Cl
 		}
 		return framework.Pending, time.Now()
 	}
-	if job.Annotations["kube-queue/job-dequeue-timestamp"] != "" {
-		transTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-dequeue-timestamp"])
+	if job.Annotations["koord-queue/job-dequeue-timestamp"] != "" {
+		transTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-dequeue-timestamp"])
 		if err != nil {
 			return framework.Pending, time.Now()
 		}
 		return framework.Pending, transTime
 	}
-	if job.Annotations["kube-queue/job-has-enqueued"] == "true" {
-		transTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-enqueue-timestamp"])
+	if job.Annotations["koord-queue/job-has-enqueued"] == "true" {
+		transTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-enqueue-timestamp"])
 		if err != nil {
 			return framework.Queuing, time.Now()
 		}
@@ -226,7 +226,7 @@ func (j *Job) ManagedByQueue(ctx context.Context, obj client.Object) bool {
 		return true
 	}
 	job := obj.(*batchv1.Job)
-	if job.Annotations["kube-queue/job-has-enqueued"] != "" {
+	if job.Annotations["koord-queue/job-has-enqueued"] != "" {
 		return true
 	}
 	return job.Status.StartTime == nil && job.Spec.Suspend != nil && *job.Spec.Suspend

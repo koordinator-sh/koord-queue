@@ -3,10 +3,10 @@ package util
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kube-queue/kube-queue/cmd/app/options"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/utils"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 )
 
 func IsJobPreemptible(qu *framework.QueueUnitInfo) bool {

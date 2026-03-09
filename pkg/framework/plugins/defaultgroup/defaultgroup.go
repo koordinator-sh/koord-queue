@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	clientv1alpha1 "github.com/kube-queue/api/pkg/client/informers/externalversions/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	clientv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 )
@@ -50,7 +50,7 @@ func (d *DefaultGroup) AddEventHandler(queueInformer clientv1alpha1.QueueInforme
 			default:
 				return false
 			}
-			return q.Name == "default" && q.Namespace == "kube-queue"
+			return q.Name == "default" && q.Namespace == "koord-queue"
 		},
 		Handler: cache.ResourceEventHandlerFuncs{
 			DeleteFunc: func(obj interface{}) {

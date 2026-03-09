@@ -5,11 +5,11 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned/fake"
-	"github.com/kube-queue/api/pkg/client/informers/externalversions"
-	"github.com/kube-queue/kube-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
+	"github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
 )
 
 type FakeHandle struct {

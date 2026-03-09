@@ -27,9 +27,9 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
-	versioned "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
-	internalinterfaces "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
-	scheduling "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/scheduling"
+	versioned "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
+	internalinterfaces "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
+	scheduling "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/scheduling"
 )
 
 // SharedInformerOption defines the functional option type for SharedInformerFactory.

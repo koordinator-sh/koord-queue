@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/test/fake"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/test/fake"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

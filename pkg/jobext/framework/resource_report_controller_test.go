@@ -6,10 +6,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	v1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/test/util/wrappers"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	"github.com/stretchr/testify/assert"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
-	"github.com/kube-queue/kube-queue/pkg/jobext/test/util/wrappers"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

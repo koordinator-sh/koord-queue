@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import (
 	"context"
 	"sync"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
 
-	schedv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	schedv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 )
 
 // MultiSchedulingQueue is interface of Multi Scheduling Queue.

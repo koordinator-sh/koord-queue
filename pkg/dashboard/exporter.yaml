@@ -1,5 +1,5 @@
 scrape_configs:
-- job_name: kube-queue-exporter
+- job_name: koord-queue-exporter
   honor_timestamps: false
   honor_labels: false
   scheme: http

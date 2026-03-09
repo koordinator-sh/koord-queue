@@ -21,7 +21,7 @@ package fake
 import (
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
-	v1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1"
+	v1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1"
 )
 
 type FakeSchedulingV1beta1 struct {

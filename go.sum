@@ -232,8 +232,6 @@ github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 gitlab.alibaba-inc.com/cos/karmada v0.1.1-0.20241121122543-7a4c258789a3 h1:tn4R3MsAb61BUpMxWFvPQSvt6vaMEGscycQsUU79A7w=
 gitlab.alibaba-inc.com/cos/karmada v0.1.1-0.20241121122543-7a4c258789a3/go.mod h1:3bn4m5VMK09VPLVoxPTqC5Wwm11jNul+pCdR4Eqkncc=
-gitlab.alibaba-inc.com/eml/kubequeue-api v0.0.12 h1:1cEVEWiAwk9rhmQSwf8da1BVZh5UI4S27eBSI9WDJ7Q=
-gitlab.alibaba-inc.com/eml/kubequeue-api v0.0.12/go.mod h1:4wlKAalL3k1QGIbuQ6cI1u+oM8w9ISe+XPrq8Kff7/4=
 gitlab.alibaba-inc.com/kubedlpro/apis v0.0.1 h1:nJnKj9jr1whqn/7CpBdL3RBe/Y9jI6Hl/TRHyi9rl8g=
 gitlab.alibaba-inc.com/kubedlpro/apis v0.0.1/go.mod h1:n8qTnhlgfjspRgOdQ979uCbl3TcIF7tJXBBDZ4VorYU=
 go.etcd.io/bbolt v1.3.11 h1:yGEzV1wPz2yVCLsD8ZAiGHhHVlczyC9d1rP43/VCRJ0=

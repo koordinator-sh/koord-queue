@@ -17,7 +17,7 @@ limitations under the License.
 package v1
 
 import (
-	"github.com/kube-queue/kube-queue/pkg/apis/config"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -35,7 +35,7 @@ var (
 // addKnownTypes registers known types to the given scheme
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&KubeQueueConfiguration{},
+		&KoordQueueConfiguration{},
 		&ElasticQuotaArgs{},
 	)
 	return nil

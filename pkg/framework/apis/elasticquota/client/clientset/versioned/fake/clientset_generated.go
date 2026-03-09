@@ -24,11 +24,11 @@ import (
 	"k8s.io/client-go/discovery"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/testing"
-	clientset "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
-	schedulingv1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1alpha1"
-	fakeschedulingv1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1alpha1/fake"
-	schedulingv1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1"
-	fakeschedulingv1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1/fake"
+	clientset "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
+	schedulingv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1alpha1"
+	fakeschedulingv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1alpha1/fake"
+	schedulingv1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1"
+	fakeschedulingv1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1/fake"
 )
 
 // NewSimpleClientset returns a clientset that will respond with the provided objects.

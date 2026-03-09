@@ -11,7 +11,7 @@ Different types of jobs belongs to different compute frameworks have different d
 
 ## Proposal
 
-A "CRD" is needed to interact with the kube-queue. The CRD kind name is subject to change. We use "QueueUnit" in the proposal. The CRD defines the information related to scheduling and queuing. "QueueUnit" is namespace scoped.
+A "CRD" is needed to interact with the koord-queue. The CRD kind name is subject to change. We use "QueueUnit" in the proposal. The CRD defines the information related to scheduling and queuing. "QueueUnit" is namespace scoped.
 
 ```yaml
 apiVersion: queue.k8s.io/v1alpha1

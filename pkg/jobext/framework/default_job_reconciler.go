@@ -7,8 +7,8 @@ import (
 	"time"
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	"golang.org/x/time/rate"
 
 	corev1 "k8s.io/api/core/v1"
@@ -353,7 +353,7 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
 		}
 		if queueUnit.Status.Phase == v1alpha1.SchedFailed {
-			log.V(2).Info("wait kube-queue to schedule the job again")
+			log.V(2).Info("wait koord-queue to schedule the job again")
 			return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
 		}
 		if queueUnit.Status.Phase == v1alpha1.SchedSucceed {

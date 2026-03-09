@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalversions "github.com/kube-queue/api/pkg/client/informers/externalversions"
-	"github.com/kube-queue/kube-queue/pkg/apis/config"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -20,5 +20,5 @@ type ControllerConfig struct {
 	InformersFactory     informers.SharedInformerFactory
 	KueueInformerFactory kueue.SharedInformerFactory
 
-	Config *config.KubeQueueConfiguration
+	Config *config.KoordQueueConfiguration
 }

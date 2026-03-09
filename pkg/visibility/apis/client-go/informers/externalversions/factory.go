@@ -22,9 +22,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/clientset/versioned"
-	apis "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/informers/externalversions/apis"
-	internalinterfaces "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/informers/externalversions/internalinterfaces"
+	versioned "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/clientset/versioned"
+	apis "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/informers/externalversions/apis"
+	internalinterfaces "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

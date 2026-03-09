@@ -22,7 +22,7 @@ package v1alpha1
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/kube-queue/kube-queue/pkg/jobext/apis/networkaware/apis/scheme"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/apis/networkaware/apis/scheme"
 )
 
 var (

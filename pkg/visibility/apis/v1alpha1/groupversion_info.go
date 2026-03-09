@@ -17,7 +17,7 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the pending workloads kueue v1alpha1 API group
 // +kubebuilder:object:generate=true
 // +kubebuilder:skip
-// +groupName=visibility.kube-queue.x-k8s.io
+// +groupName=visibility.koord-queue.x-k8s.io
 // +k8s:openapi-gen=true
 // +k8s:conversion-gen=false
 
@@ -30,7 +30,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects.
-	GroupVersion = schema.GroupVersion{Group: "visibility.kube-queue.x-k8s.io", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "visibility.koord-queue.x-k8s.io", Version: "v1alpha1"}
 
 	// SchemeGroupVersion is alias to GroupVersion for client-go libraries.
 	// It is required by pkg/client/informers/externalversions/...

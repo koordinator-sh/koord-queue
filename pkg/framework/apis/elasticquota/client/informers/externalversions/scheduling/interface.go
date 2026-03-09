@@ -19,9 +19,9 @@ limitations under the License.
 package scheduling
 
 import (
-	internalinterfaces "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/scheduling/v1alpha1"
-	v1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/scheduling/v1beta1"
+	internalinterfaces "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/scheduling/v1alpha1"
+	v1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/scheduling/v1beta1"
 )
 
 // Interface provides access to each of this group's versions.

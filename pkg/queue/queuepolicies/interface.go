@@ -3,9 +3,9 @@ package queuepolicies
 import (
 	"context"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 )
 
 type QueueDebugInfo interface {

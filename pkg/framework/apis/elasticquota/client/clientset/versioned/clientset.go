@@ -24,8 +24,8 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
-	schedulingv1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1alpha1"
-	schedulingv1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1"
+	schedulingv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1alpha1"
+	schedulingv1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/typed/scheduling/v1beta1"
 )
 
 type Interface interface {

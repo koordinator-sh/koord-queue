@@ -23,8 +23,8 @@ CODEGEN_PKG=${CODEGEN_PKG:-$(cd "${SCRIPT_ROOT}"; ls -d -1 ./vendor/k8s.io/code-
 
 bash "${CODEGEN_PKG}"/generate-internal-groups.sh \
   "deepcopy,defaulter,conversion" \
-  github.com/kube-queue/kube-queue/pkg/generated \
-  github.com/kube-queue/kube-queue/pkg//apis \
-  github.com/kube-queue/kube-queue/pkg//apis \
+  github.com/koordinator-sh/koord-queue/pkg/generated \
+  github.com/koordinator-sh/koord-queue/pkg/apis \
+  github.com/koordinator-sh/koord-queue/pkg/apis \
   "queue:v1alpha1" \
   --go-header-file "${SCRIPT_ROOT}"/hack/boilerplate/boilerplate.generatego.txt

@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/kube-queue/kube-queue/cmd/app/options"
-	"github.com/kube-queue/kube-queue/pkg/config"
-	"github.com/kube-queue/kube-queue/pkg/controllers"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
+	"github.com/koordinator-sh/koord-queue/pkg/config"
+	"github.com/koordinator-sh/koord-queue/pkg/controllers"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,17 +36,17 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalv1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins"
-	"github.com/kube-queue/kube-queue/pkg/framework/runtime"
-	"github.com/kube-queue/kube-queue/pkg/queue"
-	"github.com/kube-queue/kube-queue/pkg/queue/multischedulingqueue"
-	"github.com/kube-queue/kube-queue/pkg/scheduler"
-	"github.com/kube-queue/kube-queue/pkg/utils"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/runtime"
+	"github.com/koordinator-sh/koord-queue/pkg/queue"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/multischedulingqueue"
+	"github.com/koordinator-sh/koord-queue/pkg/scheduler"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 )
 
 type Controller struct {
@@ -179,7 +179,7 @@ func (c *Controller) Start(ctx context.Context) {
 		c.AddQueueUnit(qu)
 	}
 	klog.InfoS("add existing queueunits to controller", "count", len(queueUnits), "pending", pending, "satisfied", satisfied, "reserved", reserved)
-	queues, _ := c.fw.QueueInformerFactory().Scheduling().V1alpha1().Queues().Lister().Queues("kube-queue").List(labels.Everything())
+	queues, _ := c.fw.QueueInformerFactory().Scheduling().V1alpha1().Queues().Lister().Queues("koord-queue").List(labels.Everything())
 	for _, q := range queues {
 		c.AddQueue(q)
 	}

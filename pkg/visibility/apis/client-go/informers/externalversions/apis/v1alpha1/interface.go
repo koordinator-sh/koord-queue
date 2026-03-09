@@ -18,7 +18,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	internalinterfaces "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

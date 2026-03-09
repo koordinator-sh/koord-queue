@@ -9,7 +9,7 @@ spec:
     max:
       cpu: 999900
       memory: 400000Gi
-      kube-queue/max-jobs: 10000000000
+      koord-queue/max-jobs: 10000000000
       nvidia.com/gpu: 100000
     min:
       cpu: 9999
@@ -17,7 +17,7 @@ spec:
     children:
     - name: child-2
       max:
-        kube-queue/max-jobs: 10
+        koord-queue/max-jobs: 10
         cpu: 2
         nvidia.com/gpu: 100
         memory: 2Gi
@@ -25,4 +25,4 @@ spec:
         cpu: 2
         memory: 2Gi
       namespaces: # 配置对应的Namespace
-        - kube-queue-e2e-test
+        - koord-queue-e2e-test

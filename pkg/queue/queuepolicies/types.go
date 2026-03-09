@@ -9,8 +9,8 @@ const Priority string = "Priority"
 const Block string = "Block"
 const Round string = "Round"
 
-const QueueArgsAnnotationKey string = "kube-queue/queue-args"
-const QueuePolicyLabelKey string = "kube-queue/queue-policy"
+const QueueArgsAnnotationKey string = "koord-queue/queue-args"
+const QueuePolicyLabelKey string = "koord-queue/queue-policy"
 
 var defaultPolicyEnv string
 var defaultPolicyCLI string
@@ -26,7 +26,7 @@ func init() {
 }
 
 func AddCommandLine(fs *flag.FlagSet) {
-	fs.StringVar(&defaultPolicyCLI, "default-queue-policy", defaultPolicyEnv, "The policy to use for dequeuing queueunits in the kube-queue.")
+	fs.StringVar(&defaultPolicyCLI, "default-queue-policy", defaultPolicyEnv, "The policy to use for dequeuing queueunits in the koord-queue.")
 }
 
 func GetDefaultQueuePolicy() string {

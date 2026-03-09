@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# this should be run in environment where kube queue has been installed
-# will use a fixed namespace kube-queue-e2e-test, make sure the namespace
+# this should be run in environment where koord queue has been installed
+# will use a fixed namespace koord-queue-e2e-test, make sure the namespace
 # is a clean namespace.
 
 failed=true
@@ -14,7 +14,7 @@ cleanup() {
     # for debug
     if [ "$failed" != true ]; then
         kubectl delete -f test-job.yaml
-        kubectl delete ns kube-queue-e2e-test
+        kubectl delete ns koord-queue-e2e-test
         echo "success"
     elif [ "$failed" = true ]; then
         echo "failed: qu not Enqueued, status is $status"
@@ -26,7 +26,7 @@ trap cleanup EXIT
 
 kubectl get eqtree -n kube-system elasticquotatree -o yaml > eqtree-backup.yaml
 
-kubectl create ns kube-queue-e2e-test
+kubectl create ns koord-queue-e2e-test
 
 kubectl delete eqtree -n kube-system elasticquotatree
 kubectl create -f eqtree.yaml
@@ -35,7 +35,7 @@ kubectl create -f test-job.yaml
 
 sleep 10
 
-status=$(kubectl -n kube-queue-e2e-test get qu pytorch-e2e-test-py-qu -o jsonpath='{.status.phase}')
+status=$(kubectl -n koord-queue-e2e-test get qu pytorch-e2e-test-py-qu -o jsonpath='{.status.phase}')
 if [[ $status == "Enqueued" ]];
 then
     failed=false

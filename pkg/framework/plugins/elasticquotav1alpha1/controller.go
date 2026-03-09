@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
-	queuev1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	queuev1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 // Controller is a controller that update queue crd
@@ -38,7 +38,7 @@ func (ctrl *Controller) Start() {
 
 func (ctrl *Controller) syncQueueStatusWorker() {
 	queues, err := ctrl.plugin.handle.QueueInformerFactory().Scheduling().V1alpha1().Queues().
-		Lister().Queues("kube-queue").List(labels.Everything())
+		Lister().Queues("koord-queue").List(labels.Everything())
 	if err != nil {
 		klog.V(3).ErrorS(err, "Unable to list queues in syncQueueStatusWorker")
 		return
@@ -73,7 +73,7 @@ func (ctrl *Controller) syncQueueStatus(q *queuev1.Queue, summary *ElasticQuotaD
 	}
 
 	err = framework.RetryTooManyRequests(func() error {
-		_, err := ctrl.plugin.handle.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").
+		_, err := ctrl.plugin.handle.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").
 			Update(context.TODO(), newQueue, metav1.UpdateOptions{})
 		return err
 	})

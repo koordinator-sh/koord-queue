@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package priority
 
 import (
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"testing"

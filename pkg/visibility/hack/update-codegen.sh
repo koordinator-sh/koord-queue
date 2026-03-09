@@ -7,7 +7,7 @@ set -o pipefail
 # run this script in pkg/visibility/hack/
 CURRENT_DIR=$(dirname "${BASH_SOURCE[0]}")
 ROOT=$(realpath "${CURRENT_DIR}/../../..")
-PKG="github.com/kube-queue/kube-queue"
+PKG="github.com/koordinator-sh/koord-queue"
 CODEGEN_PKG=$ROOT/vendor/k8s.io/code-generator
 
 cd "$CURRENT_DIR/.."

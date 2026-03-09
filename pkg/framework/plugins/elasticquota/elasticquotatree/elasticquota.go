@@ -23,9 +23,9 @@ import (
 	"path"
 	"sync"
 
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/tools/clientcmd"
@@ -342,7 +342,7 @@ func (e *ElasticQuotaInfo) UsedOverMax(podRequest *utils.Resource) bool {
 // This is only be used for check if the quota is oversold
 // Oversold quota cannot be get more resources when there are other quota not oversold.
 func (e *ElasticQuotaInfo) UsedLowerThanMinWithOverSell(oversellRate float64, mask sets.Set[string]) (bool, string) {
-	if v, ok := e.Min.Resources["kube-queue/max-jobs"]; ok {
+	if v, ok := e.Min.Resources["koord-queue/max-jobs"]; ok {
 		if v < math.MaxInt32 &&
 			float64(v)*oversellRate <= float64(e.Count) {
 			return false, "jobs"
@@ -363,7 +363,7 @@ func (e *ElasticQuotaInfo) UsedLowerThanMinWithOverSell(oversellRate float64, ma
 }
 
 func (e *ElasticQuotaInfo) UsedOverMinWithOverSell(podRequest, preempt *utils.Resource, oversellRate float64) (bool, string) {
-	if v, ok := e.Min.Resources["kube-queue/max-jobs"]; ok {
+	if v, ok := e.Min.Resources["koord-queue/max-jobs"]; ok {
 		if !preempt.Zero() || (v < math.MaxInt32 && float64(v)*oversellRate < float64(e.Count)+1) {
 			return true, "jobs"
 		}
@@ -390,7 +390,7 @@ func (e *ElasticQuotaInfo) ValidatePreemptibleJobCount(max *int64) (bool, int64)
 }
 
 func (e *ElasticQuotaInfo) UsedOverMaxWithOverSell(podRequest *utils.Resource, oversellRate float64) (bool, string) {
-	if v, ok := e.Max.Resources["kube-queue/max-jobs"]; ok {
+	if v, ok := e.Max.Resources["koord-queue/max-jobs"]; ok {
 		if v < math.MaxInt32 && float64(v)*oversellRate < float64(e.Count)+1 {
 			return true, "jobs"
 		}
@@ -422,7 +422,7 @@ func (e *ElasticQuotaInfo) ParentUsedOverMinWithOverSell(podRequest, preempt *ut
 func (e *ElasticQuotaInfo) ParentUsedOverMaxWithOverSell(logger klog.Logger, podRequest *utils.Resource, oversellRate float64) (bool, string, string, *utils.Resource) {
 	parent := e.parent
 	if parent != nil {
-		if v, ok := parent.Max.Resources["kube-queue/max-jobs"]; ok {
+		if v, ok := parent.Max.Resources["koord-queue/max-jobs"]; ok {
 			if v < math.MaxInt32 && float64(v)*oversellRate < float64(parent.Count)+1 {
 				return true, parent.FullName, "jobs", nil
 			}

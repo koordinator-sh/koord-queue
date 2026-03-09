@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -290,7 +290,7 @@ var _ = Describe("RayCluster Controller", func() {
 					Name:      "test-cluster",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-dequeue-timestamp": time.Now().String(),
+						"koord-queue/job-dequeue-timestamp": time.Now().String(),
 					},
 				},
 				Spec: rayv1.RayClusterSpec{
@@ -303,7 +303,7 @@ var _ = Describe("RayCluster Controller", func() {
 			Expect(fakeClient.Get(ctx, types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Name}, cluster))
 			Expect(err).To(BeNil())
 			Expect(cluster.Spec.Suspend).To(Equal(ptr.To(false)))
-			Expect(cluster.Annotations["kube-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
+			Expect(cluster.Annotations["koord-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
 		})
 
 		It("should not resume already running cluster", func() {
@@ -335,7 +335,7 @@ var _ = Describe("RayCluster Controller", func() {
 			cluster := &rayv1.RayCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": "",
+						"koord-queue/job-enqueue-timestamp": "",
 					},
 				},
 			}
@@ -348,7 +348,7 @@ var _ = Describe("RayCluster Controller", func() {
 			cluster := &rayv1.RayCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": time.Now().String(),
+						"koord-queue/job-enqueue-timestamp": time.Now().String(),
 					},
 				},
 			}
@@ -361,8 +361,8 @@ var _ = Describe("RayCluster Controller", func() {
 			cluster := &rayv1.RayCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": time.Now().String(),
-						"kube-queue/job-dequeue-timestamp": time.Now().String(),
+						"koord-queue/job-enqueue-timestamp": time.Now().String(),
+						"koord-queue/job-dequeue-timestamp": time.Now().String(),
 					},
 				},
 				Status: rayv1.RayClusterStatus{
@@ -410,7 +410,7 @@ var _ = Describe("RayCluster Controller", func() {
 			cluster := &rayv1.RayCluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": "timestamp",
+						"koord-queue/job-enqueue-timestamp": "timestamp",
 					},
 				},
 			}

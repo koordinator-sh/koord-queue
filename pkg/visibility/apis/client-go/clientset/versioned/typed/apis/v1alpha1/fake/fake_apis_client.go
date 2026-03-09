@@ -18,7 +18,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )

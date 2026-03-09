@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/metrics"
-	"github.com/kube-queue/kube-queue/pkg/queue"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/metrics"
+	"github.com/koordinator-sh/koord-queue/pkg/queue"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 func (c *Controller) AddAllEventHandlers(queueUnitInformer cache.SharedIndexInformer, queueInformer cache.SharedIndexInformer) {

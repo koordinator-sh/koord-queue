@@ -19,10 +19,10 @@ package handles
 import (
 	"context"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -129,7 +129,7 @@ var _ = Describe("ArgoWorkflow", func() {
 		Context("When getting PodSet", func() {
 			BeforeEach(func() {
 				workflow.Annotations = map[string]string{
-					"kube-queue/min-resources": `cpu: 100m
+					"koord-queue/min-resources": `cpu: 100m
 memory: 100Mi`,
 				}
 			})
@@ -145,7 +145,7 @@ memory: 100Mi`,
 
 	Describe("ManagedByQueue", func() {
 		Context("When checking if managed by queue", func() {
-			It("should return false for workflow without kube-queue-suspend template", func() {
+			It("should return false for workflow without koord-queue-suspend template", func() {
 				managed := workflowReconciler.ManagedByQueue(ctx, workflow)
 				Expect(managed).To(BeFalse())
 			})
@@ -265,7 +265,7 @@ memory: 100Mi`,
 
 			It("should return resource list from YAML annotation", func() {
 				workflow.Annotations = map[string]string{
-					"kube-queue/min-resources": `cpu: 100m
+					"koord-queue/min-resources": `cpu: 100m
 memory: 100Mi`,
 				}
 				result := workflowReconciler.Resources(ctx, workflow)
@@ -276,7 +276,7 @@ memory: 100Mi`,
 
 			It("should return resource list from JSON annotation", func() {
 				workflow.Annotations = map[string]string{
-					"kube-queue/min-resources": `{"cpu": "100m", "memory": "100Mi"}`,
+					"koord-queue/min-resources": `{"cpu": "100m", "memory": "100Mi"}`,
 				}
 				result := workflowReconciler.Resources(ctx, workflow)
 				Expect(result).ToNot(BeEmpty())
@@ -399,8 +399,8 @@ memory: 100Mi`,
 				}, updatedWorkflow)
 				Expect(getErr).To(BeNil())
 
-				Expect(updatedWorkflow.Annotations["kube-queue/job-has-enqueued"]).To(Equal("true"))
-				Expect(updatedWorkflow.Annotations["kube-queue/job-enqueue-timestamp"]).ToNot(BeEmpty())
+				Expect(updatedWorkflow.Annotations["koord-queue/job-has-enqueued"]).To(Equal("true"))
+				Expect(updatedWorkflow.Annotations["koord-queue/job-enqueue-timestamp"]).ToNot(BeEmpty())
 
 				found := false
 				for _, condition := range updatedWorkflow.Status.Conditions {

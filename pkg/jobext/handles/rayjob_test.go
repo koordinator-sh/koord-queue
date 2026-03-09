@@ -23,8 +23,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -96,7 +96,7 @@ var _ = Describe("RayJob Controller", func() {
 					Name:      "test-rayjob",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": time.Now().String(),
+						"koord-queue/job-enqueue-timestamp": time.Now().String(),
 					},
 				},
 				Spec: rayv1.RayJobSpec{
@@ -405,7 +405,7 @@ var _ = Describe("RayJob Controller", func() {
 					Name:      "test-rayjob",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": time.Now().String(),
+						"koord-queue/job-enqueue-timestamp": time.Now().String(),
 					},
 				},
 				Spec: rayv1.RayJobSpec{
@@ -499,7 +499,7 @@ var _ = Describe("RayJob Controller", func() {
 					Name:      "test-rayjob",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-dequeue-timestamp": time.Now().String(),
+						"koord-queue/job-dequeue-timestamp": time.Now().String(),
 					},
 				},
 				Spec: rayv1.RayJobSpec{
@@ -512,7 +512,7 @@ var _ = Describe("RayJob Controller", func() {
 			_ = fakeClient.Get(ctx, types.NamespacedName{Namespace: rayJob.Namespace, Name: rayJob.Name}, rayJob)
 			Expect(err).To(BeNil())
 			Expect(rayJob.Spec.Suspend).To(BeFalse())
-			Expect(rayJob.Annotations["kube-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
+			Expect(rayJob.Annotations["koord-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
 		})
 
 		It("should not resume an already running RayJob", func() {
@@ -574,33 +574,33 @@ var _ = Describe("RayJob Controller", func() {
 
 		It("should return Pending when job has dequeue timestamp", func() {
 			rayJob.Annotations = map[string]string{
-				"kube-queue/job-dequeue-timestamp": time.Now().String(),
-				"kube-queue/job-enqueue-timestamp": time.Now().String(),
+				"koord-queue/job-dequeue-timestamp": time.Now().String(),
+				"koord-queue/job-enqueue-timestamp": time.Now().String(),
 			}
 
 			status, timestamp := rayJobController.GetJobStatus(ctx, rayJob, fakeClient)
 			Expect(status).To(Equal(framework.Pending))
 
-			_, err := time.Parse(timeFormat, rayJob.Annotations["kube-queue/job-enqueue-timestamp"])
+			_, err := time.Parse(timeFormat, rayJob.Annotations["koord-queue/job-enqueue-timestamp"])
 			if err == nil {
 				// If parsing succeeds, timestamp should match
-				parsedTime, _ := time.Parse(timeFormat, rayJob.Annotations["kube-queue/job-enqueue-timestamp"])
+				parsedTime, _ := time.Parse(timeFormat, rayJob.Annotations["koord-queue/job-enqueue-timestamp"])
 				Expect(timestamp).To(Equal(parsedTime))
 			}
 		})
 
 		It("should return Queuing when job has enqueue timestamp but no dequeue timestamp", func() {
 			rayJob.Annotations = map[string]string{
-				"kube-queue/job-enqueue-timestamp": time.Now().String(),
+				"koord-queue/job-enqueue-timestamp": time.Now().String(),
 			}
 
 			status, timestamp := rayJobController.GetJobStatus(ctx, rayJob, fakeClient)
 			Expect(status).To(Equal(framework.Queuing))
 
-			_, err := time.Parse(timeFormat, rayJob.Annotations["kube-queue/job-enqueue-timestamp"])
+			_, err := time.Parse(timeFormat, rayJob.Annotations["koord-queue/job-enqueue-timestamp"])
 			if err == nil {
 				// If parsing succeeds, timestamp should match
-				parsedTime, _ := time.Parse(timeFormat, rayJob.Annotations["kube-queue/job-enqueue-timestamp"])
+				parsedTime, _ := time.Parse(timeFormat, rayJob.Annotations["koord-queue/job-enqueue-timestamp"])
 				Expect(timestamp).To(Equal(parsedTime))
 			} else {
 				// If parsing fails, should be current time
@@ -662,7 +662,7 @@ var _ = Describe("RayJob Controller", func() {
 
 		It("should not enqueue an already enqueued job", func() {
 			rayJob.Annotations = map[string]string{
-				"kube-queue/job-enqueue-timestamp": time.Now().String(),
+				"koord-queue/job-enqueue-timestamp": time.Now().String(),
 			}
 
 			err := rayJobController.Enqueue(ctx, rayJob, fakeClient)
@@ -682,7 +682,7 @@ var _ = Describe("RayJob Controller", func() {
 			}, updatedRayJob)
 			Expect(getErr).To(BeNil())
 
-			Expect(updatedRayJob.Annotations["kube-queue/job-enqueue-timestamp"]).ToNot(BeEmpty())
+			Expect(updatedRayJob.Annotations["koord-queue/job-enqueue-timestamp"]).ToNot(BeEmpty())
 			Expect(updatedRayJob.Spec.RayClusterSpec.HeadGroupSpec.Template.Annotations[util.RelatedAPIVersionKindAnnoKey]).To(Equal("ray.io/v1/RayJob"))
 			Expect(updatedRayJob.Spec.RayClusterSpec.HeadGroupSpec.Template.Annotations[util.RelatedObjectAnnoKey]).To(Equal(rayJob.Name))
 			Expect(updatedRayJob.Spec.RayClusterSpec.WorkerGroupSpecs[0].Template.Annotations[util.RelatedAPIVersionKindAnnoKey]).To(Equal("ray.io/v1/RayJob"))

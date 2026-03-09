@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	mpiv1alpha1 "github.com/AliyunContainerService/mpi-operator/pkg/apis/kubeflow/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -195,7 +195,7 @@ var _ = Describe("MPIJobV1alpha1 Controller", func() {
 					Name:      "test-job",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-has-enqueued": "true",
+						"koord-queue/job-has-enqueued": "true",
 					},
 				},
 			}
@@ -233,8 +233,8 @@ var _ = Describe("MPIJobV1alpha1 Controller", func() {
 			// Check that the job was updated
 			updatedJob := &mpiv1alpha1.MPIJob{}
 			Expect(fakeClient.Get(ctx, client.ObjectKey{Name: "test-job", Namespace: "default"}, updatedJob)).To(Succeed())
-			Expect(updatedJob.Annotations["kube-queue/job-has-enqueued"]).To(Equal("true"))
-			Expect(updatedJob.Annotations["kube-queue/job-enqueue-timestamp"]).NotTo(BeEmpty())
+			Expect(updatedJob.Annotations["koord-queue/job-has-enqueued"]).To(Equal("true"))
+			Expect(updatedJob.Annotations["koord-queue/job-enqueue-timestamp"]).NotTo(BeEmpty())
 		})
 	})
 
@@ -322,7 +322,7 @@ var _ = Describe("MPIJobV1alpha1 Controller", func() {
 			updatedJob := &mpiv1alpha1.MPIJob{}
 			Expect(fakeClient.Get(ctx, client.ObjectKey{Name: "test-job", Namespace: "default"}, updatedJob)).To(Succeed())
 			Expect(updatedJob.Annotations[QueueAnnotation]).To(Equal(""))
-			Expect(updatedJob.Annotations["kube-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
+			Expect(updatedJob.Annotations["koord-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
 		})
 	})
 
@@ -388,8 +388,8 @@ var _ = Describe("MPIJobV1alpha1 Controller", func() {
 					Name:      "test-job",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": enqueueTime,
-						"kube-queue/job-dequeue-timestamp": dequeueTime,
+						"koord-queue/job-enqueue-timestamp": enqueueTime,
+						"koord-queue/job-dequeue-timestamp": dequeueTime,
 						QueueAnnotation:                    "false",
 					},
 					CreationTimestamp: now,
@@ -412,8 +412,8 @@ var _ = Describe("MPIJobV1alpha1 Controller", func() {
 					Name:      "test-job",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-has-enqueued":      "true",
-						"kube-queue/job-enqueue-timestamp": enqueueTime,
+						"koord-queue/job-has-enqueued":      "true",
+						"koord-queue/job-enqueue-timestamp": enqueueTime,
 						QueueAnnotation:                    "true",
 					},
 					CreationTimestamp: now,
@@ -457,7 +457,7 @@ var _ = Describe("MPIJobV1alpha1 Controller", func() {
 			job := &mpiv1alpha1.MPIJob{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-has-enqueued": "true",
+						"koord-queue/job-has-enqueued": "true",
 					},
 				},
 			}

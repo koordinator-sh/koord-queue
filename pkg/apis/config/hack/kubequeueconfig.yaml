@@ -1,5 +1,5 @@
 apiVersion: scheduling.k8s.io/v1
-kind: KubeQueueConfiguration
+kind: KoordQueueConfiguration
 pluginConfigs:
   ElasticQuota: 
     checkQuotaOversold: true

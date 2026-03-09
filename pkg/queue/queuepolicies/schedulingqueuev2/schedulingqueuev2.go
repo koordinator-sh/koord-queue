@@ -11,21 +11,21 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalv1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota/util"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
-	"github.com/kube-queue/kube-queue/pkg/utils"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota/util"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 	"k8s.io/klog/v2"
 )
 
 const (
-	WaitForPodsRunningAnnotation = "kube-queue/wait-for-pods-running"
-	EnableQueueUnitPreemption    = "kube-queue/enable-queueunit-preemption"
-	MaxDepthAnnotation           = "kube-queue/max-depth"
+	WaitForPodsRunningAnnotation = "koord-queue/wait-for-pods-running"
+	EnableQueueUnitPreemption    = "koord-queue/enable-queueunit-preemption"
+	MaxDepthAnnotation           = "koord-queue/max-depth"
 )
 
 func less(a, b *framework.QueueUnitInfo) int {

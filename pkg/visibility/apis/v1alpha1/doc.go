@@ -17,7 +17,7 @@ limitations under the License.
 // +kubebuilder:object:generate=true
 // +k8s:deepcopy-gen=package
 // +kubebuilder:skip
-// +groupName=visibility.kube-queue.x-k8s.io
+// +groupName=visibility.koord-queue.x-k8s.io
 // +k8s:openapi-gen=true
 // +k8s:conversion-gen=false
 package v1alpha1

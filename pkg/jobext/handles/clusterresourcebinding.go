@@ -9,9 +9,9 @@ import (
 	"github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta2"
 	"gitlab.alibaba-inc.com/cos/karmada/pkg/apis/policy/v1alpha1"
 	"gitlab.alibaba-inc.com/cos/karmada/pkg/apis/work/v1alpha2"
-	common "github.com/kube-queue/kube-queue/pkg/jobext/apis/common/job_controller/v1"
-	pytorchv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/pytorch/v1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
+	common "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/common/job_controller/v1"
+	pytorchv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/pytorch/v1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	v1 "k8s.io/api/core/v1"
 	schedv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -197,7 +197,7 @@ func (r *ClusterResourceBinding) Resume(ctx context.Context, obj client.Object, 
 	if new.Spec.Suspension != nil {
 		new.Spec.Suspension.Scheduling = ptr.To(false)
 	}
-	new.Annotations["kube-queue/job-dequeue-timestamp"] = time.Now().String()
+	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
 

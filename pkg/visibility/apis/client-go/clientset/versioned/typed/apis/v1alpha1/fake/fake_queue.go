@@ -22,8 +22,8 @@ import (
 	json "encoding/json"
 	"fmt"
 
-	apisv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/applyconfiguration/apis/v1alpha1"
-	v1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	apisv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/applyconfiguration/apis/v1alpha1"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	types "k8s.io/apimachinery/pkg/types"

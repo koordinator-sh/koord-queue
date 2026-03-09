@@ -22,9 +22,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	commonv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/common/job_controller/v1"
-	pytorchv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/pytorch/v1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
+	commonv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/common/job_controller/v1"
+	pytorchv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/pytorch/v1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"

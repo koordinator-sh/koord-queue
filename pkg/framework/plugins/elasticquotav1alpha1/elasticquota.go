@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	queueunitversioned "github.com/kube-queue/api/pkg/client/clientset/versioned"
-	clientv1alpha1 "github.com/kube-queue/api/pkg/client/informers/externalversions/scheduling/v1alpha1"
-	queuev1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	queueunitversioned "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	clientv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions/scheduling/v1alpha1"
+	queuev1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions"
-	eqlister "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/listers/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/metrics"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions"
+	eqlister "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/metrics"
 )
 
 var _ framework.FilterPlugin = &ElasticQuota{}

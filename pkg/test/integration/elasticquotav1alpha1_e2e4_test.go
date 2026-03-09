@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	queuunitv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	queuunitv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/stretchr/testify/assert"
 
-	eqv1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquotav1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils"
+	eqv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquotav1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -70,7 +70,7 @@ func TestElasticQuotav1alpha1_QueueAdd_Update_Delete(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 
 	queueCr, _ := elasticQuotaPlugin.GetQueueUnitClient().SchedulingV1alpha1().Queues(
-		elasticquotav1alpha1.KubeQueueNamespace).Get(context.Background(), testElasticQuota.Name, metav1.GetOptions{})
+		elasticquotav1alpha1.KoordQueueNamespace).Get(context.Background(), testElasticQuota.Name, metav1.GetOptions{})
 	assert.Equal(t, queueCr.Name, testElasticQuota.Name)
 	// assert.Equal(t, queueCr.Spec.QueuePolicy, queuunitv1alpha1.QueuePolicy(common.PaiStrategyRoundRobin))
 
@@ -98,7 +98,7 @@ func TestElasticQuotav1alpha1_QueueAdd_Update_Delete(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 
 	queueCr, _ = elasticQuotaPlugin.GetQueueUnitClient().SchedulingV1alpha1().Queues(
-		elasticquotav1alpha1.KubeQueueNamespace).Get(context.Background(), testElasticQuota.Name, metav1.GetOptions{})
+		elasticquotav1alpha1.KoordQueueNamespace).Get(context.Background(), testElasticQuota.Name, metav1.GetOptions{})
 	assert.Equal(t, queueCr.Name, testElasticQuota.Name)
 	// assert.Equal(t, queueCr.Spec.QueuePolicy, queuunitv1alpha1.QueuePolicy(common.PaiStrategyBalance))
 
@@ -123,6 +123,6 @@ func TestElasticQuotav1alpha1_QueueAdd_Update_Delete(t *testing.T) {
 	assert.True(t, elasticQuotaInfo == nil)
 
 	queueCr, _ = elasticQuotaPlugin.GetQueueUnitClient().SchedulingV1alpha1().Queues(
-		elasticquotav1alpha1.KubeQueueNamespace).Get(context.Background(), testElasticQuota.Name, metav1.GetOptions{})
+		elasticquotav1alpha1.KoordQueueNamespace).Get(context.Background(), testElasticQuota.Name, metav1.GetOptions{})
 	assert.True(t, queueCr == nil)
 }

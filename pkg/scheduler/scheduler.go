@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -37,10 +37,10 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/kueue/apis/kueue/v1beta1"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/metrics"
-	"github.com/kube-queue/kube-queue/pkg/queue"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/metrics"
+	"github.com/koordinator-sh/koord-queue/pkg/queue"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 type Scheduler struct {

@@ -1,7 +1,7 @@
 package restapi
 
 import (
-	"github.com/kube-queue/kube-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/controller"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 

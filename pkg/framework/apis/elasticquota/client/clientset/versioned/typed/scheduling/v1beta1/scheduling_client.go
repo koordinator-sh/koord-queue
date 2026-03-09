@@ -20,8 +20,8 @@ package v1beta1
 
 import (
 	rest "k8s.io/client-go/rest"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/scheme"
-	v1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/scheme"
+	v1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
 )
 
 type SchedulingV1beta1Interface interface {

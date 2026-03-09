@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kube-queue-controller
-  namespace: kube-queue
+  name: koord-queue-controller
+  namespace: koord-queue
   labels:
-    control-plane: kube-queue-controller
+    control-plane: koord-queue-controller
 spec:
   selector:
     matchLabels:
-      control-plane: kube-queue-controller
+      control-plane: koord-queue-controller
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: kube-queue-controller
+        control-plane: koord-queue-controller
     spec:
     {{- with .Values.tolerations }}
       tolerations:
@@ -22,18 +22,18 @@ spec:
       volumes:
       - configMap:
           defaultMode: 420
-          name: kube-queue-plugin-config
-        name: kube-queue-plugin-config
-      serviceAccountName: kube-queue
+          name: koord-queue-plugin-config
+        name: koord-queue-plugin-config
+      serviceAccountName: koord-queue
       containers:
-        - image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+        - image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
           imagePullPolicy: Always
           name: controller
           volumeMounts:
           - mountPath: /etc/kubernetes/ack-config
-            name: kube-queue-plugin-config
+            name: koord-queue-plugin-config
           command:
-          - kube-queue
+          - koord-queue
           - --oversellrate={{ .Values.oversellrate }}
           - --qps={{ .Values.qps }}
           - --burst={{ .Values.burst }}
@@ -66,7 +66,7 @@ spec:
         {{- if .Values.admissionCheckController.enabled }}
         - command:
             - /manager
-          image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.admissionCheckController.image.repository }}:{{ .Values.admissionCheckController.image.tag }}"
+          image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.admissionCheckController.image.repository }}:{{ .Values.admissionCheckController.image.tag }}"
           imagePullPolicy: IfNotPresent
           name: provreq-ac-ctrl
           resources:
@@ -83,7 +83,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: job-extensions
-  namespace: kube-queue
+  namespace: koord-queue
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment
@@ -136,7 +136,7 @@ spec:
             {{- $jobType = print $jobType ",workflow"}}
             {{- end }}
             - --enabled-extensions={{- $jobType | trimPrefix "," }}
-          image: "{{ include "ack-kube-queue.imagePrefix" . }}/acs/job-extensions:{{ .Values.extension.jobextensions.tag }}"
+          image: "{{ include "ack-koord-queue.imagePrefix" . }}/acs/job-extensions:{{ .Values.extension.jobextensions.tag }}"
           name: manager
           livenessProbe:
             httpGet:
@@ -152,8 +152,8 @@ spec:
             periodSeconds: 10
           resources:
           {{- toYaml .Values.extension.batchjob.resources | nindent 12 }}
-      serviceAccount: kube-queue
-      serviceAccountName: kube-queue
+      serviceAccount: koord-queue
+      serviceAccountName: koord-queue
       terminationGracePeriodSeconds: 10
 
 {{- if eq 1 0 }}
@@ -162,7 +162,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: argo-extension
-  namespace: kube-queue
+  namespace: koord-queue
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: deployment
@@ -192,7 +192,7 @@ spec:
         - /manager
         args:
         - --leader-elect
-        image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.extension.argo.image.repository }}:{{ .Values.extension.argo.image.tag }}"
+        image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.extension.argo.image.repository }}:{{ .Values.extension.argo.image.tag }}"
         name: manager
         livenessProbe:
           httpGet:
@@ -208,8 +208,8 @@ spec:
           periodSeconds: 10
         resources:
           {{- toYaml .Values.extension.argo.resources | nindent 12 }}
-      serviceAccount: kube-queue
-      serviceAccountName: kube-queue
+      serviceAccount: koord-queue
+      serviceAccountName: koord-queue
       terminationGracePeriodSeconds: 10
 {{- end }}
 
@@ -221,7 +221,7 @@ metadata:
   name: notebook-operator-extesion
   labels:
     control-plane: notebook-operator-extesion
-  namespace: kube-queue
+  namespace: koord-queue
 spec:
   selector:
     matchLabels:
@@ -245,10 +245,10 @@ spec:
                 operator: NotIn
                 values:
                 - "arm64"
-      serviceAccountName: kube-queue
+      serviceAccountName: koord-queue
       containers:
         - name: notebook-operator-extesion
-          image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.extension.notebook.image.repository }}:{{ .Values.extension.notebook.image.tag }}"
+          image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.extension.notebook.image.repository }}:{{ .Values.extension.notebook.image.tag }}"
           imagePullPolicy: Always
           resources:
             {{- toYaml .Values.extension.notebook.resources | nindent 12 }}

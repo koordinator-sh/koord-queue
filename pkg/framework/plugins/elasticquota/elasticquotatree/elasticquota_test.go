@@ -8,8 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 func TestNewElasticQuotaTree(t *testing.T) {
@@ -370,7 +370,7 @@ func TestElasticQuotaInfo_UsedLowerThanMinWithOverSell(t *testing.T) {
 	min := v1.ResourceList{
 		v1.ResourceCPU:        resource.MustParse("1"),
 		v1.ResourceMemory:     resource.MustParse("1Gi"),
-		"kube-queue/max-jobs": resource.MustParse("10"),
+		"koord-queue/max-jobs": resource.MustParse("10"),
 	}
 	max := v1.ResourceList{
 		v1.ResourceCPU:    resource.MustParse("2"),
@@ -406,7 +406,7 @@ func TestElasticQuotaInfo_UsedOverMinWithOverSell(t *testing.T) {
 	min := v1.ResourceList{
 		v1.ResourceCPU:        resource.MustParse("1"),
 		v1.ResourceMemory:     resource.MustParse("1Gi"),
-		"kube-queue/max-jobs": resource.MustParse("10"),
+		"koord-queue/max-jobs": resource.MustParse("10"),
 	}
 	max := v1.ResourceList{
 		v1.ResourceCPU:    resource.MustParse("2"),

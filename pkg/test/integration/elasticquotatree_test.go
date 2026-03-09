@@ -9,13 +9,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/cmd/app/options"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
-	elasticquotatree "github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	elasticquotatree "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,19 +66,19 @@ func TestElasticQuotaReserve(t *testing.T) {
 					{
 						Name: "child2",
 						Min:  v1.ResourceList{"cpu": resource.MustParse("6")},
-						Max:  v1.ResourceList{"cpu": resource.MustParse("6"), "kube-queue/max-jobs": resource.MustParse("2")},
+						Max:  v1.ResourceList{"cpu": resource.MustParse("6"), "koord-queue/max-jobs": resource.MustParse("2")},
 						Children: []v1beta1.ElasticQuotaSpec{
 							{
 								Name:       "child2_1",
 								Min:        v1.ResourceList{"cpu": resource.MustParse("3")},
-								Max:        v1.ResourceList{"cpu": resource.MustParse("3"), "kube-queue/max-jobs": resource.MustParse("2")},
+								Max:        v1.ResourceList{"cpu": resource.MustParse("3"), "koord-queue/max-jobs": resource.MustParse("2")},
 								Children:   []v1beta1.ElasticQuotaSpec{},
 								Namespaces: []string{"quota-2-1"},
 							},
 							{
 								Name:       "child2_2",
 								Min:        v1.ResourceList{"cpu": resource.MustParse("3")},
-								Max:        v1.ResourceList{"cpu": resource.MustParse("3"), "kube-queue/max-jobs": resource.MustParse("1")},
+								Max:        v1.ResourceList{"cpu": resource.MustParse("3"), "koord-queue/max-jobs": resource.MustParse("1")},
 								Children:   []v1beta1.ElasticQuotaSpec{},
 								Namespaces: []string{"quota-2-2"},
 							},

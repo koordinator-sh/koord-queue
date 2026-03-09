@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/kube-queue/kube-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/controller"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/klog/v2"
 	"net"

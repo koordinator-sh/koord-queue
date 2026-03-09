@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	"github.com/kube-queue/api/pkg/client/informers/externalversions"
-	clientv1alpha1 "github.com/kube-queue/api/pkg/client/informers/externalversions/scheduling/v1alpha1"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	"github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	clientv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions/scheduling/v1alpha1"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"

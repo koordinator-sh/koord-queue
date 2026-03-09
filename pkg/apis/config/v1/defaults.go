@@ -11,7 +11,7 @@ func SetDefaults_ElasticQuotaTreeArgs(obj *ElasticQuotaArgs) {
 	}
 }
 
-func SetDefaults_KubeQueueConfiguration(obj *KubeQueueConfiguration) {
+func SetDefaults_KoordQueueConfiguration(obj *KoordQueueConfiguration) {
 	scheme := runtime.NewScheme()
 	localSchemeBuilder.AddToScheme(scheme)
 	if len(obj.Plugins) == 0 {

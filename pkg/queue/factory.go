@@ -3,13 +3,13 @@ package queue
 import (
 	"errors"
 
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalv1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies/schedulingqueuev2"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies/schedulingqueuev2"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
 )
 
 var ErrUnsupportedStrategy = errors.New("unsupported strategy")

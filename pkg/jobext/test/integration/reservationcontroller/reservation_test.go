@@ -5,7 +5,7 @@ import (
 	"time"
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -13,9 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
-	jobv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/common/job_controller/v1"
-	pytorchv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/pytorch/v1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/handles"
+	jobv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/common/job_controller/v1"
+	pytorchv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/pytorch/v1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/handles"
 	v1 "k8s.io/api/core/v1"
 )
 

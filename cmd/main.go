@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/kube-queue/cmd/app/options"
-	app "github.com/kube-queue/kube-queue/cmd/app/server"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
+	app "github.com/koordinator-sh/koord-queue/cmd/app/server"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
 )
 
 func main() {

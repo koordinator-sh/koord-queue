@@ -1,8 +1,8 @@
 package queueunits
 
 import (
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	eqv1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	eqv1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +16,7 @@ type QueueWrapper struct {
 }
 
 func NewQueue(name string) *QueueWrapper {
-	return &QueueWrapper{queue: &v1alpha1.Queue{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "kube-queue"}}}
+	return &QueueWrapper{queue: &v1alpha1.Queue{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "koord-queue"}}}
 }
 
 func (q *QueueWrapper) Policy(p string) *QueueWrapper {

@@ -3,7 +3,7 @@ package admissioncontroller
 import (
 	"testing"
 
-	v1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/stretchr/testify/assert"
 
 	corev1 "k8s.io/api/core/v1"

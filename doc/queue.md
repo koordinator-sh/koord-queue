@@ -10,7 +10,7 @@ In practical applications, multiple tenants often share a cluster, and resource 
 
 ## Proposal
 
-A "CRD" is needed to interact with the kube-queue. The CRD kind name is subject to change. We use "Queue" in the proposal. The CRD defines the information related to multiple queue queuing. "Queue" is namespace scoped.
+A "CRD" is needed to interact with the koord-queue. The CRD kind name is subject to change. We use "Queue" in the proposal. The CRD defines the information related to multiple queue queuing. "Queue" is namespace scoped.
 
 ```yaml
 apiVersion: scheduling.x-k8s.io/v1alpha1

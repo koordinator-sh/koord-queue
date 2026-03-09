@@ -2,7 +2,7 @@
 
 ## Architecture
 
-Kube-Queue is designed with compliance of micro-service, making extensibility as one its priorities.
+Koord-Queue is designed with compliance of micro-service, making extensibility as one its priorities.
 
 The overall system can be separated into 3 parts:
 
@@ -16,6 +16,6 @@ The **Queue Scheduler** watches these queues and decides which job, represented 
 
 The real job CRs like TFJob, MPIJob are monitotred and will be updated by corresponding **Extension Server**s. When a new job is created, the **Extension Server** will post a `QueueUnit` in APIServer and update the job when the `QueueUnit` is dequeued.
 
-*To support Kube-queue in operators, subtle modifications will be introduced.*
+*To support Koord-queue in operators, subtle modifications will be introduced.*
 
 ![arch](./img/architecture-updated.jpg)

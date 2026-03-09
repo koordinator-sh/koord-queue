@@ -3,22 +3,22 @@ package elasticquotatree
 import (
 	"strings"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
 const (
-	NamespaceAvailableQuotaAnnotation = "kube-queue/available-quota-in-namespace"
-	NamespaceAvailableQueueAnnotation = "kube-queue/available-queue-in-namespace"
-	QueueAvailableQuotaAnnotation     = "kube-queue/available-quota-in-queue"
-	AvailableQuota                    = "kube-queue/available-quota"
-	AvailableQUeue                    = "kube-queue/available-queue"
+	NamespaceAvailableQuotaAnnotation = "koord-queue/available-quota-in-namespace"
+	NamespaceAvailableQueueAnnotation = "koord-queue/available-queue-in-namespace"
+	QueueAvailableQuotaAnnotation     = "koord-queue/available-quota-in-queue"
+	AvailableQuota                    = "koord-queue/available-quota"
+	AvailableQUeue                    = "koord-queue/available-queue"
 
-	QuotaFullNameInQueue = "kube-queue/quota-fullname"
-	QueueNameInQueueUnit = "kube-queue/queue-name"
+	QuotaFullNameInQueue = "koord-queue/quota-fullname"
+	QueueNameInQueueUnit = "koord-queue/queue-name"
 
-	QueueUnitBlockForTestAnno = "kube-queue/block-for-test"
+	QueueUnitBlockForTestAnno = "koord-queue/block-for-test"
 )
 
 func RemoveQuotaStrInNs(ns *v1.Namespace) {

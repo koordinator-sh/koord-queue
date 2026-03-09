@@ -1,6 +1,6 @@
 apiVersion: v2
-name: ack-kube-queue
-description: A Helm chart to deploy ack-kube-queue for Kubernetes
+name: ack-koord-queue
+description: A Helm chart to deploy ack-koord-queue for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -22,10 +22,10 @@ version: 1.22.2
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.22.2"
-home: https://github.com/kube-queue/kube-queue
+home: https://github.com/koordinator-sh/koord-queue
 keywords:
   - category:data
-  - ack-kube-queue
-  - namespace:kube-queue
-  - releaseName:ack-kube-queue
+  - ack-koord-queue
+  - namespace:koord-queue
+  - releaseName:ack-koord-queue
   - console-visibility:false

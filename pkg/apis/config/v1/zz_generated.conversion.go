@@ -24,7 +24,7 @@ package v1
 import (
 	unsafe "unsafe"
 
-	config "github.com/kube-queue/kube-queue/pkg/apis/config"
+	config "github.com/koordinator-sh/koord-queue/pkg/apis/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -57,13 +57,13 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*config.KubeQueueConfiguration)(nil), (*KubeQueueConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_config_KubeQueueConfiguration_To_v1_KubeQueueConfiguration(a.(*config.KubeQueueConfiguration), b.(*KubeQueueConfiguration), scope)
+	if err := s.AddConversionFunc((*config.KoordQueueConfiguration)(nil), (*KoordQueueConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_config_KoordQueueConfiguration_To_v1_KoordQueueConfiguration(a.(*config.KoordQueueConfiguration), b.(*KoordQueueConfiguration), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*KubeQueueConfiguration)(nil), (*config.KubeQueueConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_KubeQueueConfiguration_To_config_KubeQueueConfiguration(a.(*KubeQueueConfiguration), b.(*config.KubeQueueConfiguration), scope)
+	if err := s.AddConversionFunc((*KoordQueueConfiguration)(nil), (*config.KoordQueueConfiguration)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_KoordQueueConfiguration_To_config_KoordQueueConfiguration(a.(*KoordQueueConfiguration), b.(*config.KoordQueueConfiguration), scope)
 	}); err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func Convert_v1_ElasticQuotaArgs_To_config_ElasticQuotaArgs(in *ElasticQuotaArgs
 	return autoConvert_v1_ElasticQuotaArgs_To_config_ElasticQuotaArgs(in, out, s)
 }
 
-func autoConvert_config_KubeQueueConfiguration_To_v1_KubeQueueConfiguration(in *config.KubeQueueConfiguration, out *KubeQueueConfiguration, s conversion.Scope) error {
+func autoConvert_config_KoordQueueConfiguration_To_v1_KoordQueueConfiguration(in *config.KoordQueueConfiguration, out *KoordQueueConfiguration, s conversion.Scope) error {
 	if in.PluginConfigs != nil {
 		in, out := &in.PluginConfigs, &out.PluginConfigs
 		*out = make(map[string]runtime.RawExtension, len(*in))
@@ -112,7 +112,7 @@ func autoConvert_config_KubeQueueConfiguration_To_v1_KubeQueueConfiguration(in *
 	return nil
 }
 
-func autoConvert_v1_KubeQueueConfiguration_To_config_KubeQueueConfiguration(in *KubeQueueConfiguration, out *config.KubeQueueConfiguration, s conversion.Scope) error {
+func autoConvert_v1_KoordQueueConfiguration_To_config_KoordQueueConfiguration(in *KoordQueueConfiguration, out *config.KoordQueueConfiguration, s conversion.Scope) error {
 	if in.PluginConfigs != nil {
 		in, out := &in.PluginConfigs, &out.PluginConfigs
 		*out = make(map[string]runtime.Object, len(*in))

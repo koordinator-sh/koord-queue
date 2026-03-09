@@ -1,4 +1,4 @@
-# Default values for ack-kube-queue.
+# Default values for ack-koord-queue.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -21,7 +21,7 @@ jobRunningTimeout: "0"
 jobBackoffTime: "0"
 
 installation:
-  namespace: kube-queue
+  namespace: koord-queue
   roleListGroups:
     - '*'
 
@@ -33,9 +33,9 @@ admissionCheckController:
 
 controller:
   image:
-    repository: acs/kube-queue
+    repository: acs/koord-queue
     tag: v1.1.0-aliyun.140877e3
-  # resources of kube-queue-controller container
+  # resources of koord-queue-controller container
   queueGroupPlugin: elasticquota
   enableBlockingMode: false
   enableStrictPriority: false
@@ -70,7 +70,7 @@ extension:
 
 pluginConfigs: 
   apiVersion: scheduling.k8s.io/v1
-  kind: KubeQueueConfiguration
+  kind: KoordQueueConfiguration
   pluginConfigs:
     ElasticQuota: 
       checkHungryQuota: false
