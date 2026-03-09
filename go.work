@@ -5,5 +5,3 @@ toolchain go1.24.2
 use (
 	.
 )
-
-replace github.com/koordinator-sh/koord-queue/pkg/apis => gitlab.alibaba-inc.com/eml/kubequeue-api v0.0.12

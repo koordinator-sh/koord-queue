@@ -1,3 +1,9 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: koord-queue
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,8 +44,8 @@ spec:
           - --qps={{ .Values.qps }}
           - --burst={{ .Values.burst }}
           - --config=/etc/kubernetes/ack-config/plugin.yaml
-          - --enableVisibilityServer={{ .Values.controller.enableVisibilityServer }},
-          - --strictDequeueMode={{ .Values.controller.enableResourceCheckWithScheduler }},
+          - --enableVisibilityServer={{ .Values.controller.enableVisibilityServer }}
+          - --strictDequeueMode={{ .Values.controller.enableResourceCheckWithScheduler }}
           env:
             - name: POD_NAMESPACE
               valueFrom:
@@ -120,9 +126,6 @@ spec:
             {{- if .Values.extension.spark.enable }}
             {{- $jobType = print $jobType ",sparkapp"}}
             {{- end }}
-            {{- if .Values.extension.mpi.enable }}
-            {{- $jobType = print $jobType ",mpijob"}}
-            {{- end }}
             {{- if .Values.extension.ray.enable }}
             {{- $jobType = print $jobType ",rayjob"}}
             {{- end }}
@@ -151,106 +154,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
-          {{- toYaml .Values.extension.batchjob.resources | nindent 12 }}
+          {{- toYaml .Values.extension.jobextensions.resources | nindent 12 }}
       serviceAccount: koord-queue
       serviceAccountName: koord-queue
       terminationGracePeriodSeconds: 10
-
-{{- if eq 1 0 }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: argo-extension
-  namespace: koord-queue
-  labels:
-    control-plane: controller-manager
-    app.kubernetes.io/name: deployment
-    app.kubernetes.io/instance: controller-manager
-    app.kubernetes.io/component: manager
-    app.kubernetes.io/created-by: argo-extension
-    app.kubernetes.io/part-of: argo-extension
-    app.kubernetes.io/managed-by: kustomize
-spec:
-  selector:
-    matchLabels:
-      control-plane: argo-extension
-  replicas: 1
-  template:
-    metadata:
-      annotations:
-        kubectl.kubernetes.io/default-container: manager
-      labels:
-        control-plane: argo-extension
-    spec:
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-      containers:
-      - command:
-        - /manager
-        args:
-        - --leader-elect
-        image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.extension.argo.image.repository }}:{{ .Values.extension.argo.image.tag }}"
-        name: manager
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8082
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8082
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          {{- toYaml .Values.extension.argo.resources | nindent 12 }}
-      serviceAccount: koord-queue
-      serviceAccountName: koord-queue
-      terminationGracePeriodSeconds: 10
-{{- end }}
-
-{{- if .Values.isNeedNotebookExtension }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: notebook-operator-extesion
-  labels:
-    control-plane: notebook-operator-extesion
-  namespace: koord-queue
-spec:
-  selector:
-    matchLabels:
-      control-plane: notebook-operator-extesion
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        control-plane: notebook-operator-extesion
-    spec:
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: NotIn
-                values:
-                - "arm64"
-      serviceAccountName: koord-queue
-      containers:
-        - name: notebook-operator-extesion
-          image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.extension.notebook.image.repository }}:{{ .Values.extension.notebook.image.tag }}"
-          imagePullPolicy: Always
-          resources:
-            {{- toYaml .Values.extension.notebook.resources | nindent 12 }}
-      terminationGracePeriodSeconds: 10
-{{- end }}
