@@ -3,14 +3,8 @@
 # Declare variables to be passed into your templates.
 
 global:
-  # pull image by aliyun vpc network
-  pullImageByVPCNetwork: true
   # the prefix of all image
   imagePrefix: registry-vpc.__ACK_REGION_ID__.aliyuncs.com
-  # the cluster profile
-  clusterProfile: __ACK_CLUSTER_PROFILE__
-  # the cluster type
-  clusterType: __ACK_CLUSTER_TYPE__
 
 tolerations: []
 isNeedNotebookExtension: false
@@ -28,15 +22,15 @@ installation:
 admissionCheckController:
   enabled: true
   image:
-    repository: acs/prevreq-controller
+    repository: prevreq-controller
     tag: v1.0.0-aliyun-d31082a1
 
 controller:
   image:
-    repository: acs/koord-queue
+    repository: koord-queue
     tag: v1.1.0-aliyun.140877e3
   # resources of koord-queue-controller container
-  queueGroupPlugin: elasticquota
+  queueGroupPlugin: elasticquotav2
   enableBlockingMode: false
   enableStrictPriority: false
   enableVisibilityServer: false
@@ -51,10 +45,10 @@ controller:
       memory: 256Mi
 
 extension:
-  ray:
-    enable: false
   jobextensions:
     tag: v1.1.0-aliyun-2eb5c73f
+  ray:
+    enable: false
   tf:
     enable: false
   pytorch:
@@ -72,5 +66,5 @@ pluginConfigs:
   apiVersion: scheduling.k8s.io/v1
   kind: KoordQueueConfiguration
   pluginConfigs:
-    ElasticQuota: 
-      checkHungryQuota: false
+#   ElasticQuota: 
+#     checkHungryQuota: false

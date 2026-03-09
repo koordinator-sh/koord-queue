@@ -3,7 +3,6 @@ module github.com/koordinator-sh/koord-queue
 go 1.24.2
 
 require (
-	github.com/AliyunContainerService/mpi-operator v0.0.0-00010101000000-000000000000
 	github.com/GoogleCloudPlatform/spark-on-k8s-operator v0.0.0-20231109204312-8cb6c8035eab
 	github.com/argoproj/argo-workflows/v3 v3.6.5
 	github.com/gin-gonic/gin v1.9.1
@@ -17,8 +16,6 @@ require (
 	github.com/prometheus/client_golang v1.22.0
 	github.com/ray-project/kuberay/ray-operator v1.2.2
 	github.com/stretchr/testify v1.11.1
-	gitlab.alibaba-inc.com/cos/karmada v0.1.1-0.20241121122543-7a4c258789a3
-	gitlab.alibaba-inc.com/kubedlpro/apis v0.0.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/time v0.11.0
 	gomodules.xyz/jsonpatch/v2 v2.4.0

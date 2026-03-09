@@ -18,14 +18,12 @@ func reconcilerWithVersion(
 }
 
 var Registry = map[string]func(cli client.Client, config *rest.Config, scheme *runtime.Scheme, manageAllJobs bool, args string) framework.JobHandle{
-	"tfjob":                  handles.NewTfJobReconciler,
-	"pytorchjob":             handles.NewPytorchJobReconciler,
-	"job":                    handles.NewJobReconciler,
-	"mpijob":                 handles.NewMpiV1alpha1JobReconciler,
-	"rayjob":                 reconcilerWithVersion(handles.NewRayJobReconciler, "v1"),
-	"rayjobv1alpha1":         reconcilerWithVersion(handles.NewRayJobReconciler, "v1alpha1"),
-	"sparkapp":               handles.NewSparkAppReconciler,
-	"raycluster":             handles.NewRayClusterReconciler,
-	"clusterresourcebinding": handles.NewClusterResourceBindingController,
-	"workflow":               handles.NewWFReconciler,
+	"tfjob":          handles.NewTfJobReconciler,
+	"pytorchjob":     handles.NewPytorchJobReconciler,
+	"job":            handles.NewJobReconciler,
+	"rayjob":         reconcilerWithVersion(handles.NewRayJobReconciler, "v1"),
+	"rayjobv1alpha1": reconcilerWithVersion(handles.NewRayJobReconciler, "v1alpha1"),
+	"sparkapp":       handles.NewSparkAppReconciler,
+	"raycluster":     handles.NewRayClusterReconciler,
+	"workflow":       handles.NewWFReconciler,
 }
