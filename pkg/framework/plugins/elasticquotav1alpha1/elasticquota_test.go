@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	versionedfake "github.com/kube-queue/api/pkg/client/clientset/versioned/fake"
-	"github.com/kube-queue/api/pkg/client/informers/externalversions"
+	api "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	versionedfake "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
+	"github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -18,10 +18,10 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework/runtime"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/runtime"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 func TestPlugin_Filter_Reserve_Unreseve(t *testing.T) {

@@ -17,7 +17,7 @@ package v1
 import (
 	"strings"
 
-	commonv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/common/job_controller/v1"
+	commonv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/common/job_controller/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )

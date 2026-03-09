@@ -6,10 +6,10 @@ metadata:
   annotations:
   name: test-queue
   annotations:
-    kube-queue/available-quota: "child-1"
-    kube-queue/wait-for-pods-running: "true"
+    koord-queue/available-quota: "child-1"
+    koord-queue/wait-for-pods-running: "true"
   labels:
-    create-by-kubequeue: "false"
-  namespace: kube-queue
+    create-by-koordqueue: "false"
+  namespace: koord-queue
 spec:
   queuePolicy: Block

@@ -8,9 +8,9 @@ import (
 	"time"
 
 	argov1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -105,7 +105,7 @@ func (a *ArgoWorkflow) Resources(ctx context.Context, obj client.Object) v1.Reso
 	}
 
 	rl := v1.ResourceList{}
-	if res := wf.Annotations["kube-queue/min-resources"]; res != "" {
+	if res := wf.Annotations["koord-queue/min-resources"]; res != "" {
 		rl = make(v1.ResourceList)
 		var err error
 		if IsJSONStr(res) {
@@ -136,7 +136,7 @@ func (a *ArgoWorkflow) PodSet(ctx context.Context, obj client.Object) []v1beta1.
 	}
 
 	rl := v1.ResourceList{}
-	if res := wf.Annotations["kube-queue/min-resources"]; res != "" {
+	if res := wf.Annotations["koord-queue/min-resources"]; res != "" {
 		rl = make(v1.ResourceList)
 		var err error
 		if IsJSONStr(res) {
@@ -217,8 +217,8 @@ func (a *ArgoWorkflow) Enqueue(ctx context.Context, obj client.Object, cli clien
 	if len(wf.Annotations) == 0 {
 		wf.Annotations = map[string]string{}
 	}
-	wf.Annotations["kube-queue/job-has-enqueued"] = "true"
-	wf.Annotations["kube-queue/job-enqueue-timestamp"] = time.Now().String()
+	wf.Annotations["koord-queue/job-has-enqueued"] = "true"
+	wf.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 	wf.Status.Conditions = append(wf.Status.Conditions, argov1alpha1.Condition{
 		Type:    argov1alpha1.ConditionType("Enqueued"),
 		Status:  metav1.ConditionTrue,
@@ -257,12 +257,12 @@ func (a *ArgoWorkflow) Resume(ctx context.Context, obj client.Object, cli client
 func (a *ArgoWorkflow) ManagedByQueue(ctx context.Context, obj client.Object) bool {
 	wf := obj.(*argov1alpha1.Workflow)
 	for _, template := range wf.Spec.Templates {
-		if template.Name == "kube-queue-suspend" && template.Suspend != nil {
+		if template.Name == "koord-queue-suspend" && template.Suspend != nil {
 			return true
 		}
 	}
 	for _, storedTemp := range wf.Status.StoredTemplates {
-		if storedTemp.Name == "kube-queue-suspend" && storedTemp.Suspend != nil {
+		if storedTemp.Name == "koord-queue-suspend" && storedTemp.Suspend != nil {
 			return true
 		}
 	}

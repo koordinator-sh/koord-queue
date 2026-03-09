@@ -20,8 +20,8 @@ package v1alpha1
 import (
 	"net/http"
 
-	"github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/clientset/versioned/scheme"
-	v1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/clientset/versioned/scheme"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 	rest "k8s.io/client-go/rest"
 )
 
@@ -31,7 +31,7 @@ type VisibilityV1alpha1Interface interface {
 	QueuesGetter
 }
 
-// VisibilityV1alpha1Client is used to interact with features provided by the visibility.kube-queue.x-k8s.io group.
+// VisibilityV1alpha1Client is used to interact with features provided by the visibility.koord-queue.x-k8s.io group.
 type VisibilityV1alpha1Client struct {
 	restClient rest.Interface
 }

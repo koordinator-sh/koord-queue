@@ -10,7 +10,7 @@ spec:
     max:
       cpu: 999900
       memory: 400000Gi
-      kube-queue/max-jobs: 10000000000
+      koord-queue/max-jobs: 10000000000
       nvidia.com/gpu: 100000
     min:
       cpu: 9999
@@ -18,6 +18,6 @@ spec:
     children:
     - name: child-1
       max:
-        kube-queue/max-jobs: 2
+        koord-queue/max-jobs: 2
         cpu: 100
         memory: 100Gi

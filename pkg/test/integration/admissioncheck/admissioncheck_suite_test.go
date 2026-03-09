@@ -8,22 +8,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalversions "github.com/kube-queue/api/pkg/client/informers/externalversions"
-	listerv1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/cmd/app/options"
-	ctrl "github.com/kube-queue/kube-queue/pkg/controller"
-	"github.com/kube-queue/kube-queue/pkg/controllers"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	eqversioned "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
-	elasticquotatree "github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota"
-	"github.com/kube-queue/kube-queue/pkg/queue"
-	"github.com/kube-queue/kube-queue/pkg/queue/multischedulingqueue"
-	"github.com/kube-queue/kube-queue/pkg/scheduler"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils/queueunits"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	listerv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	ctrl "github.com/koordinator-sh/koord-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/controllers"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	eqversioned "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
+	elasticquotatree "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
+	"github.com/koordinator-sh/koord-queue/pkg/queue"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/multischedulingqueue"
+	"github.com/koordinator-sh/koord-queue/pkg/scheduler"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils/queueunits"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -101,7 +101,7 @@ var _ = Describe("AdmissionCheck", ginkgo.Ordered, func() {
 			if !ok {
 				return nil, nil
 			}
-			return []string{qu.Annotations["kube-queue/quota-fullname"]}, nil
+			return []string{qu.Annotations["koord-queue/quota-fullname"]}, nil
 		}})
 
 		var (
@@ -163,7 +163,7 @@ var _ = Describe("AdmissionCheck", ginkgo.Ordered, func() {
 					Name: "ad2",
 				},
 			}
-			defaultQueue, err = cli.SchedulingV1alpha1().Queues("kube-queue").Update(context.Background(), defaultQueue, metav1.UpdateOptions{})
+			defaultQueue, err = cli.SchedulingV1alpha1().Queues("koord-queue").Update(context.Background(), defaultQueue, metav1.UpdateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 

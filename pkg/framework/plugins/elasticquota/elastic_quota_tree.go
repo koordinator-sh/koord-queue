@@ -12,21 +12,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	clientv1alpha1 "github.com/kube-queue/api/pkg/client/informers/externalversions/scheduling/v1alpha1"
-	queuev1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/apis/config"
-	"github.com/kube-queue/kube-queue/pkg/features"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
-	schedinformer "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions"
-	externalv1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/listers/scheduling/v1beta1"
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota/elasticquotatree"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota/util"
-	"github.com/kube-queue/kube-queue/pkg/metrics"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	clientv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions/scheduling/v1alpha1"
+	queuev1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/features"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
+	schedinformer "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions"
+	externalv1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/listers/scheduling/v1beta1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota/elasticquotatree"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota/util"
+	"github.com/koordinator-sh/koord-queue/pkg/metrics"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	"github.com/prometheus/client_golang/prometheus"
 
 	v1 "k8s.io/api/core/v1"
@@ -229,7 +229,7 @@ func (eq *ElasticQuota) Mapping(q *v1alpha1.QueueUnit) (string, error) {
 		}
 		return "", errors.New("queue name must be set in queue unit")
 	}
-	queue, err := eq.queueLister.Queues("kube-queue").Get(attemptingQueue)
+	queue, err := eq.queueLister.Queues("koord-queue").Get(attemptingQueue)
 	if err != nil {
 		klog.ErrorS(err, "failed to find queue object in cluster", "queueUnit", q.Name, "namespace", q.Namespace, "attempting", attemptingQueue)
 		return "", errors.New("failed to find queue object in cluster")
@@ -312,7 +312,7 @@ func (eq *ElasticQuota) Filter(ctx context.Context, queueUnit *framework.QueueUn
 			rname := v1.ResourceName(res)
 			if res == "jobs" {
 				used := info.Count
-				originMax := info.Max.ResourceList()["kube-queue/max-jobs"]
+				originMax := info.Max.ResourceList()["koord-queue/max-jobs"]
 				scaledmax := convertMaxToReadable(rname, &originMax, eq.frameworkHandle.OversellRate())
 				return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Insufficient quota(%v) in quota %v: request %v, max %v, used %v, oversellreate %v. Wait for running jobs to complete", res, info.FullName, 1, scaledmax, used, eq.frameworkHandle.OversellRate()), nil)
 			} else {
@@ -332,7 +332,7 @@ func (eq *ElasticQuota) Filter(ctx context.Context, queueUnit *framework.QueueUn
 			pinfo := eq.elasticQuotaTree.ElasticQuotaInfos[pname]
 			if res == "jobs" {
 				used := pinfo.Count
-				originMax := pinfo.Max.ResourceList()["kube-queue/max-jobs"]
+				originMax := pinfo.Max.ResourceList()["koord-queue/max-jobs"]
 				scaledmax := convertMaxToReadable(rname, &originMax, eq.frameworkHandle.OversellRate())
 				return framework.NewStatus(framework.Unschedulable, fmt.Sprintf(
 					"Insufficient quota(%v) in parent quota %v: request %v, max %v, used %v, "+
@@ -382,7 +382,7 @@ func (eq *ElasticQuota) Filter(ctx context.Context, queueUnit *framework.QueueUn
 			rname := v1.ResourceName(res)
 			if res == "jobs" {
 				used := info.Count
-				originMax := info.Min.ResourceList()["kube-queue/max-jobs"]
+				originMax := info.Min.ResourceList()["koord-queue/max-jobs"]
 				scaledmax := convertMaxToReadable(rname, &originMax, eq.frameworkHandle.OversellRate())
 				return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Insufficient quota(%v) in quota %v: request %v, min %v, used %v, preempt %v, oversellreate %v. Wait for running jobs to complete",
 					res, info.FullName, 1, scaledmax, used, totalPreemptCount, eq.frameworkHandle.OversellRate()), nil)
@@ -403,7 +403,7 @@ func (eq *ElasticQuota) Filter(ctx context.Context, queueUnit *framework.QueueUn
 			pinfo := eq.elasticQuotaTree.ElasticQuotaInfos[pname]
 			if res == "jobs" {
 				used := pinfo.Count
-				originMin := pinfo.Min.ResourceList()["kube-queue/max-jobs"]
+				originMin := pinfo.Min.ResourceList()["koord-queue/max-jobs"]
 				scaledMin := convertMaxToReadable(rname, &originMin, eq.frameworkHandle.OversellRate())
 				return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Insufficient quota(%v) in parent quota %v: request %v, min %v, used %v, oversellreate %v. Wait for running jobs to complete", res, pname, 1, scaledMin, used, eq.frameworkHandle.OversellRate()), nil)
 			} else {
@@ -743,7 +743,7 @@ func syncQueues(quotas sets.Set[string], parent map[string]string, mapping map[s
 	hasError := false
 	for q := range quotas {
 		queue := mapping[q]
-		if queue == nil || queue.Labels["create-by-kubequeue"] != "true" {
+		if queue == nil || queue.Labels["create-by-koordqueue"] != "true" {
 			continue
 		}
 		var policy string
@@ -779,7 +779,7 @@ func deleteQueues(quotas sets.Set[string], mapping map[string]*v1alpha1.Queue, h
 	hasError := false
 	for q := range quotas {
 		queue := mapping[q]
-		if queue == nil || queue.Labels["create-by-kubequeue"] != "true" {
+		if queue == nil || queue.Labels["create-by-koordqueue"] != "true" {
 			continue
 		}
 		err := handle.DeleteQueue(queue.Name)
@@ -813,7 +813,7 @@ func (eq *ElasticQuota) DeleteElasticQuotaTree(obj interface{}) {
 }
 
 func (eq *ElasticQuota) SetMaxPreemptibleJob(labels map[string]string) {
-	if maxPreJob := labels["kube-queue/max-preempible-jobs"]; maxPreJob != "" {
+	if maxPreJob := labels["koord-queue/max-preempible-jobs"]; maxPreJob != "" {
 		c, err := strconv.Atoi(maxPreJob)
 		if err != nil {
 			eq.maxAvailablePreemptibleJob = nil

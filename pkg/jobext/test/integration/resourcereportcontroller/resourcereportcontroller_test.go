@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
 
-	v1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	kueue "sigs.k8s.io/kueue/apis/kueue/v1beta1"
@@ -43,7 +43,7 @@ var _ = Describe("ResourceReporter Integration Tests", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:        rayJobName,
 				Namespace:   namespace,
-				Annotations: map[string]string{"kube-queue/job-enqueue-timestamp": "123"},
+				Annotations: map[string]string{"koord-queue/job-enqueue-timestamp": "123"},
 			},
 			Spec: rayv1.RayJobSpec{
 				Entrypoint: "python train.py",

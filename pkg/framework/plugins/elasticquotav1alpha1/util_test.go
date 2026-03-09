@@ -1,9 +1,10 @@
 package elasticquotav1alpha1
 
 import (
-	api "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	api "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetQuotaName(t *testing.T) {

@@ -18,9 +18,9 @@ limitations under the License.
 package applyconfiguration
 
 import (
-	apisv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/applyconfiguration/apis/v1alpha1"
-	internal "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/applyconfiguration/internal"
-	v1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	apisv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/applyconfiguration/apis/v1alpha1"
+	internal "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/applyconfiguration/internal"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	testing "k8s.io/client-go/testing"
@@ -30,7 +30,7 @@ import (
 // apply configuration type exists for the given GroupVersionKind.
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
-	// Group=visibility.kube-queue.x-k8s.io, Version=v1alpha1
+	// Group=visibility.koord-queue.x-k8s.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithKind("ElasticQuota"):
 		return &apisv1alpha1.ElasticQuotaApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("PodState"):

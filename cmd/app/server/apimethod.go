@@ -3,7 +3,7 @@ package app
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"github.com/kube-queue/kube-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/controller"
 	"net/http"
 )
 

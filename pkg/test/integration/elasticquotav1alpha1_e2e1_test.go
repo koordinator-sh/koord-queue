@@ -6,16 +6,16 @@ import (
 	"testing"
 	"time"
 
-	queuunitv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/informers/externalversions"
+	queuunitv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	controller2 "github.com/kube-queue/kube-queue/pkg/controller"
-	eqv1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquotav1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/queue/multischedulingqueue"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils"
+	controller2 "github.com/koordinator-sh/koord-queue/pkg/controller"
+	eqv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquotav1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/multischedulingqueue"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -137,7 +137,7 @@ func TestWatchDequeuedQueueUnitDirectly(t *testing.T) {
 		// json.Unmarshal(debugInfoBytes, debugInfo)
 		// assert.Equal(t, 0, len(debugInfo.GuaranteedDebugInfo.AllItems))
 
-		queues, _ := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").List(
+		queues, _ := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").List(
 			context.Background(), metav1.ListOptions{})
 		assert.Equal(t, 1, len(queues.Items))
 	}

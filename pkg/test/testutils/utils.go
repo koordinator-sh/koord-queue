@@ -6,14 +6,14 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	versionedfake "github.com/kube-queue/api/pkg/client/clientset/versioned/fake"
-	externalversions "github.com/kube-queue/api/pkg/client/informers/externalversions"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins"
-	"github.com/kube-queue/kube-queue/pkg/framework/runtime"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	versionedfake "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
+	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/runtime"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kuberuntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/informers"
@@ -94,7 +94,7 @@ func (f *FakeHandle) QueueUnitClient() versioned.Interface                      
 func (f *FakeHandle) OversellRate() float64                                        { return 1 }
 func (f *FakeHandle) KubeConfig() *rest.Config                                     { return nil }
 func (f *FakeHandle) UpdateQueueStatus(name string, details map[string][]v1alpha1.QueueItemDetail) error {
-	queue, err := f.ver.Scheduling().V1alpha1().Queues().Lister().Queues("kube-queue").Get(name)
+	queue, err := f.ver.Scheduling().V1alpha1().Queues().Lister().Queues("koord-queue").Get(name)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (f *FakeHandle) UpdateQueueStatus(name string, details map[string][]v1alpha
 		return nil
 	}
 	return framework.RetryTooManyRequests(func() error {
-		_, err := f.fakeClient.SchedulingV1alpha1().Queues("kube-queue").UpdateStatus(context.Background(), newQueue, metav1.UpdateOptions{})
+		_, err := f.fakeClient.SchedulingV1alpha1().Queues("koord-queue").UpdateStatus(context.Background(), newQueue, metav1.UpdateOptions{})
 		return err
 	})
 }

@@ -28,14 +28,14 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.ElasticQuota":      schema_pkg_visibility_apis_v1alpha1_ElasticQuota(ref),
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.ElasticQuotaList":  schema_pkg_visibility_apis_v1alpha1_ElasticQuotaList(ref),
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.PodState":          schema_pkg_visibility_apis_v1alpha1_PodState(ref),
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.Queue":             schema_pkg_visibility_apis_v1alpha1_Queue(ref),
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueList":         schema_pkg_visibility_apis_v1alpha1_QueueList(ref),
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnit":         schema_pkg_visibility_apis_v1alpha1_QueueUnit(ref),
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitOptions":  schema_pkg_visibility_apis_v1alpha1_QueueUnitOptions(ref),
-		"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary": schema_pkg_visibility_apis_v1alpha1_QueueUnitsSummary(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.ElasticQuota":      schema_pkg_visibility_apis_v1alpha1_ElasticQuota(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.ElasticQuotaList":  schema_pkg_visibility_apis_v1alpha1_ElasticQuotaList(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.PodState":          schema_pkg_visibility_apis_v1alpha1_PodState(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.Queue":             schema_pkg_visibility_apis_v1alpha1_Queue(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueList":         schema_pkg_visibility_apis_v1alpha1_QueueList(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnit":         schema_pkg_visibility_apis_v1alpha1_QueueUnit(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitOptions":  schema_pkg_visibility_apis_v1alpha1_QueueUnitOptions(ref),
+		"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary": schema_pkg_visibility_apis_v1alpha1_QueueUnitsSummary(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                   schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                               schema_pkg_apis_meta_v1_APIGroupList(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIResource":                                schema_pkg_apis_meta_v1_APIResource(ref),
@@ -121,7 +121,7 @@ func schema_pkg_visibility_apis_v1alpha1_ElasticQuota(ref common.ReferenceCallba
 					"QueueUnitsSummary": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary"),
+							Ref:     ref("github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary"),
 						},
 					},
 				},
@@ -129,7 +129,7 @@ func schema_pkg_visibility_apis_v1alpha1_ElasticQuota(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -166,7 +166,7 @@ func schema_pkg_visibility_apis_v1alpha1_ElasticQuotaList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.Queue"),
+										Ref:     ref("github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.Queue"),
 									},
 								},
 							},
@@ -177,7 +177,7 @@ func schema_pkg_visibility_apis_v1alpha1_ElasticQuotaList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.Queue", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.Queue", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -237,7 +237,7 @@ func schema_pkg_visibility_apis_v1alpha1_Queue(ref common.ReferenceCallback) com
 					"QueueUnitsSummary": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary"),
+							Ref:     ref("github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary"),
 						},
 					},
 				},
@@ -245,7 +245,7 @@ func schema_pkg_visibility_apis_v1alpha1_Queue(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -282,7 +282,7 @@ func schema_pkg_visibility_apis_v1alpha1_QueueList(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.Queue"),
+										Ref:     ref("github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.Queue"),
 									},
 								},
 							},
@@ -293,7 +293,7 @@ func schema_pkg_visibility_apis_v1alpha1_QueueList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.Queue", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.Queue", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -361,14 +361,14 @@ func schema_pkg_visibility_apis_v1alpha1_QueueUnit(ref common.ReferenceCallback)
 					"podState": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.PodState"),
+							Ref:     ref("github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.PodState"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.PodState", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.PodState", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -463,7 +463,7 @@ func schema_pkg_visibility_apis_v1alpha1_QueueUnitsSummary(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnit"),
+										Ref:     ref("github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnit"),
 									},
 								},
 							},
@@ -474,7 +474,7 @@ func schema_pkg_visibility_apis_v1alpha1_QueueUnitsSummary(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnit", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnit", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

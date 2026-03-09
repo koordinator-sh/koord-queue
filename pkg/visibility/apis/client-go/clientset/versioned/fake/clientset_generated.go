@@ -18,10 +18,10 @@ limitations under the License.
 package fake
 
 import (
-	applyconfiguration "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/applyconfiguration"
-	clientset "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/clientset/versioned"
-	visibilityv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1"
-	fakevisibilityv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1/fake"
+	applyconfiguration "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/applyconfiguration"
+	clientset "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/clientset/versioned"
+	visibilityv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1"
+	fakevisibilityv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

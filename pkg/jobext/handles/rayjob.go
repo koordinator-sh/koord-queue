@@ -11,11 +11,11 @@ import (
 	"k8s.io/client-go/rest"
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
-	kv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	kv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	rayv1alpha1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -164,14 +164,14 @@ func (j *RayJob) Enqueue(ctx context.Context, obj client.Object, cli client.Clie
 	job := obj.(*rayv1.RayJob)
 	job.TypeMeta.APIVersion = rayv1.GroupVersion.String()
 	job.TypeMeta.Kind = "RayJob"
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return nil
 	}
 
 	old := job
 	new := job.DeepCopy()
 	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations["kube-queue/job-enqueue-timestamp"] = time.Now().String()
+	new.ObjectMeta.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 
 	util.SetPodTemplateSpec(&new.Spec.RayClusterSpec.HeadGroupSpec.Template, job.Namespace, job.Name, "head", j.QueueUnitSuffix())
 	new.Spec.RayClusterSpec.HeadGroupSpec.Template.Annotations[util.RelatedAPIVersionKindAnnoKey] = "ray.io/v1/RayJob"
@@ -212,13 +212,13 @@ func (j *RayJob) Resume(ctx context.Context, obj client.Object, cli client.Clien
 	new := &rayv1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new.Spec.Suspend = false
 	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.Annotations["kube-queue/job-dequeue-timestamp"] = time.Now().String()
+	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
 
 func (j *RayJob) GetJobStatus(ctx context.Context, obj client.Object, client client.Client) (framework.JobStatus, time.Time) {
 	job := obj.(*rayv1.RayJob)
-	queuingTransTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-enqueue-timestamp"])
+	queuingTransTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-enqueue-timestamp"])
 	if err != nil {
 		queuingTransTime = time.Now()
 	}
@@ -249,11 +249,11 @@ func (j *RayJob) GetJobStatus(ctx context.Context, obj client.Object, client cli
 		return framework.Running, job.Status.StartTime.Time
 	}
 
-	if job.Annotations["kube-queue/job-dequeue-timestamp"] != "" {
+	if job.Annotations["koord-queue/job-dequeue-timestamp"] != "" {
 		return framework.Pending, queuingTransTime
 	}
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
-		transTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-enqueue-timestamp"])
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
+		transTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-enqueue-timestamp"])
 		if err != nil {
 			return framework.Queuing, time.Now()
 		}
@@ -266,7 +266,7 @@ func (j *RayJob) GetJobStatus(ctx context.Context, obj client.Object, client cli
 func (j *RayJob) ManagedByQueue(ctx context.Context, obj client.Object) bool {
 	job := obj.(*rayv1.RayJob)
 	// TODO: rayjob with cluster selector should not be managed by queue
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return true
 	}
 	return job.Status.StartTime == nil && job.Spec.Suspend
@@ -423,7 +423,7 @@ func (j *RayJobV1alpha1) Enqueue(ctx context.Context, obj client.Object, cli cli
 	old := job
 	new := job.DeepCopy()
 	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations["kube-queue/job-enqueue-timestamp"] = time.Now().String()
+	new.ObjectMeta.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 
 	util.SetPodTemplateSpec(&new.Spec.RayClusterSpec.HeadGroupSpec.Template, job.Namespace, job.Name, "head", j.QueueUnitSuffix())
 	new.Spec.RayClusterSpec.HeadGroupSpec.Template.Annotations[util.RelatedAPIVersionKindAnnoKey] = "ray.io/v1alpha1/RayJob"
@@ -458,7 +458,7 @@ func (j *RayJobV1alpha1) Resume(ctx context.Context, obj client.Object, cli clie
 	new := &rayv1alpha1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new.Spec.Suspend = false
 	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.Annotations["kube-queue/job-dequeue-timestamp"] = time.Now().String()
+	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
 
@@ -476,8 +476,8 @@ func (j *RayJobV1alpha1) GetJobStatus(ctx context.Context, obj client.Object, cl
 		return framework.Queuing, job.CreationTimestamp.Time
 	}
 
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
-		transTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-enqueue-timestamp"])
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
+		transTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-enqueue-timestamp"])
 		if err != nil {
 			return framework.Queuing, time.Now()
 		}
@@ -493,7 +493,7 @@ func (j *RayJobV1alpha1) ManagedByQueue(ctx context.Context, obj client.Object) 
 	}
 	job := obj.(*rayv1alpha1.RayJob)
 	// TODO: rayjob with cluster selector should not be managed by queue
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return true
 	}
 	return job.Status.StartTime == nil && job.Spec.Suspend

@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kube-queue-visibility-server
-  namespace: kube-queue
+  name: koord-queue-visibility-server
+  namespace: koord-queue
 spec:
   internalTrafficPolicy: Cluster
   ipFamilies:
@@ -14,8 +14,8 @@ spec:
       protocol: TCP
       targetPort: 8082
   selector:
-    control-plane: kube-queue-controller
-    kube-queue-leader: "true"
+    control-plane: koord-queue-controller
+    koord-queue-leader: "true"
   sessionAffinity: None
   type: ClusterIP
 ---
@@ -24,15 +24,15 @@ kind: APIService
 metadata:
   labels:
     app.kubernetes.io/component: controller
-    app.kubernetes.io/name: kube-queue
+    app.kubernetes.io/name: koord-queue
     control-plane: controller-manager
-  name: v1alpha1.visibility.kube-queue.x-k8s.io
+  name: v1alpha1.visibility.koord-queue.x-k8s.io
 spec:
-  group: visibility.kube-queue.x-k8s.io
+  group: visibility.koord-queue.x-k8s.io
   groupPriorityMinimum: 100
   insecureSkipTLSVerify: true
   service:
-    name: kube-queue-visibility-server
-    namespace: kube-queue
+    name: koord-queue-visibility-server
+    namespace: koord-queue
   version: v1alpha1
   versionPriority: 100

@@ -15,10 +15,10 @@ limitations under the License.
 */
 
 // +k8s:deepcopy-gen=package
-// +k8s:conversion-gen=github.com/kube-queue/kube-queue/pkg/apis/config/v1
-// +k8s:conversion-gen-external-types=github.com/kube-queue/kube-queue/pkg/apis/config
+// +k8s:conversion-gen=github.com/koordinator-sh/koord-queue/pkg/apis/config/v1
+// +k8s:conversion-gen-external-types=github.com/koordinator-sh/koord-queue/pkg/apis/config
 // +k8s:defaulter-gen=TypeMeta
-// +k8s:defaulter-gen-input=github.com/kube-queue/kube-queue/pkg/apis/config/v1
+// +k8s:defaulter-gen-input=github.com/koordinator-sh/koord-queue/pkg/apis/config/v1
 // +groupName=scheduling.k8s.io
 
 // Package v1

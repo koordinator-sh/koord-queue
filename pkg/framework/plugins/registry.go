@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import (
 
 	apiruntime "k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/defaultgroup"
-	elasticquota "github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquotav1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/priority"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/resourcequota"
-	"github.com/kube-queue/kube-queue/pkg/framework/runtime"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/defaultgroup"
+	elasticquota "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquotav1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/priority"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/resourcequota"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/runtime"
 )
 
 // NewInTreeRegistry builds the registry with all the in-tree plugins.

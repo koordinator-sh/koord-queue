@@ -6,4 +6,4 @@ use (
 	.
 )
 
-replace github.com/kube-queue/api => gitlab.alibaba-inc.com/eml/kubequeue-api v0.0.12
+replace github.com/koordinator-sh/koord-queue/pkg/apis => gitlab.alibaba-inc.com/eml/kubequeue-api v0.0.12

@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	queuunitv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	externalversions "github.com/kube-queue/api/pkg/client/informers/externalversions"
-	controller2 "github.com/kube-queue/kube-queue/pkg/controller"
-	eqv1alpha1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquotav1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/queue/multischedulingqueue"
-	"github.com/kube-queue/kube-queue/pkg/test/testutils"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	queuunitv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	controller2 "github.com/koordinator-sh/koord-queue/pkg/controller"
+	eqv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquotav1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/multischedulingqueue"
+	"github.com/koordinator-sh/koord-queue/pkg/test/testutils"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -57,7 +57,7 @@ func TestAddQueueInfoWillUpdateQueueInitStatus(t *testing.T) {
 				// queuepolicies.QueuePolicyLabelKey: common.PaiStrategyBalance,
 			},
 			Annotations: map[string]string{
-				utils.QuotaKubeQueueEnable: "true",
+				utils.QuotaKoordQueueEnable: "true",
 			},
 		},
 		Spec: eqv1alpha1.ElasticQuotaSpec{
@@ -112,7 +112,7 @@ func TestAddQueueInfoWillUpdateQueueInitStatus(t *testing.T) {
 		assert.Equal(t, queueUnitNew.Status.Phase, queuunitv1alpha1.Dequeued)
 	}
 
-	testElasticQuota.Annotations[utils.QuotaKubeQueueEnable] = "false"
+	testElasticQuota.Annotations[utils.QuotaKoordQueueEnable] = "false"
 	elasticQuotaPlugin.GetElasticQuotaClient().SchedulingV1alpha1().
 		ElasticQuotas("kube-system").Update(context.Background(), testElasticQuota, metav1.UpdateOptions{})
 	time.Sleep(time.Millisecond * 3000)

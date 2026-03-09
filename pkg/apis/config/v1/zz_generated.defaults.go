@@ -29,10 +29,10 @@ import (
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
-	scheme.AddTypeDefaultingFunc(&KubeQueueConfiguration{}, func(obj interface{}) { SetObjectDefaults_KubeQueueConfiguration(obj.(*KubeQueueConfiguration)) })
+	scheme.AddTypeDefaultingFunc(&KoordQueueConfiguration{}, func(obj interface{}) { SetObjectDefaults_KoordQueueConfiguration(obj.(*KoordQueueConfiguration)) })
 	return nil
 }
 
-func SetObjectDefaults_KubeQueueConfiguration(in *KubeQueueConfiguration) {
-	SetDefaults_KubeQueueConfiguration(in)
+func SetObjectDefaults_KoordQueueConfiguration(in *KoordQueueConfiguration) {
+	SetDefaults_KoordQueueConfiguration(in)
 }

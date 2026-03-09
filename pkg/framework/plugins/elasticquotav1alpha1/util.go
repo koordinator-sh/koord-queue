@@ -1,11 +1,11 @@
 package elasticquotav1alpha1
 
 import (
-	quv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	quv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/api/core/v1"
 
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
 )
 
 const (

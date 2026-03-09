@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +16,7 @@ import (
 	resourcehelpers "k8s.io/component-helpers/resource"
 	"k8s.io/klog/v2"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
 )
 
 // indicate whether the queueunit's resource requirements are checked by the scheduler
@@ -156,7 +156,7 @@ func IsQueueUnitDequeued(qu *v1alpha1.QueueUnit) bool {
 	return false
 }
 
-const KubeQueueDefaultRequirement = "kube-queue/default-requirement"
+const KoordQueueDefaultRequirement = "koord-queue/default-requirement"
 
 func GetResourcesCanReclaim(qu *v1alpha1.QueueUnit) (map[string]framework.Admission, *Resource) {
 	if qu.Status.LastAllocateTime != nil {
@@ -185,8 +185,8 @@ func GetResourcesCanReclaim(qu *v1alpha1.QueueUnit) (map[string]framework.Admiss
 func GetQueueUnitResourceRequirementAds(qu *v1alpha1.QueueUnit) map[string]framework.Admission {
 	result := map[string]framework.Admission{}
 	if len(qu.Spec.PodSets) == 0 && len(qu.Spec.Request) > 0 {
-		result[KubeQueueDefaultRequirement] = framework.Admission{
-			Name:     KubeQueueDefaultRequirement,
+		result[KoordQueueDefaultRequirement] = framework.Admission{
+			Name:     KoordQueueDefaultRequirement,
 			Replicas: 1,
 		}
 		return result
@@ -203,7 +203,7 @@ func GetQueueUnitResourceRequirementAds(qu *v1alpha1.QueueUnit) map[string]frame
 func ConvertFromAdmissionToResource(qu *v1alpha1.QueueUnit, ads map[string]framework.Admission) *Resource {
 	converted := NewResource(nil)
 	// 向前兼容一些没有podset的queueunit，只有resource的最老版本不兼容
-	if _, ok := ads[KubeQueueDefaultRequirement]; ok {
+	if _, ok := ads[KoordQueueDefaultRequirement]; ok {
 		res := NewResource(qu.Spec.Request)
 		converted.AddResource(res)
 		return converted
@@ -252,7 +252,7 @@ func ConvertFromStatusAdmissionToResource(qu *v1alpha1.QueueUnit, ads []v1alpha1
 		return converted
 	}
 	// 向前兼容
-	if len(ads) == 1 && ads[0].Name == KubeQueueDefaultRequirement {
+	if len(ads) == 1 && ads[0].Name == KoordQueueDefaultRequirement {
 		res := NewResource(qu.Spec.Request)
 		converted.AddResource(res)
 		return converted

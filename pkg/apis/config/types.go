@@ -22,7 +22,7 @@ import (
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type KubeQueueConfiguration struct {
+type KoordQueueConfiguration struct {
 	metav1.TypeMeta `json:",inline"`
 
 	PluginConfigs map[string]runtime.Object `json:"pluginConfigs,omitempty"`

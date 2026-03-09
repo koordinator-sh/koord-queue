@@ -3,9 +3,9 @@ package elasticquotav1alpha1
 import (
 	"context"
 	"fmt"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	fakev1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/fake"
-	schedinformer "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	fakev1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned/fake"
+	schedinformer "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
 )

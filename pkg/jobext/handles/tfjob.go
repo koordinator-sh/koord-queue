@@ -17,13 +17,13 @@ import (
 	"sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
-	kv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	kv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	commonv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/common/job_controller/v1"
+	networkv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/networkaware/apis/scheduling/v1alpha1"
+	tfjobv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/tensorflow/v1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	"github.com/kubeflow/common/pkg/controller.v1/control"
-	commonv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/common/job_controller/v1"
-	networkv1alpha1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/networkaware/apis/scheduling/v1alpha1"
-	tfjobv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/tensorflow/v1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -396,7 +396,7 @@ func (j *TfJob) Resume(ctx context.Context, obj client.Object, cli client.Client
 	} else {
 		new.ObjectMeta.Annotations[QueueAnnotation] = "false"
 	}
-	new.Annotations["kube-queue/job-dequeue-timestamp"] = time.Now().String()
+	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	patch := client.MergeFrom(old)
 	return cli.Patch(ctx, new, patch)
 }

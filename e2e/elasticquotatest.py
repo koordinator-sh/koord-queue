@@ -29,7 +29,7 @@ class Elasticquota:
             return "Err"
 
     def check_queue_status(self, expect_queues):
-        queue_list = self.client.list_queues("kube-queue")
+        queue_list = self.client.list_queues("koord-queue")
         queues = queue_list["items"]
         queue_set = set()
         for queue in queues:

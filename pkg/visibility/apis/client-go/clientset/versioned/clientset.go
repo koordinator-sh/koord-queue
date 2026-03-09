@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
-	visibilityv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1"
+	visibilityv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/client-go/clientset/versioned/typed/apis/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"

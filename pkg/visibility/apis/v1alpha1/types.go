@@ -25,7 +25,7 @@ import (
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +k8s:openapi-gen=true
 // +genclient:nonNamespaced
-// +genclient:method=GetQueueUnitsSummary,verb=get,subresource=QueueUnits,result=github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary
+// +genclient:method=GetQueueUnitsSummary,verb=get,subresource=QueueUnits,result=github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary
 type Queue struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -47,7 +47,7 @@ type QueueList struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +k8s:openapi-gen=true
 // +genclient:nonNamespaced
-// +genclient:method=GetQueueUnitsSummary,verb=get,subresource=QueueUnits,result=github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary
+// +genclient:method=GetQueueUnitsSummary,verb=get,subresource=QueueUnits,result=github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1.QueueUnitsSummary
 type ElasticQuota struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

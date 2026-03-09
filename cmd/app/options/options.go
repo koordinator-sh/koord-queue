@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ func (s *ServerOption) AddFlags(fs *flag.FlagSet) {
 	fs.Int64Var(&s.AdmissionCheckControllerWorker, "admissionCheckControllerWorker", 2, "the number of workers to check admissionCheckState in queue units' status")
 	fs.StringVar(&s.Config, "config", "", "the path to the config file")
 	fs.BoolVar(&s.StrictDequeueMode, "strictDequeueMode", false, "When strict dequeue mode is enabled, QueueUnits will be SchedReady after dequeue from the queue and waiting scheduler to change the status to SchedSucceed or SchedFailed.")
-	fs.StringVar(&s.QueueList, "queue-list", "", "KubeQueue Controller will only enable strictDequeueMode for the queue in the queue list.")
+	fs.StringVar(&s.QueueList, "queue-list", "", "KoordQueue Controller will only enable strictDequeueMode for the queue in the queue list.")
 }
 
 func DefaultPreemptible() (bool, bool) {

@@ -14,7 +14,7 @@ metadata:
   labels:
     quota.scheduling.alibabacloud.com/name: "child-1"
   annotations:
-    kube-queue/queue-name: test-queue
+    koord-queue/queue-name: test-queue
 spec:
   suspend: true
   completions: 2
@@ -43,7 +43,7 @@ metadata:
   labels:
     quota.scheduling.alibabacloud.com/name: "child-1"
   annotations:
-    kube-queue/queue-name: test-queue
+    koord-queue/queue-name: test-queue
 spec:
   suspend: true
   completions: 1

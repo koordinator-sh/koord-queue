@@ -20,7 +20,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	v1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -51,7 +51,7 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=visibility.kube-queue.x-k8s.io, Version=v1alpha1
+	// Group=visibility.koord-queue.x-k8s.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("elasticquotas"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Visibility().V1alpha1().ElasticQuotas().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("queues"):

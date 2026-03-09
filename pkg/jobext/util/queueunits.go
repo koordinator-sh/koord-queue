@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -14,13 +14,13 @@ import (
 
 const AIMASTERROLENAME = "aimaster"
 const SchedulerAdmissionLabelKey = "alibabacloud.com/schedule-admission"
-const RelatedQueueUnitCacheFields = "kubequeue.relatedqueueunit.cache"
-const RelatedQueueUnitPodSetCacheFieldsForTest = "kubequeue.relatedqueueunit.podset.test"
+const RelatedQueueUnitCacheFields = "koordqueue.relatedqueueunit.cache"
+const RelatedQueueUnitPodSetCacheFieldsForTest = "koordqueue.relatedqueueunit.podset.test"
 const PodsByOwnersCacheFields = "podsByOwners"
-const RelatedQueueUnitAnnoKey = "kube-queue/related-queueunit"
-const RelatedAPIVersionKindAnnoKey = "kube-queue/related-apiversion-kind"
-const RelatedObjectAnnoKey = "kube-queue/related-object"
-const RelatedPodSetAnnoKey = "kube-queue/related-podset-name"
+const RelatedQueueUnitAnnoKey = "koord-queue/related-queueunit"
+const RelatedAPIVersionKindAnnoKey = "koord-queue/related-apiversion-kind"
+const RelatedObjectAnnoKey = "koord-queue/related-object"
+const RelatedPodSetAnnoKey = "koord-queue/related-podset-name"
 
 func SetPodTemplateSpec(pts *corev1.PodTemplateSpec, jobNamespace, jobName, podset, suffix string) {
 	if len(pts.Annotations) == 0 {

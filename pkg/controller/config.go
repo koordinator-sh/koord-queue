@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalversions "github.com/kube-queue/api/pkg/client/informers/externalversions"
-	configapi "github.com/kube-queue/kube-queue/pkg/apis/config"
-	"github.com/kube-queue/kube-queue/pkg/config"
+	configapi "github.com/koordinator-sh/koord-queue/pkg/apis/config"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/config"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -43,7 +43,7 @@ func WithQueueUnitClient(queueUnitClient versioned.Interface) ControllerConfigOp
 	}
 }
 
-func WithKubeQueueConfig(cfg *configapi.KubeQueueConfiguration) ControllerConfigOpt {
+func WithKoordQueueConfig(cfg *configapi.KoordQueueConfiguration) ControllerConfigOpt {
 	return func(c *config.ControllerConfig) {
 		c.Config = cfg
 	}

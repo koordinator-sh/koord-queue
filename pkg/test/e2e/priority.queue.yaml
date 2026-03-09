@@ -6,9 +6,9 @@ metadata:
   annotations:
   name: test-queue
   annotations:
-    kube-queue/available-quota: "child-1"
+    koord-queue/available-quota: "child-1"
   labels:
-    create-by-kubequeue: "false"
-  namespace: kube-queue
+    create-by-koordqueue: "false"
+  namespace: koord-queue
 spec:
   queuePolicy: Priority

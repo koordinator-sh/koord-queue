@@ -37,7 +37,7 @@ func ElasticQuota(name string) *ElasticQuotaApplyConfiguration {
 	b := &ElasticQuotaApplyConfiguration{}
 	b.WithName(name)
 	b.WithKind("ElasticQuota")
-	b.WithAPIVersion("visibility.kube-queue.x-k8s.io/v1alpha1")
+	b.WithAPIVersion("visibility.koord-queue.x-k8s.io/v1alpha1")
 	return b
 }
 

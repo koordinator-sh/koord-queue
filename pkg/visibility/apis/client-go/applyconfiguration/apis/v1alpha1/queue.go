@@ -37,7 +37,7 @@ func Queue(name string) *QueueApplyConfiguration {
 	b := &QueueApplyConfiguration{}
 	b.WithName(name)
 	b.WithKind("Queue")
-	b.WithAPIVersion("visibility.kube-queue.x-k8s.io/v1alpha1")
+	b.WithAPIVersion("visibility.koord-queue.x-k8s.io/v1alpha1")
 	return b
 }
 

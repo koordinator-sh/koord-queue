@@ -3,9 +3,9 @@
 FROM --platform=$BUILDPLATFORM golang:1.22.8-alpine3.19 as build
 ARG TARGETOS 
 ARG TARGETARCH
-ADD . /go/src/github.com/kube-queue
-WORKDIR /go/src/github.com/kube-queue
+ADD . /go/src/github.com/koord-queue
+WORKDIR /go/src/github.com/koord-queue
 
-RUN GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} CGO_ENABLED=0 go build -ldflags '-w' -o bin/kube-queue cmd/main.go	
+RUN GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} CGO_ENABLED=0 go build -ldflags '-w' -o bin/koord-queue cmd/main.go	
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
-ENTRYPOINT ["dlv", "exec", "/go/src/github.com/kube-queue/bin/kube-queue"]
+ENTRYPOINT ["dlv", "exec", "/go/src/github.com/koord-queue/bin/koord-queue"]

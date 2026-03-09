@@ -9,10 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	queuev1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	queuev1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	kueue "sigs.k8s.io/kueue/apis/kueue/v1beta1"
 
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1alpha1"
 )
 
 func TestUpdateUsage(t *testing.T) {
@@ -396,7 +396,7 @@ func TestConvertFromStatusAdmissionToResource(t *testing.T) {
 
 		ads := []queuev1.Admission{
 			{
-				Name:     KubeQueueDefaultRequirement,
+				Name:     KoordQueueDefaultRequirement,
 				Replicas: 1,
 			},
 		}

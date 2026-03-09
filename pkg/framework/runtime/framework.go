@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -36,14 +36,14 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/yaml"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	"github.com/kube-queue/api/pkg/client/informers/externalversions"
-	"github.com/kube-queue/kube-queue/pkg/apis/config"
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
-	"github.com/kube-queue/kube-queue/pkg/utils"
-	apiv1alpha1 "github.com/kube-queue/kube-queue/pkg/visibility/apis/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	"github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
+	apiv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/visibility/apis/v1alpha1"
 )
 
 var _ framework.Framework = &frameworkImpl{}
@@ -298,9 +298,9 @@ func (f *frameworkImpl) CreateQueue(name, generateName, policy string, priority 
 		ObjectMeta: v1.ObjectMeta{
 			Name:         name,
 			GenerateName: generateName,
-			Namespace:    "kube-queue",
+			Namespace:    "koord-queue",
 			Labels: map[string]string{
-				"create-by-kubequeue": "true",
+				"create-by-koordqueue": "true",
 			},
 			Annotations: map[string]string{},
 		},
@@ -321,20 +321,20 @@ func (f *frameworkImpl) CreateQueue(name, generateName, policy string, priority 
 	}
 
 	return framework.RetryTooManyRequests(func() error {
-		_, err := f.queueUnitClient.SchedulingV1alpha1().Queues("kube-queue").Create(context.Background(), newQueue, v1.CreateOptions{})
+		_, err := f.queueUnitClient.SchedulingV1alpha1().Queues("koord-queue").Create(context.Background(), newQueue, v1.CreateOptions{})
 		return err
 	})
 }
 
 func (f *frameworkImpl) DeleteQueue(name string) error {
 	return framework.RetryTooManyRequests(func() error {
-		err := f.queueUnitClient.SchedulingV1alpha1().Queues("kube-queue").Delete(context.Background(), name, v1.DeleteOptions{})
+		err := f.queueUnitClient.SchedulingV1alpha1().Queues("koord-queue").Delete(context.Background(), name, v1.DeleteOptions{})
 		return framework.IgnoreNotFound(err)
 	})
 }
 
 func (f *frameworkImpl) UpdateQueue(queueName string, policy *string, priority *int32, priorityClassName string, labels, annotations map[string]string, kv ...string) error {
-	queue, err := f.queueInformersFactory.Scheduling().V1alpha1().Queues().Lister().Queues("kube-queue").Get(queueName)
+	queue, err := f.queueInformersFactory.Scheduling().V1alpha1().Queues().Lister().Queues("koord-queue").Get(queueName)
 	if err != nil {
 		return err
 	}
@@ -373,13 +373,13 @@ func (f *frameworkImpl) UpdateQueue(queueName string, policy *string, priority *
 	}
 	queue.Annotations[queuepolicies.QueueArgsAnnotationKey] = string(b)
 	return framework.RetryTooManyRequests(func() error {
-		_, err := f.queueUnitClient.SchedulingV1alpha1().Queues("kube-queue").Update(context.Background(), queue, v1.UpdateOptions{})
+		_, err := f.queueUnitClient.SchedulingV1alpha1().Queues("koord-queue").Update(context.Background(), queue, v1.UpdateOptions{})
 		return err
 	})
 }
 
 func (f *frameworkImpl) UpdateQueueStatus(name string, details map[string][]v1alpha1.QueueItemDetail) error {
-	queue, err := f.queueInformersFactory.Scheduling().V1alpha1().Queues().Lister().Queues("kube-queue").Get(name)
+	queue, err := f.queueInformersFactory.Scheduling().V1alpha1().Queues().Lister().Queues("koord-queue").Get(name)
 	if err != nil {
 		return err
 	}
@@ -392,13 +392,13 @@ func (f *frameworkImpl) UpdateQueueStatus(name string, details map[string][]v1al
 		return nil
 	}
 	return framework.RetryTooManyRequests(func() error {
-		_, err := f.queueUnitClient.SchedulingV1alpha1().Queues("kube-queue").UpdateStatus(context.Background(), newQueue, v1.UpdateOptions{})
+		_, err := f.queueUnitClient.SchedulingV1alpha1().Queues("koord-queue").UpdateStatus(context.Background(), newQueue, v1.UpdateOptions{})
 		return err
 	})
 }
 
 func (f *frameworkImpl) ListQueus() ([]*v1alpha1.Queue, error) {
-	return f.queueInformersFactory.Scheduling().V1alpha1().Queues().Lister().Queues("kube-queue").List(labels.SelectorFromSet(labels.Set{}))
+	return f.queueInformersFactory.Scheduling().V1alpha1().Queues().Lister().Queues("koord-queue").List(labels.SelectorFromSet(labels.Set{}))
 }
 
 func (f *frameworkImpl) StartQueueUnitMappingPlugin(ctx context.Context) {
@@ -411,7 +411,7 @@ func NewFramework(r Registry, config *rest.Config, kubeConfigPath string,
 	recorder record.EventRecorderLogger,
 	queueUnitClient versioned.Interface,
 	oversellRate float64,
-	pluginconfig *config.KubeQueueConfiguration,
+	pluginconfig *config.KoordQueueConfiguration,
 ) (framework.Framework, error) {
 	apiHandlerPlugins := make([]framework.ApiHandlerPlugin, 0)
 	filterPlugins := make([]framework.FilterPlugin, 0)

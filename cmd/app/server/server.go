@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -23,16 +23,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalversions "github.com/kube-queue/api/pkg/client/informers/externalversions"
-	"github.com/kube-queue/kube-queue/cmd/app/options"
-	"github.com/kube-queue/kube-queue/pkg/apis/config"
-	"github.com/kube-queue/kube-queue/pkg/apis/config/scheme"
-	v1 "github.com/kube-queue/kube-queue/pkg/apis/config/v1"
-	"github.com/kube-queue/kube-queue/pkg/controller"
-	"github.com/kube-queue/kube-queue/pkg/utils"
-	"github.com/kube-queue/kube-queue/pkg/visibility"
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config/scheme"
+	v1 "github.com/koordinator-sh/koord-queue/pkg/apis/config/v1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/visibility"
 	"gomodules.xyz/jsonpatch/v2"
 
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
@@ -58,7 +58,7 @@ const (
 )
 
 // LoadConfigFromFile loads scheduler config from the specified file path
-func LoadConfigFromFile(logger klog.Logger, file string) (*config.KubeQueueConfiguration, error) {
+func LoadConfigFromFile(logger klog.Logger, file string) (*config.KoordQueueConfiguration, error) {
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -67,16 +67,16 @@ func LoadConfigFromFile(logger klog.Logger, file string) (*config.KubeQueueConfi
 	return loadConfig(data)
 }
 
-func loadConfig(data []byte) (*config.KubeQueueConfiguration, error) {
+func loadConfig(data []byte) (*config.KoordQueueConfiguration, error) {
 	// The UniversalDecoder runs defaulting and returns the internal type by default.
 	obj, gvk, err := scheme.Codecs.UniversalDecoder().Decode(data, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	if cfgObj, ok := obj.(*config.KubeQueueConfiguration); ok {
+	if cfgObj, ok := obj.(*config.KoordQueueConfiguration); ok {
 		// We don't set this field in pkg/scheduler/apis/config/{version}/conversion.go
 		// because the field will be cleared later by API machinery during
-		// conversion. See KubeQueueConfiguration internal type definition for
+		// conversion. See KoordQueueConfiguration internal type definition for
 		// more details.
 		cfgObj.TypeMeta.APIVersion = gvk.GroupVersion().String()
 		return cfgObj, nil
@@ -126,7 +126,7 @@ func addIndexer(qif externalversions.SharedInformerFactory) error {
 }
 
 func Start(ctx context.Context, cfg *rest.Config, kubeClient kubernetes.Interface, opt *options.ServerOption) error {
-	var c *config.KubeQueueConfiguration
+	var c *config.KoordQueueConfiguration
 	var err error
 	if opt.Config != "" {
 		c, err = LoadConfigFromFile(klog.LoggerWithName(klog.Background(), "Init"), opt.Config)
@@ -134,10 +134,10 @@ func Start(ctx context.Context, cfg *rest.Config, kubeClient kubernetes.Interfac
 			return err
 		}
 	} else {
-		configv1 := &v1.KubeQueueConfiguration{}
-		c = &config.KubeQueueConfiguration{}
-		v1.SetDefaults_KubeQueueConfiguration(configv1)
-		err = v1.Convert_v1_KubeQueueConfiguration_To_config_KubeQueueConfiguration(configv1, c, nil)
+		configv1 := &v1.KoordQueueConfiguration{}
+		c = &config.KoordQueueConfiguration{}
+		v1.SetDefaults_KoordQueueConfiguration(configv1)
+		err = v1.Convert_v1_KoordQueueConfiguration_To_config_KoordQueueConfiguration(configv1, c, nil)
 		if err != nil {
 			return err
 		}
@@ -175,7 +175,7 @@ func Start(ctx context.Context, cfg *rest.Config, kubeClient kubernetes.Interfac
 		controller.WithInformersFactory(kubeInformerFactory),
 		controller.WithQueueFactory(queueUnitInformerFactory),
 		controller.WithKueueInformerFactory(kueueInformerFactory),
-		controller.WithKubeQueueConfig(c),
+		controller.WithKoordQueueConfig(c),
 	)
 
 	if err != nil {
@@ -247,7 +247,7 @@ func Run(opt *options.ServerOption) error {
 				OnStartedLeading: func(ctx context.Context) {
 					// 当当前实例成为leader时执行的逻辑
 					if opt.EnableVisibilityServer {
-						patchStr := fmt.Sprintf("[%v]", ptr.To(jsonpatch.NewOperation("add", "/metadata/labels/kube-queue-leader", "true")).Json())
+						patchStr := fmt.Sprintf("[%v]", ptr.To(jsonpatch.NewOperation("add", "/metadata/labels/koord-queue-leader", "true")).Json())
 						_, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Patch(context.Background(),
 							os.Getenv("POD_NAME"), types.JSONPatchType,
 							[]byte(patchStr),
@@ -277,7 +277,7 @@ func Run(opt *options.ServerOption) error {
 		return nil
 	} else {
 		if opt.EnableVisibilityServer {
-			patchStr := fmt.Sprintf("[%v]", ptr.To(jsonpatch.NewOperation("add", "/metadata/labels/kube-queue-leader", "true")).Json())
+			patchStr := fmt.Sprintf("[%v]", ptr.To(jsonpatch.NewOperation("add", "/metadata/labels/koord-queue-leader", "true")).Json())
 			_, err := kubeClient.CoreV1().Pods(os.Getenv("POD_NAMESPACE")).Patch(context.Background(),
 				os.Getenv("POD_NAME"), types.JSONPatchType,
 				[]byte(patchStr),

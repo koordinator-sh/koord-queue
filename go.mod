@@ -1,4 +1,4 @@
-module github.com/kube-queue/kube-queue
+module github.com/koordinator-sh/koord-queue
 
 go 1.24.2
 
@@ -11,7 +11,6 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/google/go-cmp v0.7.0
 	github.com/koordinator-sh/apis v1.5.0
-	github.com/kube-queue/api v0.0.7
 	github.com/kubeflow/common v0.4.7
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
@@ -151,7 +150,4 @@ require (
 replace (
 	github.com/AliyunContainerService/mpi-operator => github.com/AliyunContainerService/mpi-operator v0.0.0-20180816014702-ed06c9c2a8f3
 	github.com/GoogleCloudPlatform/spark-on-k8s-operator => github.com/GoogleCloudPlatform/spark-on-k8s-operator v0.0.0-20231109204312-8cb6c8035eab
-	github.com/kube-queue/api => gitlab.alibaba-inc.com/eml/kubequeue-api v0.0.12
-	gitlab.alibaba-inc.com/cos/karmada => gitlab.alibaba-inc.com/cos/karmada v0.1.1-0.20241121122543-7a4c258789a3
-// k8s.io/gengo/v2 => k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70
 )

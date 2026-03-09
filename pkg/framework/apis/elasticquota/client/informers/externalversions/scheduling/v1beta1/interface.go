@@ -19,7 +19,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	internalinterfaces "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
+	internalinterfaces "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to all the informers in this group version.

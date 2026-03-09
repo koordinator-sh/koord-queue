@@ -24,8 +24,8 @@ import (
 	"k8s.io/client-go/rest"
 
 	mpiv1alpha1 "github.com/AliyunContainerService/mpi-operator/pkg/apis/kubeflow/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	commonv1 "gitlab.alibaba-inc.com/kubedlpro/apis/common/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -135,15 +135,15 @@ func (j *MpiJobV1alpha1) Priority(ctx context.Context, obj client.Object) (strin
 
 func (j *MpiJobV1alpha1) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*mpiv1alpha1.MPIJob)
-	if job.Annotations["kube-queue/job-has-enqueued"] == "true" {
+	if job.Annotations["koord-queue/job-has-enqueued"] == "true" {
 		return nil
 	}
 
 	old := job
 	new := job.DeepCopy()
 	new.Annotations = util.MapCopy(job.Annotations)
-	new.Annotations["kube-queue/job-has-enqueued"] = "true"
-	new.Annotations["kube-queue/job-enqueue-timestamp"] = time.Now().String()
+	new.Annotations["koord-queue/job-has-enqueued"] = "true"
+	new.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 
 	util.SetPodTemplateSpec(&new.Spec.Template, job.Namespace, job.Name, job.Name, j.QueueUnitSuffix())
 	return cli.Patch(ctx, new, client.MergeFrom(old))
@@ -179,17 +179,17 @@ func (j *MpiJobV1alpha1) Resume(ctx context.Context, obj client.Object, cli clie
 	} else {
 		delete(new.Annotations, QueueAnnotation)
 	}
-	new.Annotations["kube-queue/job-dequeue-timestamp"] = time.Now().String()
+	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
 
 func (j *MpiJobV1alpha1) GetJobStatus(ctx context.Context, obj client.Object, client client.Client) (framework.JobStatus, time.Time) {
 	job := obj.(*mpiv1alpha1.MPIJob)
-	queuingTransTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-enqueue-timestamp"])
+	queuingTransTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-enqueue-timestamp"])
 	if err != nil {
 		queuingTransTime = time.Now()
 	}
-	dequeueTransTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-dequeue-timestamp"])
+	dequeueTransTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-dequeue-timestamp"])
 	if err != nil {
 		dequeueTransTime = time.Now()
 	}
@@ -205,7 +205,7 @@ func (j *MpiJobV1alpha1) GetJobStatus(ctx context.Context, obj client.Object, cl
 	if value, ok := job.Annotations[QueueAnnotation]; !ok || (ok && value == "false") {
 		return framework.Pending, dequeueTransTime
 	}
-	if job.Annotations["kube-queue/job-has-enqueued"] != "" {
+	if job.Annotations["koord-queue/job-has-enqueued"] != "" {
 		return framework.Queuing, queuingTransTime
 	}
 
@@ -218,7 +218,7 @@ func (j *MpiJobV1alpha1) ManagedByQueue(ctx context.Context, obj client.Object) 
 	}
 	job := obj.(*mpiv1alpha1.MPIJob)
 
-	if job.Annotations["kube-queue/job-has-enqueued"] != "" {
+	if job.Annotations["koord-queue/job-has-enqueued"] != "" {
 		return true
 	}
 	return job.Status.LauncherStatus == "" && job.Annotations[QueueAnnotation] == "true"

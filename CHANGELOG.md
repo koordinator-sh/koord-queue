@@ -1,4 +1,4 @@
-# Kube-queue Release Notes
+# Koord-queue Release Notes
 
 ## v0.1.0
 ### Features

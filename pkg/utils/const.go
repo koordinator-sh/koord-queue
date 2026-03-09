@@ -1,5 +1,5 @@
 /*
- Copyright 2021 The Kube-Queue Authors.
+ Copyright 2021 The Koord-Queue Authors.
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -17,13 +17,13 @@
 package utils
 
 const (
-	ControllerAgentName     = "kube-queue-controller"
+	ControllerAgentName     = "koord-queue-controller"
 	Default                 = "default"
-	QuotaKubeQueueEnable    = "quota-kube-queue-enable"
+	QuotaKoordQueueEnable    = "quota-koord-queue-enable"
 	ParentQuotaNameLabelKey = "quota.scheduling.koordinator.sh/parent"
 
-	AnnotationParentQuotaName = "kube-queue/parent-quota-fullname"
-	AnnotationQuotaFullName   = "kube-queue/quota-fullname"
+	AnnotationParentQuotaName = "koord-queue/parent-quota-fullname"
+	AnnotationQuotaFullName   = "koord-queue/quota-fullname"
 
 	AnnotationQuotaOversoldType = "quota.scheduling.koordinator.sh/quota-oversold-type"
 	// AnnotationActualQuotaOversoldType for QuotaOversoldTypeAccept queue unit, the value of

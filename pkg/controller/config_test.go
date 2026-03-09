@@ -3,10 +3,10 @@ package controller
 import (
 	"testing"
 
-	versionedfake "github.com/kube-queue/api/pkg/client/clientset/versioned/fake"
-	externalversions "github.com/kube-queue/api/pkg/client/informers/externalversions"
-	configapi "github.com/kube-queue/kube-queue/pkg/apis/config"
-	"github.com/kube-queue/kube-queue/pkg/config"
+	configapi "github.com/koordinator-sh/koord-queue/pkg/apis/config"
+	versionedfake "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
+	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/config"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
@@ -70,15 +70,15 @@ func TestWithQueueUnitClient(t *testing.T) {
 	assert.Equal(t, queueClient, controllerConfig.QueueUnitClient)
 }
 
-func TestWithKubeQueueConfig(t *testing.T) {
-	kubeQueueConfig := &configapi.KubeQueueConfiguration{
+func TestWithKoordQueueConfig(t *testing.T) {
+	kubeQueueConfig := &configapi.KoordQueueConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "TestKind",
 		},
 	}
 
 	controllerConfig := &config.ControllerConfig{}
-	option := WithKubeQueueConfig(kubeQueueConfig)
+	option := WithKoordQueueConfig(kubeQueueConfig)
 	option(controllerConfig)
 
 	assert.Equal(t, kubeQueueConfig, controllerConfig.Config)

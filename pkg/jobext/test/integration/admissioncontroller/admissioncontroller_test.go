@@ -3,11 +3,11 @@ package admissioncontroller
 import (
 	"time"
 
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/test/util/wrappers"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
-	"github.com/kube-queue/kube-queue/pkg/jobext/test/util/wrappers"
 
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 	kueue "sigs.k8s.io/kueue/apis/kueue/v1beta1"

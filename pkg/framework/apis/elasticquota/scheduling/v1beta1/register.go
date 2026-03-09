@@ -17,7 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
-	"github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

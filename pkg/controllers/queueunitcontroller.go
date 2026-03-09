@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/api/pkg/client/clientset/versioned"
-	externalv1alpha1 "github.com/kube-queue/api/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
+	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
 	"sigs.k8s.io/kueue/apis/kueue/v1beta1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

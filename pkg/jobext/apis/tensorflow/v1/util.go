@@ -15,7 +15,7 @@
 package v1
 
 import (
-	commonv1 "github.com/kube-queue/kube-queue/pkg/jobext/apis/common/job_controller/v1"
+	commonv1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/common/job_controller/v1"
 )
 
 // IsChieforMaster returns true if the type is Master or Chief.

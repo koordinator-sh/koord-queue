@@ -113,7 +113,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "dequeued_quota_usage_by_quota{job=\"kube-queue-exporter\",resource=\"cpu\"}/1000",
+            "expr": "dequeued_quota_usage_by_quota{job=\"koord-queue-exporter\",resource=\"cpu\"}/1000",
             "interval": "",
             "legendFormat": "{{quota}}/资源使用量",
             "refId": "A"
@@ -195,7 +195,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "dequeued_quota_usage_by_namespace{job=\"kube-queue-exporter\",resource=\"cpu\"}",
+            "expr": "dequeued_quota_usage_by_namespace{job=\"koord-queue-exporter\",resource=\"cpu\"}",
             "interval": "",
             "legendFormat": "{{namespace}}/资源使用量",
             "refId": "A"
@@ -277,7 +277,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "dequeued_quota_usage_by_quota{job=\"kube-queue-exporter\",resource=\"memory\"}",
+            "expr": "dequeued_quota_usage_by_quota{job=\"koord-queue-exporter\",resource=\"memory\"}",
             "interval": "",
             "legendFormat": "{{quota}}/资源使用量",
             "refId": "A"
@@ -359,7 +359,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "dequeued_quota_usage_by_namespace{job=\"kube-queue-exporter\",resource=\"memory\"}",
+            "expr": "dequeued_quota_usage_by_namespace{job=\"koord-queue-exporter\",resource=\"memory\"}",
             "interval": "",
             "legendFormat": "{{namespace}}/资源使用量",
             "refId": "A"
@@ -441,7 +441,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "dequeued_quota_usage_by_quota{job=\"kube-queue-exporter\",resource=\"$Resource\",quota=\"$Quota\"}",
+            "expr": "dequeued_quota_usage_by_quota{job=\"koord-queue-exporter\",resource=\"$Resource\",quota=\"$Quota\"}",
             "interval": "",
             "legendFormat": "{{quota}}/{{resource}}/资源使用量",
             "refId": "A"
@@ -523,7 +523,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "dequeued_quota_usage_by_namespace{job=\"kube-queue-exporter\",resource=\"$Resource\", namespace=\"$Namespace\"}",
+            "expr": "dequeued_quota_usage_by_namespace{job=\"koord-queue-exporter\",resource=\"$Resource\", namespace=\"$Namespace\"}",
             "interval": "",
             "legendFormat": "{{namespace}}/{{resource}}/资源使用量",
             "refId": "A"
@@ -543,7 +543,7 @@
         },
         "id": 29,
         "panels": [],
-        "title": "Kube Queue任务数",
+        "title": "Koord Queue任务数",
         "type": "row"
       },
       {
@@ -618,14 +618,14 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "queueunits_by_job_type{job=\"kube-queue-exporter\"}",
+            "expr": "queueunits_by_job_type{job=\"koord-queue-exporter\"}",
             "hide": false,
             "interval": "",
             "legendFormat": "任务数量-{{namespace}}-{{type}}",
             "refId": "A"
           }
         ],
-        "title": "KubeQueue各用户任务数",
+        "title": "KoordQueue各用户任务数",
         "type": "timeseries"
       },
       {
@@ -700,7 +700,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "sum(irate(queueunits_coming_rate_by_job_type{job=\"kube-queue-exporter\", status=\"Enqueued\"}[$interval])) by (namespace)",
+            "expr": "sum(irate(queueunits_coming_rate_by_job_type{job=\"koord-queue-exporter\", status=\"Enqueued\"}[$interval])) by (namespace)",
             "hide": false,
             "interval": "",
             "legendFormat": "入队速度-{{namespace}}",
@@ -708,14 +708,14 @@
           },
           {
             "exemplar": true,
-            "expr": "sum(irate(queueunits_coming_rate_by_job_type{job=\"kube-queue-exporter\", status=\"Enqueued\"}[$interval])) by (namespace, type)",
+            "expr": "sum(irate(queueunits_coming_rate_by_job_type{job=\"koord-queue-exporter\", status=\"Enqueued\"}[$interval])) by (namespace, type)",
             "hide": false,
             "interval": "",
             "legendFormat": "入队速度-{{namespace}}-{{type}}",
             "refId": "C"
           }
         ],
-        "title": "KubeQueue各用户任务入队速度",
+        "title": "KoordQueue各用户任务入队速度",
         "type": "timeseries"
       },
       {
@@ -790,7 +790,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "queueunits_in_active_queue{job=\"kube-queue-exporter\"}",
+            "expr": "queueunits_in_active_queue{job=\"koord-queue-exporter\"}",
             "hide": false,
             "interval": "",
             "legendFormat": "{{queue}}/Active队列任务数",
@@ -798,14 +798,14 @@
           },
           {
             "exemplar": true,
-            "expr": "queueunits_in_backoff_queue{job=\"kube-queue-exporter\"}",
+            "expr": "queueunits_in_backoff_queue{job=\"koord-queue-exporter\"}",
             "hide": false,
             "interval": "",
             "legendFormat": "{{queue}}/Backoff队列任务数",
             "refId": "B"
           }
         ],
-        "title": "KubeQueue各队列任务数",
+        "title": "KoordQueue各队列任务数",
         "type": "timeseries"
       },
       {
@@ -819,7 +819,7 @@
         },
         "id": 12,
         "panels": [],
-        "title": "Kube Queue Controller调度指标",
+        "title": "Koord Queue Controller调度指标",
         "type": "row"
       },
       {
@@ -894,7 +894,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "rate(job_schedule_attempts{job=\"kube-queue-exporter\",result=\"scheduled\"}[5m])",
+            "expr": "rate(job_schedule_attempts{job=\"koord-queue-exporter\",result=\"scheduled\"}[5m])",
             "hide": false,
             "interval": "",
             "legendFormat": "成功调度速度",
@@ -902,13 +902,13 @@
           },
           {
             "exemplar": true,
-            "expr": "rate(job_schedule_attempts{job=\"kube-queue-exporter\",result=\"unschedulable\"}[5m])",
+            "expr": "rate(job_schedule_attempts{job=\"koord-queue-exporter\",result=\"unschedulable\"}[5m])",
             "interval": "",
             "legendFormat": "调度失败速度",
             "refId": "A"
           }
         ],
-        "title": "KubeQueue调度速度",
+        "title": "KoordQueue调度速度",
         "type": "timeseries"
       },
       {
@@ -1008,7 +1008,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "histogram_quantile(0.99, sum(rate(job_scheduling_algorithm_latency_bucket{job=\"kube-queue-exporter\",}[$interval])) by (le))",
+            "expr": "histogram_quantile(0.99, sum(rate(job_scheduling_algorithm_latency_bucket{job=\"koord-queue-exporter\",}[$interval])) by (le))",
             "hide": false,
             "interval": "",
             "legendFormat": "调度算法耗时p99",
@@ -1016,14 +1016,14 @@
           },
           {
             "exemplar": true,
-            "expr": "histogram_quantile(0.99, sum(rate(job_scheduling_e2e_latency_bucket{job=\"kube-queue-exporter\"}[$interval])) by (le))",
+            "expr": "histogram_quantile(0.99, sum(rate(job_scheduling_e2e_latency_bucket{job=\"koord-queue-exporter\"}[$interval])) by (le))",
             "hide": false,
             "interval": "",
             "legendFormat": "端到端耗时p99",
             "refId": "B"
           }
         ],
-        "title": "KubeQueue调度延迟p99",
+        "title": "KoordQueue调度延迟p99",
         "type": "timeseries"
       },
       {
@@ -1112,13 +1112,13 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "irate(process_cpu_seconds_total{job=\"kube-queue-exporter\"}[$interval])*100",
+            "expr": "irate(process_cpu_seconds_total{job=\"koord-queue-exporter\"}[$interval])*100",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
           }
         ],
-        "title": "Ack Kube Queue Controller CPU使用量",
+        "title": "Ack Koord Queue Controller CPU使用量",
         "type": "timeseries"
       },
       {
@@ -1194,7 +1194,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "process_resident_memory_bytes{job=\"kube-queue-exporter\"}",
+            "expr": "process_resident_memory_bytes{job=\"koord-queue-exporter\"}",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
@@ -1276,14 +1276,14 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"2..\"}[$interval])) by (method)",
+            "expr": "sum(irate(rest_client_requests_total{job=\"koord-queue-exporter\",code=~\"2..\"}[$interval])) by (method)",
             "interval": "",
             "legendFormat": "2xx-{{method}}",
             "refId": "A"
           },
           {
             "exemplar": true,
-            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"3..\"}[$interval])) by (method)",
+            "expr": "sum(irate(rest_client_requests_total{job=\"koord-queue-exporter\",code=~\"3..\"}[$interval])) by (method)",
             "hide": false,
             "interval": "",
             "legendFormat": "3xx-{{method}}",
@@ -1291,7 +1291,7 @@
           },
           {
             "exemplar": true,
-            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"4..\"}[$interval])) by (method)",
+            "expr": "sum(irate(rest_client_requests_total{job=\"koord-queue-exporter\",code=~\"4..\"}[$interval])) by (method)",
             "hide": false,
             "interval": "",
             "legendFormat": "4xx-{{method}}",
@@ -1299,7 +1299,7 @@
           },
           {
             "exemplar": true,
-            "expr": "sum(irate(rest_client_requests_total{job=\"kube-queue-exporter\",code=~\"5..\"}[$interval])) by (method)",
+            "expr": "sum(irate(rest_client_requests_total{job=\"koord-queue-exporter\",code=~\"5..\"}[$interval])) by (method)",
             "hide": false,
             "interval": "",
             "legendFormat": "5xx-{{method}}",
@@ -1382,7 +1382,7 @@
         "targets": [
           {
             "exemplar": true,
-            "expr": "histogram_quantile(0.99, sum(rate(rest_client_request_duration_seconds_bucket{job=\"kube-queue-exporter\"}[$interval])) by (verb,le,host))",
+            "expr": "histogram_quantile(0.99, sum(rate(rest_client_request_duration_seconds_bucket{job=\"koord-queue-exporter\"}[$interval])) by (verb,le,host))",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
@@ -1558,7 +1558,7 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "AckKubeQueue",
+    "title": "AckKoordQueue",
     "uid": "VhwsfAqVz",
     "version": 4
   }

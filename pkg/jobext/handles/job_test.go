@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 )
 
 var _ = Describe("Job Controller", func() {
@@ -201,7 +201,7 @@ var _ = Describe("Job Controller", func() {
 			Expect(err).To(BeNil())
 			_ = fakeClient.Get(ctx, types.NamespacedName{Namespace: job.Namespace, Name: job.Name}, job)
 			Expect(job.Spec.Suspend).To(Equal(ptr.To(false)))
-			Expect(job.Annotations["kube-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
+			Expect(job.Annotations["koord-queue/job-dequeue-timestamp"]).NotTo(BeEmpty())
 		})
 
 		It("should not resume already running job", func() {
@@ -270,7 +270,7 @@ var _ = Describe("Job Controller", func() {
 					Name:      "test-job",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-has-enqueued": "true",
+						"koord-queue/job-has-enqueued": "true",
 					},
 				},
 			}
@@ -291,7 +291,7 @@ var _ = Describe("Job Controller", func() {
 			job := &batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-has-enqueued": "true",
+						"koord-queue/job-has-enqueued": "true",
 					},
 				},
 			}

@@ -21,9 +21,9 @@ import (
 
 	"github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta2"
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
-	kv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
-	"github.com/kube-queue/kube-queue/pkg/jobext/util"
+	kv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	kueue "sigs.k8s.io/kueue/apis/kueue/v1beta1"
 )
@@ -402,14 +402,14 @@ func (j *SparkApplication) Enqueue(ctx context.Context, obj client.Object, cli c
 	job := obj.(*v1beta2.SparkApplication)
 	job.TypeMeta.APIVersion = v1beta2.SchemeGroupVersion.String()
 	job.TypeMeta.Kind = "SparkApplication"
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return nil
 	}
 
 	old := job
 	new := job.DeepCopy()
 	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations["kube-queue/job-enqueue-timestamp"] = time.Now().String()
+	new.ObjectMeta.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 	if len(new.Spec.Driver.SparkPodSpec.Labels) == 0 {
 		new.Spec.Driver.SparkPodSpec.Labels = make(map[string]string)
 	}
@@ -465,7 +465,7 @@ func (j *SparkApplication) Resume(ctx context.Context, obj client.Object, cli cl
 		new.Annotations = map[string]string{}
 	}
 	new.ObjectMeta.Annotations[QueueAnnotation] = "false"
-	new.Annotations["kube-queue/job-dequeue-timestamp"] = time.Now().String()
+	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
 
@@ -481,15 +481,15 @@ func (j *SparkApplication) GetJobStatus(ctx context.Context, obj client.Object, 
 	}
 
 	if value, ok := job.Annotations[QueueAnnotation]; !ok || (ok && value == "false") {
-		dequeueTransTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-dequeue-timestamp"])
+		dequeueTransTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-dequeue-timestamp"])
 		if err != nil {
 			dequeueTransTime = time.Now()
 		}
 		return framework.Pending, dequeueTransTime
 	}
 
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
-		queuingTransTime, err := time.Parse(timeFormat, job.Annotations["kube-queue/job-enqueue-timestamp"])
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
+		queuingTransTime, err := time.Parse(timeFormat, job.Annotations["koord-queue/job-enqueue-timestamp"])
 		if err != nil {
 			queuingTransTime = time.Now()
 		}
@@ -504,7 +504,7 @@ func (j *SparkApplication) ManagedByQueue(ctx context.Context, obj client.Object
 		return true
 	}
 	job := obj.(*v1beta2.SparkApplication)
-	if job.Annotations["kube-queue/job-enqueue-timestamp"] != "" {
+	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return true
 	}
 	return job.Status.AppState.State == "" && job.Annotations[QueueAnnotation] == "true"

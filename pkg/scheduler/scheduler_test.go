@@ -7,9 +7,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	queueunitfake "github.com/kube-queue/api/pkg/client/clientset/versioned/fake"
-	queueunitfakeex "github.com/kube-queue/api/pkg/client/informers/externalversions"
+	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	queueunitfake "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
+	queueunitfakeex "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -24,13 +24,13 @@ import (
 
 	"sigs.k8s.io/kueue/apis/kueue/v1beta1"
 
-	"github.com/kube-queue/kube-queue/pkg/framework"
-	"github.com/kube-queue/kube-queue/pkg/framework/plugins"
-	"github.com/kube-queue/kube-queue/pkg/framework/runtime"
-	"github.com/kube-queue/kube-queue/pkg/queue"
-	queue2 "github.com/kube-queue/kube-queue/pkg/queue"
-	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies/schedulingqueuev2"
-	"github.com/kube-queue/kube-queue/pkg/utils"
+	"github.com/koordinator-sh/koord-queue/pkg/framework"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/runtime"
+	"github.com/koordinator-sh/koord-queue/pkg/queue"
+	queue2 "github.com/koordinator-sh/koord-queue/pkg/queue"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies/schedulingqueuev2"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 func TestDequeue(t *testing.T) {

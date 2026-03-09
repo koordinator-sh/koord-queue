@@ -25,8 +25,8 @@ import (
 
 	"github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta2"
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
-	kv1alpha1 "github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
-	"github.com/kube-queue/kube-queue/pkg/jobext/framework"
+	kv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -336,7 +336,7 @@ var _ = Describe("SparkApplication Controller", func() {
 					Name:      "test-spark",
 					Namespace: "default",
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": "already-set",
+						"koord-queue/job-enqueue-timestamp": "already-set",
 					},
 				},
 			}
@@ -463,8 +463,8 @@ var _ = Describe("SparkApplication Controller", func() {
 			job := &v1beta2.SparkApplication{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						QueueAnnotation:                    "false",
-						"kube-queue/job-dequeue-timestamp": time.Now().Format(timeFormat),
+						QueueAnnotation:                     "false",
+						"koord-queue/job-dequeue-timestamp": time.Now().Format(timeFormat),
 					},
 				},
 			}
@@ -477,8 +477,8 @@ var _ = Describe("SparkApplication Controller", func() {
 			job := &v1beta2.SparkApplication{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": time.Now().Format(timeFormat),
-						QueueAnnotation:                    "true",
+						"koord-queue/job-enqueue-timestamp": time.Now().Format(timeFormat),
+						QueueAnnotation:                     "true",
 					},
 				},
 			}
@@ -518,7 +518,7 @@ var _ = Describe("SparkApplication Controller", func() {
 			job := &v1beta2.SparkApplication{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"kube-queue/job-enqueue-timestamp": "some-timestamp",
+						"koord-queue/job-enqueue-timestamp": "some-timestamp",
 					},
 				},
 			}

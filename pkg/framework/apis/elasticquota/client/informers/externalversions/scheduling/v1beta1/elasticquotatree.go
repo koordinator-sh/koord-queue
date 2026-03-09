@@ -26,10 +26,10 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"
 	cache "k8s.io/client-go/tools/cache"
-	versioned "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
-	internalinterfaces "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
-	v1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/client/listers/scheduling/v1beta1"
-	schedulingv1beta1 "github.com/kube-queue/kube-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
+	versioned "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/clientset/versioned"
+	internalinterfaces "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/informers/externalversions/internalinterfaces"
+	v1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/client/listers/scheduling/v1beta1"
+	schedulingv1beta1 "github.com/koordinator-sh/koord-queue/pkg/framework/apis/elasticquota/scheduling/v1beta1"
 )
 
 // ElasticQuotaTreeInformer provides access to a shared informer and lister for
