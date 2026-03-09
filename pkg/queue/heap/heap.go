@@ -23,7 +23,9 @@ package heap
 import (
 	"container/heap"
 	"fmt"
+	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -127,11 +129,17 @@ type Heap struct {
 	// data stores objects and has a queue that keeps their ordering according
 	// to the heap invariant.
 	data *data
+
+	lock sync.Mutex
+
+	metrics prometheus.Gauge
 }
 
 // Add inserts an item, and puts it in the queue. The item is updated if it
 // already exists.
 func (h *Heap) Add(obj interface{}) error {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	key, err := h.data.keyFunc(obj)
 	if err != nil {
 		return cache.KeyError{Obj: obj, Err: err}
@@ -140,6 +148,9 @@ func (h *Heap) Add(obj interface{}) error {
 		h.data.items[key].obj = obj
 		heap.Fix(h.data, h.data.items[key].index)
 	} else {
+		if h.metrics != nil {
+			h.metrics.Add(1)
+		}
 		heap.Push(h.data, &itemKeyValue{key, obj})
 	}
 	return nil
@@ -148,11 +159,16 @@ func (h *Heap) Add(obj interface{}) error {
 // AddIfNotPresent inserts an item, and puts it in the queue. If an item with
 // the key is present in the map, no changes is made to the item.
 func (h *Heap) AddIfNotPresent(obj interface{}) error {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	key, err := h.data.keyFunc(obj)
 	if err != nil {
 		return cache.KeyError{Obj: obj, Err: err}
 	}
 	if _, exists := h.data.items[key]; !exists {
+		if h.metrics != nil {
+			h.metrics.Add(1)
+		}
 		heap.Push(h.data, &itemKeyValue{key, obj})
 	}
 	return nil
@@ -170,7 +186,12 @@ func (h *Heap) Delete(obj interface{}) error {
 	if err != nil {
 		return cache.KeyError{Obj: obj, Err: err}
 	}
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	if item, ok := h.data.items[key]; ok {
+		if h.metrics != nil {
+			h.metrics.Sub(1)
+		}
 		heap.Remove(h.data, item.index)
 		return nil
 	}
@@ -179,13 +200,23 @@ func (h *Heap) Delete(obj interface{}) error {
 
 // Peek returns the head of the heap without removing it.
 func (h *Heap) Peek() interface{} {
+	h.lock.Lock()
+	defer h.lock.Unlock()
 	return h.data.Peek()
 }
 
 // Pop returns the head of the heap and removes it.
 func (h *Heap) Pop() (interface{}, error) {
+	h.lock.Lock()
+	defer h.lock.Unlock()
+	if h.data.Len() == 0 {
+		return nil, fmt.Errorf("heap is empty")
+	}
 	obj := heap.Pop(h.data)
 	if obj != nil {
+		if h.metrics != nil {
+			h.metrics.Sub(1)
+		}
 		return obj, nil
 	}
 	return nil, fmt.Errorf("object was removed from heap data")
@@ -209,6 +240,12 @@ func (h *Heap) GetByKey(key string) (interface{}, bool, error) {
 	return item.obj, true, nil
 }
 
+func (h *Heap) KeyList() []string {
+	ret := make([]string, len(h.data.queue))
+	copy(ret, h.data.queue)
+	return ret
+}
+
 // List returns a list of all the items.
 func (h *Heap) List() []interface{} {
 	list := make([]interface{}, 0, len(h.data.items))
@@ -225,11 +262,11 @@ func (h *Heap) Len() int {
 
 // New returns a Heap which can be used to queue up items to process.
 func New(keyFn KeyFunc, lessFn lessFunc) *Heap {
-	return NewWithRecorder(keyFn, lessFn)
+	return NewWithRecorder(keyFn, lessFn, nil)
 }
 
 // NewWithRecorder wraps an optional metricRecorder to compose a Heap object.
-func NewWithRecorder(keyFn KeyFunc, lessFn lessFunc) *Heap {
+func NewWithRecorder(keyFn KeyFunc, lessFn lessFunc, m prometheus.Gauge) *Heap {
 	return &Heap{
 		data: &data{
 			items:    map[string]*heapItem{},
@@ -237,6 +274,7 @@ func NewWithRecorder(keyFn KeyFunc, lessFn lessFunc) *Heap {
 			keyFunc:  keyFn,
 			lessFunc: lessFn,
 		},
+		metrics: m,
 	}
 }
 

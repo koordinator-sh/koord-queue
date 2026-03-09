@@ -19,16 +19,27 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"k8s.io/klog/v2"
 
 	"github.com/kube-queue/kube-queue/cmd/app/options"
 	app "github.com/kube-queue/kube-queue/cmd/app/server"
+	"github.com/kube-queue/kube-queue/pkg/queue/queuepolicies"
 )
 
 func main() {
 	s := options.NewServerOption()
 	s.AddFlags(flag.CommandLine)
+	queuepolicies.AddCommandLine(flag.CommandLine)
+	klog.InitFlags(flag.CommandLine)
 
 	flag.Parse()
+	s.Register(flag.CommandLine)
+	http.Handle("/metrics", promhttp.Handler())
+	go http.ListenAndServe(":10259", nil)
 
 	if err := app.Run(s); err != nil {
 		log.Fatalln(err)

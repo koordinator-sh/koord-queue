@@ -17,17 +17,13 @@
 package framework
 
 import (
+	"sync"
 	"time"
 
 	"github.com/kube-queue/api/pkg/apis/scheduling/v1alpha1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/cache"
 )
-
-// QueueInfo is a Queue wrapper with additional information related to the Queue
-type QueueInfo struct {
-	// Name is namespace
-	Name string
-	Queue *v1alpha1.Queue
-}
 
 // QueueUnitInfo is a Queue wrapper with additional information related to
 // the QueueUnit
@@ -41,23 +37,62 @@ type QueueUnitInfo struct {
 	Attempts int
 	// The time when the QueueUnit is added to the queue for the first time.
 	InitialAttemptTimestamp time.Time
+	//
+	Queue string
+}
+
+var lock sync.RWMutex
+var queueUnitInfoCache = map[types.UID]*QueueUnitInfo{}
+
+func ResetQueueUnitCache() {
+	lock.Lock()
+	defer lock.Unlock()
+	queueUnitInfoCache = map[types.UID]*QueueUnitInfo{}
 }
 
 // NewQueueUnitInfo constructs QueueUnitInfo
 func NewQueueUnitInfo(unit *v1alpha1.QueueUnit) *QueueUnitInfo {
-	return &QueueUnitInfo{
+	lock.RLock()
+	if existing, ok := queueUnitInfoCache[unit.UID]; ok {
+		lock.RUnlock()
+		return &QueueUnitInfo{
+			Name:                    unit.Namespace + "/" + unit.Name,
+			Unit:                    unit.DeepCopy(),
+			Timestamp:               existing.Timestamp,
+			Attempts:                0,
+			InitialAttemptTimestamp: existing.InitialAttemptTimestamp,
+		}
+	}
+	lock.RUnlock()
+	info := &QueueUnitInfo{
 		Name:                    unit.Namespace + "/" + unit.Name,
 		Unit:                    unit,
 		Timestamp:               time.Now(),
 		Attempts:                0,
-		InitialAttemptTimestamp: time.Now(),
+		InitialAttemptTimestamp: unit.CreationTimestamp.Time,
 	}
+	lock.Lock()
+	queueUnitInfoCache[unit.UID] = info
+	lock.Unlock()
+	return info
 }
 
-// NewQueueInfo constructs QueueInfo
-func NewQueueInfo(queue *v1alpha1.Queue) *QueueInfo {
-	return &QueueInfo{
-		Name: queue.Namespace,
-		Queue: queue,
+func ForgetQueueUnitInfo(c cache.Indexer) {
+	lock.Lock()
+	for uid := range queueUnitInfoCache {
+		if _, e, _ := c.GetByKey(string(uid)); !e {
+			delete(queueUnitInfoCache, uid)
+		}
+	}
+	lock.Unlock()
+}
+
+func (qu *QueueUnitInfo) Copy() *QueueUnitInfo {
+	return &QueueUnitInfo{
+		Name:                    qu.Name,
+		Timestamp:               qu.Timestamp,
+		Attempts:                qu.Attempts,
+		InitialAttemptTimestamp: qu.InitialAttemptTimestamp,
+		Unit:                    qu.Unit.DeepCopy(),
 	}
 }

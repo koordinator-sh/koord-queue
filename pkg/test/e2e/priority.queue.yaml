@@ -1,0 +1,14 @@
+
+---
+apiVersion: scheduling.x-k8s.io/v1alpha1
+kind: Queue
+metadata:
+  annotations:
+  name: test-queue
+  annotations:
+    kube-queue/available-quota: "child-1"
+  labels:
+    create-by-kubequeue: "false"
+  namespace: kube-queue
+spec:
+  queuePolicy: Priority

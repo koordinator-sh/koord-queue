@@ -17,6 +17,15 @@
 package plugins
 
 import (
+	"os"
+	"strings"
+
+	apiruntime "k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/kube-queue/kube-queue/pkg/framework"
+	"github.com/kube-queue/kube-queue/pkg/framework/plugins/defaultgroup"
+	elasticquota "github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquota"
+	"github.com/kube-queue/kube-queue/pkg/framework/plugins/elasticquotav1alpha1"
 	"github.com/kube-queue/kube-queue/pkg/framework/plugins/priority"
 	"github.com/kube-queue/kube-queue/pkg/framework/plugins/resourcequota"
 	"github.com/kube-queue/kube-queue/pkg/framework/runtime"
@@ -27,7 +36,45 @@ import (
 // through the WithFrameworkOutOfTreeRegistry option.
 func NewInTreeRegistry() runtime.Registry {
 	return runtime.Registry{
-		resourcequota.Name: resourcequota.New,
-		priority.Name:      priority.New,
+		priority.Name:             priority.New,
+		defaultgroup.Name:         defaultgroup.New,
+		resourcequota.Name:        resourcequota.New,
+		elasticquota.Name:         elasticquota.New,
+		elasticquotav1alpha1.Name: elasticquotav1alpha1.New,
+	}
+}
+
+func pluginproxy(f func(_ apiruntime.Object, handle framework.Handle) (framework.Plugin, error), plugins map[string]framework.Plugin) func(_ apiruntime.Object, handle framework.Handle) (framework.Plugin, error) {
+	return func(obj apiruntime.Object, handle framework.Handle) (framework.Plugin, error) {
+		plg, err := f(obj, handle)
+		plugins[plg.Name()] = plg
+		return plg, err
+	}
+}
+
+func NewFakeRegistry() (runtime.Registry, map[string]framework.Plugin) {
+	plugins := map[string]framework.Plugin{}
+	queueGroupPlugin := "resourceQuota"
+	if os.Getenv("QueueGroupPlugin") != "" {
+		queueGroupPlugin = strings.TrimSpace(os.Getenv("QueueGroupPlugin"))
+	}
+	if queueGroupPlugin == "resourceQuota" {
+		return runtime.Registry{
+			priority.Name:      pluginproxy(priority.New, plugins),
+			defaultgroup.Name:  pluginproxy(defaultgroup.New, plugins),
+			resourcequota.Name: pluginproxy(resourcequota.New, plugins),
+		}, plugins
+	} else if queueGroupPlugin == "elasticquota" {
+		return runtime.Registry{
+			priority.Name:     pluginproxy(priority.New, plugins),
+			elasticquota.Name: pluginproxy(elasticquota.FakeNew, plugins),
+		}, plugins
+	} else if queueGroupPlugin == "elasticquotav2" {
+		return runtime.Registry{
+			priority.Name:     pluginproxy(priority.New, plugins),
+			elasticquota.Name: pluginproxy(elasticquotav1alpha1.FakeNew, plugins),
+		}, plugins
+	} else {
+		panic("QueueGroupPlugin must be in [resourceQuota|elasticquota]")
 	}
 }

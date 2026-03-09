@@ -1,0 +1,256 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-queue-controller
+  namespace: kube-queue
+  labels:
+    control-plane: kube-queue-controller
+spec:
+  selector:
+    matchLabels:
+      control-plane: kube-queue-controller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: kube-queue-controller
+    spec:
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: kube-queue-plugin-config
+        name: kube-queue-plugin-config
+      serviceAccountName: kube-queue
+      containers:
+        - image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+          imagePullPolicy: Always
+          name: controller
+          volumeMounts:
+          - mountPath: /etc/kubernetes/ack-config
+            name: kube-queue-plugin-config
+          command:
+          - kube-queue
+          - --oversellrate={{ .Values.oversellrate }}
+          - --qps={{ .Values.qps }}
+          - --burst={{ .Values.burst }}
+          - --config=/etc/kubernetes/ack-config/plugin.yaml
+          - --enableVisibilityServer={{ .Values.controller.enableVisibilityServer }},
+          - --strictDequeueMode={{ .Values.controller.enableResourceCheckWithScheduler }},
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- if .Values.controller.enableBlockingMode }}
+            - name: StrictPriority
+              value: "true"
+            {{- end}}
+            {{- if .Values.controller.enableStrictPriority }}
+            - name: StrictConsistency
+              value: "true"
+            {{- end}}
+            {{- if .Values.controller.queueGroupPlugin }}
+            - name: QueueGroupPlugin
+              value: {{ .Values.controller.queueGroupPlugin }}
+            {{- end}}
+          resources:
+            {{- toYaml .Values.controller.resources | nindent 12 }}
+        {{- if .Values.admissionCheckController.enabled }}
+        - command:
+            - /manager
+          image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.admissionCheckController.image.repository }}:{{ .Values.admissionCheckController.image.tag }}"
+          imagePullPolicy: IfNotPresent
+          name: provreq-ac-ctrl
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+        {{- end }}
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-extensions
+  namespace: kube-queue
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: deployment
+    app.kubernetes.io/instance: controller-manager
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/created-by: job-extensions
+    app.kubernetes.io/part-of: job-extensions
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  selector:
+    matchLabels:
+      control-plane: job-extensions
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: job-extensions
+    spec:
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - command:
+            - /manager
+          args:
+            - --leader-elect
+            {{- $jobType := "" }}
+            {{- if .Values.extension.batchjob.enable }}
+            {{- $jobType = print $jobType ",job"}}
+            {{- end }}
+            {{- if .Values.extension.spark.enable }}
+            {{- $jobType = print $jobType ",sparkapp"}}
+            {{- end }}
+            {{- if .Values.extension.mpi.enable }}
+            {{- $jobType = print $jobType ",mpijob"}}
+            {{- end }}
+            {{- if .Values.extension.ray.enable }}
+            {{- $jobType = print $jobType ",rayjob"}}
+            {{- end }}
+            {{- if .Values.extension.tf.enable }}
+            {{- $jobType = print $jobType ",tfjob"}}
+            {{- end }}
+            {{- if .Values.extension.pytorch.enable }}
+            {{- $jobType = print $jobType ",pytorchjob"}}
+            {{- end }}
+            {{- if .Values.extension.argo.enable }}
+            {{- $jobType = print $jobType ",workflow"}}
+            {{- end }}
+            - --enabled-extensions={{- $jobType | trimPrefix "," }}
+          image: "{{ include "ack-kube-queue.imagePrefix" . }}/acs/job-extensions:{{ .Values.extension.jobextensions.tag }}"
+          name: manager
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+          {{- toYaml .Values.extension.batchjob.resources | nindent 12 }}
+      serviceAccount: kube-queue
+      serviceAccountName: kube-queue
+      terminationGracePeriodSeconds: 10
+
+{{- if eq 1 0 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argo-extension
+  namespace: kube-queue
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: deployment
+    app.kubernetes.io/instance: controller-manager
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/created-by: argo-extension
+    app.kubernetes.io/part-of: argo-extension
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  selector:
+    matchLabels:
+      control-plane: argo-extension
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: argo-extension
+    spec:
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+      - command:
+        - /manager
+        args:
+        - --leader-elect
+        image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.extension.argo.image.repository }}:{{ .Values.extension.argo.image.tag }}"
+        name: manager
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8082
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          {{- toYaml .Values.extension.argo.resources | nindent 12 }}
+      serviceAccount: kube-queue
+      serviceAccountName: kube-queue
+      terminationGracePeriodSeconds: 10
+{{- end }}
+
+{{- if .Values.isNeedNotebookExtension }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notebook-operator-extesion
+  labels:
+    control-plane: notebook-operator-extesion
+  namespace: kube-queue
+spec:
+  selector:
+    matchLabels:
+      control-plane: notebook-operator-extesion
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        control-plane: notebook-operator-extesion
+    spec:
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/arch
+                operator: NotIn
+                values:
+                - "arm64"
+      serviceAccountName: kube-queue
+      containers:
+        - name: notebook-operator-extesion
+          image: "{{ include "ack-kube-queue.imagePrefix" . }}/{{ .Values.extension.notebook.image.repository }}:{{ .Values.extension.notebook.image.tag }}"
+          imagePullPolicy: Always
+          resources:
+            {{- toYaml .Values.extension.notebook.resources | nindent 12 }}
+      terminationGracePeriodSeconds: 10
+{{- end }}
