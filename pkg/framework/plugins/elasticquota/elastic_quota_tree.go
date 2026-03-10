@@ -117,6 +117,9 @@ var _ framework.QueueUnitInfoProvider = &ElasticQuota{}
 
 func (eq *ElasticQuota) GetQueueUnitQuotaName(unit *v1alpha1.QueueUnit) ([]string, error) {
 	info, err := eq.GetElasticQuotaInfo(unit)
+	if err != nil {
+		return []string{}, err
+	}
 	return []string{info.Name}, err
 }
 

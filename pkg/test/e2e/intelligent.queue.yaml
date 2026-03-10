@@ -1,0 +1,41 @@
+---
+apiVersion: scheduling.sigs.k8s.io/v1beta1
+kind: ElasticQuotaTree
+metadata:
+  name: elasticquotatree
+  namespace: kube-system # 只有kube-system下才会生效
+spec:
+  root:
+    name: root # Root节点的Max必须等于Min
+    max:
+      cpu: 10
+    min:
+      cpu: 10
+    children:
+    - name: child-2
+      max:
+        cpu: 8
+      min:
+        cpu: 4
+      namespaces: # 配置对应的Namespace
+        - eqt-demo
+    - name: child-1
+      max:
+        cpu: 8
+      min:
+        cpu: 4
+      namespaces: # 配置对应的Namespace
+        - eqt-default-group
+---
+apiVersion: scheduling.x-k8s.io/v1alpha1
+kind: Queue
+metadata:
+  name: intelligent-queue
+  namespace: kube-queue
+  annotations:
+    kube-queue/available-quota: "child-1"
+    kube-queue/priority-threshold: "4"
+  labels:
+    create-by-kubequeue: "false"
+spec:
+  queuePolicy: Intelligent

@@ -101,8 +101,13 @@ func NewPriorityQueue(name string,
 	pq.enablePreempt = q.Annotations[EnableQueueUnitPreemption] == "true"
 	klog.V(1).Infof("create new queue %v, policy %v, waitPodsRunning %v, maxDepth %v", pq.name, pq.queueCr.Spec.QueuePolicy, pq.waitPodsRunning, pq.maxDepth)
 	go func() {
-		pq.fixQueue(klog.Background())
-		time.Sleep(30 * time.Second)
+		for {
+			if pq.closed {
+				return
+			}
+			pq.fixQueue(klog.Background())
+			time.Sleep(30 * time.Second)
+		}
 	}()
 	return pq
 }
@@ -142,6 +147,8 @@ type PriorityQueue struct {
 	enablePreempt   bool
 	// only one preempt go routine will be running at one time
 	preemptFlag atomic.Int32
+
+	closed bool
 }
 
 var _ queuepolicies.SchedulingQueue = &PriorityQueue{}
@@ -234,6 +241,9 @@ func (q *PriorityQueue) Next(ctx context.Context) (*framework.QueueUnitInfo, err
 	klog.Infof("len %v, nextid %v", len(q.queue), q.nextIdx)
 	if q.blocked {
 		for {
+			if q.closed {
+				return nil, fmt.Errorf("queue %s is closed", q.name)
+			}
 			shouldBlock := false
 			shouldRejudge := false
 			_, qu = q.findNextQueueUnit()
@@ -288,6 +298,9 @@ func (q *PriorityQueue) Next(ctx context.Context) (*framework.QueueUnitInfo, err
 		}
 	} else {
 		for {
+			if q.closed {
+				return nil, fmt.Errorf("queue %s is closed", q.name)
+			}
 			_, qu = q.findNextQueueUnit()
 			if qu == nil {
 				block := []string{}
@@ -350,8 +363,25 @@ func (q *PriorityQueue) AddQueueUnitInfo(qu *framework.QueueUnitInfo) (bool, err
 	q.resetNextIdxFlag = true
 	q.queue = slices.Insert(q.queue, index, qu)
 	// When new queueUnit is added, wake up the scheduler.
-	klog.V(1).Infof("queueUnit add event %v in queue %s", key, q.name)
+	var msg = ""
+	var kvs = []interface{}{}
+	if klog.V(1).Enabled() {
+		msg = "queueUnit add event %v in queue %s"
+		kvs = []interface{}{key, q.name}
+	}
 	q.sessionId++
+
+	quotas, err := q.fw.GetQueueUnitQuotaName(qu.Unit)
+	if err == nil && len(quotas) > 0 {
+		if klog.V(2).Enabled() {
+			msg += "; add event for %v, quota %v no more blocked in queue %v"
+			kvs = append(kvs, []interface{}{klog.KObj(qu.Unit), quotas[0], q.name})
+		}
+		q.blockedQuota.Delete(quotas[0])
+	}
+	if msg != "" {
+		klog.Infof(msg, kvs...)
+	}
 	q.cond.Broadcast()
 	return true, nil
 }
@@ -427,6 +457,9 @@ func isAdmissionChanged(old, new *v1alpha1.QueueUnit) bool {
 		oldAds[ad.Name] = ad
 	}
 	for _, ad := range new.Status.Admissions {
+		if _, exist := oldAds[ad.Name]; !exist {
+			return true
+		}
 		if oldAds[ad.Name].Name != ad.Name {
 			return true
 		}
@@ -537,7 +570,7 @@ func (q *PriorityQueue) Update(old, new *v1alpha1.QueueUnit) error {
 }
 
 // Reserve will be called when a queueUnit is scheduled
-func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo) error {
+func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo) (err error, preempted bool) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -545,7 +578,7 @@ func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo
 	// no more queueunit can be scheduled in this queue
 	if q.waitPodsRunning && len(q.assumed) > 0 {
 		if !q.preemptFlag.CompareAndSwap(0, 1) {
-			return fmt.Errorf("queue %s is preempting, not allowed to preempt again", q.name)
+			return fmt.Errorf("queue %s is preempting, not allowed to preempt again", q.name), true
 		}
 		startTime := time.Now()
 		victims := []*framework.QueueUnitInfo{}
@@ -555,8 +588,13 @@ func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo
 				delete(q.assumed, assmed)
 				continue
 			} else if q.lessFunc(qi, assumedQi) < 0 {
-				victims = append(victims, assumedQi)
 				pps, _ := utils.GetResourcesCanReclaim(assumedQi.Unit)
+				if pps == nil {
+					logger := klog.FromContext(ctx)
+					logger.V(2).Info("preemption: no resources can be reclaimed (protected), skip", "queueUnit", klog.KObj(assumedQi.Unit))
+					continue
+				}
+				victims = append(victims, assumedQi)
 				ps[assumedQi.Unit.Namespace+"/"+assumedQi.Unit.Name] = pps
 			}
 		}
@@ -571,7 +609,7 @@ func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo
 				victimNames = append(victimNames, v.Name)
 			}
 			q.preemptFlag.CompareAndSwap(1, 0)
-			return fmt.Errorf("preemption: waiting for queueUnit preempted, victims: [%v]", strings.Join(victimNames, ","))
+			return fmt.Errorf("preemption: waiting for queueUnit preempted, victims: [%v]", strings.Join(victimNames, ",")), true
 		} else {
 			q.preemptFlag.CompareAndSwap(1, 0)
 			assumed := []string{}
@@ -579,7 +617,7 @@ func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo
 				assumed = append(assumed, k)
 			}
 			logger.V(2).Info("preemption: no more queueUnit allowed to schedule in this queue", "assumed", assumed)
-			return fmt.Errorf("no more queueUnit allowed to schedule in this queue")
+			return fmt.Errorf("no more queueUnit allowed to schedule in this queue"), false
 		}
 	}
 	if !q.blocked {
@@ -589,7 +627,7 @@ func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo
 	}
 	q.assumed[qi.Unit.Namespace+"/"+qi.Unit.Name] = struct{}{}
 	q.updating[qi.Unit.Namespace+"/"+qi.Unit.Name] = struct{}{}
-	return nil
+	return nil, false
 }
 
 // AddUnschedulableIfNotPresent will be call when a queueUnit is unschedulable, allocatableChangedDuringScheduling
@@ -745,6 +783,8 @@ func (q *PriorityQueue) Run() {
 
 // Close stops the queue.
 func (q *PriorityQueue) Close() {
+	q.closed = true
+	q.cond.Broadcast()
 }
 
 // GetQueueDebugInfo returns debug information about the queue.

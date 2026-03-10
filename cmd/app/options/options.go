@@ -19,6 +19,7 @@ package options
 import (
 	"flag"
 	"sync"
+	"time"
 )
 
 // ServerOption is the main context object for the queue controller.
@@ -44,6 +45,8 @@ type ServerOption struct {
 	EnableParentLimit               bool
 	EnableVisibilityServer          bool
 	Config                          string
+
+	DefaultReclaimProtectTime time.Duration
 	// When strict dequeue mode is enabled, QueueUnits will be SchedReady after dequeue
 	// from the queue and waiting scheduler to change the status to SchedSucceed or SchedFailed.
 	StrictDequeueMode bool
@@ -86,6 +89,7 @@ func (s *ServerOption) AddFlags(fs *flag.FlagSet) {
 	flag.StringVar(&s.FeatureGates, "feature-gates", "", "A set of key=value pairs that describe feature gates for alpha/experimental features.")
 	fs.Int64Var(&s.AdmissionCheckControllerWorker, "admissionCheckControllerWorker", 2, "the number of workers to check admissionCheckState in queue units' status")
 	fs.StringVar(&s.Config, "config", "", "the path to the config file")
+	fs.DurationVar(&s.DefaultReclaimProtectTime, "defaultReclaimProtectTime", 0, "the default reclaim protect time")
 	fs.BoolVar(&s.StrictDequeueMode, "strictDequeueMode", false, "When strict dequeue mode is enabled, QueueUnits will be SchedReady after dequeue from the queue and waiting scheduler to change the status to SchedSucceed or SchedFailed.")
 	fs.StringVar(&s.QueueList, "queue-list", "", "KoordQueue Controller will only enable strictDequeueMode for the queue in the queue list.")
 }

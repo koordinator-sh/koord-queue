@@ -209,6 +209,10 @@ func (q *Queue) Sync(newQueue *v1alpha1.Queue) error {
 		q.queueImpl.Close()
 
 		q.queueImpl, err = CreateSchedulingQueue(newQueue.Name, string(newQueue.Spec.QueuePolicy), newQueue, q.fw, q.queueUnitLister, args, items...)
+
+		for _, item := range items {
+			q.queueImpl.AddQueueUnitInfo(item)
+		}
 	}
 	q.policy = string(newQueue.Spec.QueuePolicy)
 	q.queue = newQueue.DeepCopy()
@@ -262,7 +266,7 @@ func (q *Queue) AddQueueUnitInfo(qu *framework.QueueUnitInfo) error {
 }
 
 // means the scheduling of the qu has finished
-func (q *Queue) Reserve(ctx context.Context, qu *schedv1alpha1.QueueUnit) error {
+func (q *Queue) Reserve(ctx context.Context, qu *schedv1alpha1.QueueUnit) (err error, preempted bool) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 

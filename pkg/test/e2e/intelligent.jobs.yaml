@@ -1,0 +1,134 @@
+---
+apiVersion: scheduling.k8s.io/v1
+description: Used for system critical pods that must not be moved from their current
+  node.
+kind: PriorityClass
+metadata:
+  name: high
+preemptionPolicy: PreemptLowerPriority
+value: 5
+---
+apiVersion: scheduling.k8s.io/v1
+description: Used for system critical pods that must not be moved from their current
+  node.
+kind: PriorityClass
+metadata:
+  name: low
+preemptionPolicy: PreemptLowerPriority
+value: 3
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-high-1
+  namespace: test-group
+  labels:
+    quota.scheduling.alibabacloud.com/name: "child-1"
+  annotations:    
+    kube-queue/queue-name: intelligent-queue
+spec:
+  suspend: true
+  completions: 2
+  parallelism: 2
+  template:
+    spec:
+      priorityClassName: high
+      priority: 5
+      schedulerName: default-scheduler
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["sleep",  "10s"]
+        resources:
+          requests:
+            cpu: 5
+          limits:
+            cpu: 5
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-high-2
+  namespace: test-group
+  labels:
+    quota.scheduling.alibabacloud.com/name: "child-1"
+  annotations:    
+    kube-queue/queue-name: intelligent-queue
+spec:
+  suspend: true
+  completions: 2
+  parallelism: 2
+  template:
+    spec:
+      priorityClassName: high
+      priority: 5
+      schedulerName: default-scheduler
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["sleep",  "10s"]
+        resources:
+          requests:
+            cpu: 1
+          limits:
+            cpu: 1
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-low-1
+  namespace: test-group
+  labels:
+    quota.scheduling.alibabacloud.com/name: "child-1"
+  annotations:    
+    kube-queue/queue-name: intelligent-queue
+spec:
+  suspend: true
+  completions: 2
+  parallelism: 2
+  template:
+    spec:
+      priorityClassName: low
+      priority: 3
+      schedulerName: default-scheduler
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["sleep",  "10s"]
+        resources:
+          requests:
+            cpu: 5
+          limits:
+            cpu: 5
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-low-2
+  namespace: test-group
+  labels:
+    quota.scheduling.alibabacloud.com/name: "child-1"
+  annotations:    
+    kube-queue/queue-name: intelligent-queue
+spec:
+  suspend: true
+  completions: 2
+  parallelism: 2
+  template:
+    spec:
+      priorityClassName: low
+      priority: 3
+      schedulerName: default-scheduler
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["sleep",  "10s"]
+        resources:
+          requests:
+            cpu: 1
+          limits:
+            cpu: 1
+      restartPolicy: Never

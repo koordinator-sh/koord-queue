@@ -5,6 +5,7 @@ import (
 
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies/intelligentqueue"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies/schedulingqueuev2"
 
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
@@ -28,6 +29,9 @@ func init() {
 	for _, p := range schedulingqueuev2.SupportedPolicy {
 		factory[p] = schedulingqueuev2.NewPriorityQueue
 	}
+
+	// Register intelligent queue strategy
+	factory[queuepolicies.Intelligent] = intelligentqueue.NewIntelligentQueue
 }
 
 func CreateSchedulingQueue(name, strategy string, q *v1alpha1.Queue, fw framework.Handle, queueUnitLister externalv1alpha1.QueueUnitLister, args map[string]string, items ...*framework.QueueUnitInfo) (queuepolicies.SchedulingQueue, error) {
