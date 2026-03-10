@@ -41,7 +41,9 @@ func (f *fakeQueueImpl) Delete(*v1alpha1.QueueUnit) error { return nil }
 func (f *fakeQueueImpl) Update(*v1alpha1.QueueUnit, *v1alpha1.QueueUnit) error { return nil }
 
 // Reserve will be called when a queueUnit is scheduled
-func (f *fakeQueueImpl) Reserve(ctx context.Context, qi *framework.QueueUnitInfo) error { return nil }
+func (f *fakeQueueImpl) Reserve(ctx context.Context, qi *framework.QueueUnitInfo) (error, bool) {
+	return nil, false
+}
 func (f *fakeQueueImpl) DequeueSuccess(qu *v1alpha1.QueueUnit)                          {}
 func (f *fakeQueueImpl) Preempt(ctx context.Context, qi *framework.QueueUnitInfo) error { return nil }
 

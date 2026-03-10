@@ -85,6 +85,19 @@ func (q *QueueUnitWrapper) Resources(res map[string]int64) *QueueUnitWrapper {
 	return q
 }
 
+func (q *QueueUnitWrapper) MilliResources(res map[string]int64) *QueueUnitWrapper {
+	for k, v := range res {
+		if k == "cpu" {
+			q.queueunit.Spec.Resource[v1.ResourceName(k)] = *resource.NewMilliQuantity(v, resource.DecimalSI)
+			q.queueunit.Spec.Request[v1.ResourceName(k)] = *resource.NewMilliQuantity(v, resource.DecimalSI)
+		} else {
+			q.queueunit.Spec.Resource[v1.ResourceName(k)] = *resource.NewQuantity(v, resource.DecimalSI)
+			q.queueunit.Spec.Request[v1.ResourceName(k)] = *resource.NewQuantity(v, resource.DecimalSI)
+		}
+	}
+	return q
+}
+
 func (q *QueueUnitWrapper) Priority(p int32) *QueueUnitWrapper {
 	q.queueunit.Spec.Priority = ptr.To(p)
 	return q

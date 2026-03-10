@@ -199,7 +199,7 @@ func TestReserve(t *testing.T) {
 	item1 := makeTestQueueUnit("default", "job1", 10)
 	q.AddQueueUnitInfo(item1)
 
-	err := q.Reserve(context.TODO(), item1)
+	err, _ := q.Reserve(context.TODO(), item1)
 	if err != nil {
 		t.Errorf("Expected Reserve to succeed, got error: %v", err)
 	}
@@ -245,11 +245,11 @@ func TestWaitForPodsRunningReserve(t *testing.T) {
 		"default/job2": item2,
 		"default/job3": item3,
 	}
-	err = q.Reserve(context.TODO(), item3)
+	err, _ = q.Reserve(context.TODO(), item3)
 	if err == nil || !strings.HasPrefix(err.Error(), "preemption: waiting for queueUnit preempted") {
 		t.Errorf("Expected Reserve to failed, actual %v", err)
 	}
-	err = q.Reserve(context.TODO(), item1)
+	err, _ = q.Reserve(context.TODO(), item1)
 	if err == nil || err.Error() != "no more queueUnit allowed to schedule in this queue" {
 		t.Errorf("Expected Reserve to failed, actual %v", err)
 	}

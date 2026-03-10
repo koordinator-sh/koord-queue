@@ -30,7 +30,7 @@ type SchedulingQueue interface {
 	// Update will be called when queueUnits are updated.
 	Update(*v1alpha1.QueueUnit, *v1alpha1.QueueUnit) error
 	// Reserve will be called when a queueUnit is scheduled
-	Reserve(ctx context.Context, qi *framework.QueueUnitInfo) error
+	Reserve(ctx context.Context, qi *framework.QueueUnitInfo) (err error, preempted bool)
 	DequeueSuccess(qu *v1alpha1.QueueUnit)
 	Preempt(ctx context.Context, qi *framework.QueueUnitInfo) error
 	// AddUnschedulableIfNotPresent will be call when a queueUnit is unschedulable, allocatableChangedDuringScheduling

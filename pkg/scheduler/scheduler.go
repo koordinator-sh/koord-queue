@@ -270,11 +270,11 @@ func (s *Scheduler) schedule(ctx context.Context, q *queue.Queue) {
 		} else {
 			copiedUnit.Status.Phase = v1alpha1.Dequeued
 		}
-		if err := q.Reserve(ctx, copiedUnit); err != nil {
+		if err, preempted := q.Reserve(ctx, copiedUnit); err != nil {
 			logger.Info("failed to reserve queueUnit in queue", "reason", err.Error())
 			status.AppendMessage(err.Error())
 			s.fw.RunReservePluginsUnreserve(schedulingCycleCtx, unitInfo)
-			s.ErrorFunc(ctx, unitInfo, q, status.Message(), finished, false)
+			s.ErrorFunc(ctx, unitInfo, q, status.Message(), finished, preempted)
 			logger.V(2).Info("------------------ schedule end ------------------")
 			return
 		}

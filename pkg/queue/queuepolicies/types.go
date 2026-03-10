@@ -8,9 +8,11 @@ import (
 const Priority string = "Priority"
 const Block string = "Block"
 const Round string = "Round"
+const Intelligent string = "Intelligent"
 
 const QueueArgsAnnotationKey string = "koord-queue/queue-args"
 const QueuePolicyLabelKey string = "koord-queue/queue-policy"
+const PriorityThresholdAnnotationKey string = "koord-queue/priority-threshold"
 
 var defaultPolicyEnv string
 var defaultPolicyCLI string

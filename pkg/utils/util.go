@@ -158,10 +158,12 @@ func IsQueueUnitDequeued(qu *v1alpha1.QueueUnit) bool {
 
 const KoordQueueDefaultRequirement = "koord-queue/default-requirement"
 
+var DefaultReclaimProtectTime = 0 * time.Minute
+
 func GetResourcesCanReclaim(qu *v1alpha1.QueueUnit) (map[string]framework.Admission, *Resource) {
-	if qu.Status.LastAllocateTime != nil {
+	if DefaultReclaimProtectTime > 0 && qu.Status.LastAllocateTime != nil {
 		allocateTime := qu.Status.LastAllocateTime.Time
-		if time.Since(allocateTime) < time.Minute {
+		if time.Since(allocateTime) < DefaultReclaimProtectTime {
 			// protection time
 			return nil, nil
 		}
