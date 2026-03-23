@@ -28,7 +28,6 @@ import (
 	"github.com/koordinator-sh/koord-queue/cmd/app/options"
 	app "github.com/koordinator-sh/koord-queue/cmd/app/server"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
-	"github.com/koordinator-sh/koord-queue/pkg/utils"
 )
 
 func main() {
@@ -36,9 +35,6 @@ func main() {
 	s.AddFlags(flag.CommandLine)
 	queuepolicies.AddCommandLine(flag.CommandLine)
 	klog.InitFlags(flag.CommandLine)
-	if s.DefaultReclaimProtectTime > 0 {
-		utils.DefaultReclaimProtectTime = s.DefaultReclaimProtectTime
-	}
 
 	flag.Parse()
 	s.Register(flag.CommandLine)

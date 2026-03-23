@@ -64,6 +64,7 @@ func LoadConfigFromFile(logger klog.Logger, file string) (*config.KoordQueueConf
 		return nil, err
 	}
 
+	logger.V(1).Info("loading config from file", "path", file, "content", string(data))
 	return loadConfig(data)
 }
 
@@ -131,6 +132,7 @@ func Start(ctx context.Context, cfg *rest.Config, kubeClient kubernetes.Interfac
 	if opt.Config != "" {
 		c, err = LoadConfigFromFile(klog.LoggerWithName(klog.Background(), "Init"), opt.Config)
 		if err != nil {
+			klog.ErrorS(err, "Error loading config file")
 			return err
 		}
 	} else {
@@ -139,13 +141,14 @@ func Start(ctx context.Context, cfg *rest.Config, kubeClient kubernetes.Interfac
 		v1.SetDefaults_KoordQueueConfiguration(configv1)
 		err = v1.Convert_v1_KoordQueueConfiguration_To_config_KoordQueueConfiguration(configv1, c, nil)
 		if err != nil {
+			klog.ErrorS(err, "Error converting config")
 			return err
 		}
 	}
-
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
+	klog.V(1).Info("Creating the client")
 	restConfig, err := clientcmd.BuildConfigFromFlags("", opt.KubeConfig)
 	if err != nil {
+		klog.ErrorS(err, "Error building kubeconfig")
 		return err
 	}
 	restConfig.QPS = float32(opt.QPS)
@@ -153,7 +156,9 @@ func Start(ctx context.Context, cfg *rest.Config, kubeClient kubernetes.Interfac
 	queueUnitClient := versioned.NewForConfigOrDie(restConfig)
 	kueueClient := kueueversioned.NewForConfigOrDie(restConfig)
 
+	klog.V(1).Info("Creating the informerFactory")
 	kueueInformerFactory := kueue.NewSharedInformerFactory(kueueClient, 0)
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	queueUnitInformerFactory := externalversions.NewSharedInformerFactory(queueUnitClient, 0)
 
 	if err := addIndexer(queueUnitInformerFactory); err != nil {
@@ -164,6 +169,7 @@ func Start(ctx context.Context, cfg *rest.Config, kubeClient kubernetes.Interfac
 	if os.Getenv("StrictConsistency") != "" {
 		enableStrictConsistency = strings.ToLower(strings.TrimSpace(os.Getenv("StrictConsistency"))) == "true"
 	}
+	klog.V(1).Info("Creating the controller")
 	controller, err := controller.NewController(
 		opt.KubeConfig,
 		enableStrictConsistency,
@@ -237,6 +243,7 @@ func Run(opt *options.ServerOption) error {
 				Identity: string(uuid.NewUUID()), // 唯一标识这个实例
 			},
 		}
+		var err error
 		leaderelection.RunOrDie(context.TODO(), leaderelection.LeaderElectionConfig{
 			Lock:            leaseLock,
 			ReleaseOnCancel: true,
@@ -257,7 +264,7 @@ func Run(opt *options.ServerOption) error {
 						}
 					}
 					fmt.Println("became leader, start to do job queuing")
-					Start(ctx, cfg, kubeClient, opt)
+					err = Start(ctx, cfg, kubeClient, opt)
 				},
 				OnStoppedLeading: func() {
 					// 当实例失去leader状态时执行的逻辑
@@ -274,7 +281,7 @@ func Run(opt *options.ServerOption) error {
 				},
 			},
 		})
-		return nil
+		return err
 	} else {
 		if opt.EnableVisibilityServer {
 			patchStr := fmt.Sprintf("[%v]", ptr.To(jsonpatch.NewOperation("add", "/metadata/labels/koord-queue-leader", "true")).Json())

@@ -93,6 +93,7 @@ func (f *FakeHandle) KubeConfigPath() string                                    
 func (f *FakeHandle) QueueUnitClient() versioned.Interface                         { return f.fakeClient }
 func (f *FakeHandle) OversellRate() float64                                        { return 1 }
 func (f *FakeHandle) KubeConfig() *rest.Config                                     { return nil }
+func (f *FakeHandle) GetReclaimProtectTime() time.Duration                         { return 0 }
 func (f *FakeHandle) UpdateQueueStatus(name string, details map[string][]v1alpha1.QueueItemDetail) error {
 	queue, err := f.ver.Scheduling().V1alpha1().Queues().Lister().Queues("koord-queue").Get(name)
 	if err != nil {

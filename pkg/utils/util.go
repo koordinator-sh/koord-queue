@@ -160,10 +160,10 @@ const KoordQueueDefaultRequirement = "koord-queue/default-requirement"
 
 var DefaultReclaimProtectTime = 0 * time.Minute
 
-func GetResourcesCanReclaim(qu *v1alpha1.QueueUnit) (map[string]framework.Admission, *Resource) {
-	if DefaultReclaimProtectTime > 0 && qu.Status.LastAllocateTime != nil {
+func GetResourcesCanReclaim(qu *v1alpha1.QueueUnit, reclaimProtectTime time.Duration) (map[string]framework.Admission, *Resource) {
+	if reclaimProtectTime > 0 && qu.Status.LastAllocateTime != nil {
 		allocateTime := qu.Status.LastAllocateTime.Time
-		if time.Since(allocateTime) < DefaultReclaimProtectTime {
+		if time.Since(allocateTime) < reclaimProtectTime {
 			// protection time
 			return nil, nil
 		}

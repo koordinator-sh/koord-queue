@@ -88,6 +88,8 @@ func NewPriorityQueue(name string,
 		lessFunc: less,
 
 		lastResetTime: time.Now(),
+
+		reclaimProtectTime: fw.GetReclaimProtectTime(),
 	}
 	if q.Annotations[MaxDepthAnnotation] != "" {
 		maxDepth, err := strconv.ParseInt(q.Annotations[MaxDepthAnnotation], 10, 32)
@@ -147,6 +149,9 @@ type PriorityQueue struct {
 	enablePreempt   bool
 	// only one preempt go routine will be running at one time
 	preemptFlag atomic.Int32
+
+	// reclaimProtectTime is the protection time for queue units before they can be reclaimed
+	reclaimProtectTime time.Duration
 
 	closed bool
 }
@@ -588,7 +593,7 @@ func (q *PriorityQueue) Reserve(ctx context.Context, qi *framework.QueueUnitInfo
 				delete(q.assumed, assmed)
 				continue
 			} else if q.lessFunc(qi, assumedQi) < 0 {
-				pps, _ := utils.GetResourcesCanReclaim(assumedQi.Unit)
+				pps, _ := utils.GetResourcesCanReclaim(assumedQi.Unit, q.reclaimProtectTime)
 				if pps == nil {
 					logger := klog.FromContext(ctx)
 					logger.V(2).Info("preemption: no resources can be reclaimed (protected), skip", "queueUnit", klog.KObj(assumedQi.Unit))
