@@ -79,9 +79,6 @@ rules:
       - update
       - patch
   {{- end }}
-  - apiGroups: ["scheduling.sigs.k8s.io"]
-    resources: ["podgroups", "elasticquotas"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["scheduling.x-k8s.io"]
     resources: ["queues", "queues/status", "queueunits", "queueunits/status"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -120,7 +117,7 @@ rules:
     resources: ["namespaces", "resourcequotas"]
     verbs: ["get", "list", "watch"]
   - apiGroups: ["scheduling.sigs.k8s.io"]
-    resources: ["elasticquotatrees"]
+    resources: ["podgroups","elasticquotatrees","elasticquotas"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["scheduling.k8s.io"]
     resources: ["priorityclasses"]

@@ -242,7 +242,7 @@ func (q *PriorityQueue) dryRunPreemption(preemptor *framework.QueueUnitInfo, ass
 				last := assumed[len(assumed)-1]
 				assumed = assumed[:len(assumed)-1]
 				// currently we do not consider resource that reserved in memory
-				ps, res := utils.GetResourcesCanReclaim(last.Unit)
+				ps, res := utils.GetResourcesCanReclaim(last.Unit, q.reclaimProtectTime)
 				if len(ps) == 0 {
 					continue
 				}

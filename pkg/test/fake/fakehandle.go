@@ -1,6 +1,8 @@
 package fake
 
 import (
+	"time"
+
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
@@ -62,4 +64,8 @@ func (f *FakeHandle) EventRecorder() record.EventRecorderLogger {
 func (f *FakeHandle) GetQueueUnitQuotaName(qu *v1alpha1.QueueUnit) ([]string, error) {
 	// 默认返回固定 quota 名称
 	return []string{f.quToQuotas[qu.Namespace+"/"+qu.Name]}, nil
+}
+
+func (f *FakeHandle) GetReclaimProtectTime() time.Duration {
+	return 0
 }

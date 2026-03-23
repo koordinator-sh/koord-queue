@@ -22,6 +22,7 @@ import (
 	"math"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -63,6 +64,7 @@ type frameworkImpl struct {
 	oversellRate           float64
 	config                 *rest.Config
 	recorder               record.EventRecorderLogger
+	reclaimProtectTime     time.Duration
 
 	// snapshotLock protects queueUnitQuotaMapping and queueUnitsByQuota
 	snapshotLock sync.RWMutex
@@ -285,6 +287,10 @@ func (f *frameworkImpl) OversellRate() float64 {
 	return f.oversellRate
 }
 
+func (f *frameworkImpl) GetReclaimProtectTime() time.Duration {
+	return f.reclaimProtectTime
+}
+
 func (f *frameworkImpl) CreateQueue(name, generateName, policy string, priority *int32, priorityClassName string, labels, annotations, args map[string]string) error {
 	var b []byte
 	var err error
@@ -432,10 +438,13 @@ func NewFramework(r Registry, config *rest.Config, kubeConfigPath string,
 		queueUnitsByQuota:      make(map[string]map[types.NamespacedName]apiv1alpha1.QueueUnit),
 	}
 
-	klog.V(1).Infof("Starting Koord Queue with plugins: %v, plugin configs: %v", pluginconfig.Plugins, pluginconfig.PluginConfigs)
 	enabledPlugins := make(map[string]struct{}, 0)
-	for _, plg := range pluginconfig.Plugins {
-		enabledPlugins[plg.Name] = struct{}{}
+	if pluginconfig != nil {
+		f.reclaimProtectTime = pluginconfig.DefaultReclaimProtectTime
+		klog.V(1).Infof("Starting Koord Queue with plugins: %v, plugin configs: %v", pluginconfig.Plugins, pluginconfig.PluginConfigs)
+		for _, plg := range pluginconfig.Plugins {
+			enabledPlugins[plg.Name] = struct{}{}
+		}
 	}
 	for name, factory := range r {
 		if _, ok := enabledPlugins[name]; !ok {

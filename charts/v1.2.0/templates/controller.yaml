@@ -40,6 +40,7 @@ spec:
             name: koord-queue-plugin-config
           command:
           - koord-queue
+          - --v=4
           - --oversellrate={{ .Values.oversellrate }}
           - --qps={{ .Values.qps }}
           - --burst={{ .Values.burst }}

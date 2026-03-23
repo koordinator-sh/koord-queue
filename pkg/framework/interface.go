@@ -18,6 +18,7 @@ package framework
 
 import (
 	"context"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -220,6 +221,7 @@ type Handle interface {
 	KubeConfig() *rest.Config
 	EventRecorder() record.EventRecorderLogger
 	GetQueueUnitQuotaName(*v1alpha1.QueueUnit) ([]string, error)
+	GetReclaimProtectTime() time.Duration
 }
 
 type MultiQueueHandle interface {

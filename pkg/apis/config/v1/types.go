@@ -3,6 +3,7 @@ package v1
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +17,9 @@ type KoordQueueConfiguration struct {
 	PluginConfigs map[string]runtime.RawExtension `json:"pluginConfigs,omitempty"`
 
 	Plugins []Plugin `json:"plugins,omitempty"`
+
+	// DefaultReclaimProtectTime is the default reclaim protect time for queue units
+	DefaultReclaimProtectTime time.Duration `json:"defaultReclaimProtectTime,omitempty"`
 }
 
 type Plugin struct {

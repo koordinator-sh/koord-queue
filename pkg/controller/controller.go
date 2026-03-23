@@ -71,28 +71,25 @@ func NewController(kubeConfigPath string, enableStrictConsistency bool, stopCh <
 	}
 
 	kubeConfig := cfg.KubeConfig
-
 	kubeClient := cfg.KubeClient
 	queueUnitClient := cfg.QueueUnitClient
-
 	queueFactory := cfg.QueueFactory
 	informerFactory := cfg.InformersFactory
-
+	schemeModified := scheme.Scheme
+	v1alpha1.AddToScheme(schemeModified)
 	queueInformer := queueFactory.Scheduling().V1alpha1().Queues().Informer()
 	queueUnitLister := queueFactory.Scheduling().V1alpha1().QueueUnits().Lister()
 	queueUnitInformer := queueFactory.Scheduling().V1alpha1().QueueUnits().Informer()
 
 	opts := options.NewServerOption()
-
 	// Create event broadcaster
+	klog.V(1).Info("Starting Koord Queue EventBroadcaster")
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(klog.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeClient.CoreV1().Events("")})
-
-	schemeModified := scheme.Scheme
-	v1alpha1.AddToScheme(schemeModified)
 	recorder := eventBroadcaster.NewRecorder(schemeModified, corev1.EventSource{Component: utils.ControllerAgentName})
 
+	klog.V(1).Info("Creating framework")
 	r := plugins.NewInTreeRegistry()
 	fw, err := runtime.NewFramework(r,
 		kubeConfig,
