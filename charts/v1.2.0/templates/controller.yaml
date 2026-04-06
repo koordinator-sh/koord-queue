@@ -32,7 +32,7 @@ spec:
         name: koord-queue-plugin-config
       serviceAccountName: koord-queue
       containers:
-        - image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+        - image: "{{ include "koord-queue.imagePrefix" . }}/{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
           imagePullPolicy: Always
           name: controller
           volumeMounts:
@@ -73,7 +73,7 @@ spec:
         {{- if .Values.admissionCheckController.enabled }}
         - command:
             - /manager
-          image: "{{ include "ack-koord-queue.imagePrefix" . }}/{{ .Values.admissionCheckController.image.repository }}:{{ .Values.admissionCheckController.image.tag }}"
+          image: "{{ include "koord-queue.imagePrefix" . }}/{{ .Values.admissionCheckController.image.repository }}:{{ .Values.admissionCheckController.image.tag }}"
           imagePullPolicy: IfNotPresent
           name: provreq-ac-ctrl
           resources:
@@ -140,7 +140,7 @@ spec:
             {{- $jobType = print $jobType ",workflow"}}
             {{- end }}
             - --enabled-extensions={{- $jobType | trimPrefix "," }}
-          image: "{{ include "ack-koord-queue.imagePrefix" . }}/acs/job-extensions:{{ .Values.extension.jobextensions.tag }}"
+          image: "{{ include "koord-queue.imagePrefix" . }}/acs/job-extensions:{{ .Values.extension.jobextensions.tag }}"
           name: manager
           livenessProbe:
             httpGet:
