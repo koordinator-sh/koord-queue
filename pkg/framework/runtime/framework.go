@@ -83,10 +83,16 @@ func (f *frameworkImpl) KubeConfig() *rest.Config {
 }
 
 func (f *frameworkImpl) MultiQueueSortFunc() framework.MultiQueueLessFunc {
+	if f.multiQueueSortPlugin == nil {
+		return nil
+	}
 	return f.multiQueueSortPlugin.MultiQueueLess
 }
 
 func (f *frameworkImpl) QueueUnitMappingFunc() framework.QueueUnitMappingFunc {
+	if f.queueUnitMappingPlugin == nil {
+		return nil
+	}
 	return f.queueUnitMappingPlugin.Mapping
 }
 
@@ -408,7 +414,9 @@ func (f *frameworkImpl) ListQueus() ([]*v1alpha1.Queue, error) {
 }
 
 func (f *frameworkImpl) StartQueueUnitMappingPlugin(ctx context.Context) {
-	f.queueUnitMappingPlugin.Start(ctx, f)
+	if f.queueUnitMappingPlugin != nil {
+		f.queueUnitMappingPlugin.Start(ctx, f)
+	}
 }
 
 func NewFramework(r Registry, config *rest.Config, kubeConfigPath string,
@@ -491,8 +499,10 @@ func NewFramework(r Registry, config *rest.Config, kubeConfigPath string,
 	f.apiHandlerPlugins = apiHandlerPlugins
 
 	if r != nil {
-		f.queueUnitMappingPlugin.AddEventHandler(queueFactory.Scheduling().V1alpha1().Queues(), f)
-		queueFactory.Scheduling().V1alpha1().QueueUnits().Informer().AddEventHandler(
+		if f.queueUnitMappingPlugin != nil {
+			f.queueUnitMappingPlugin.AddEventHandler(queueFactory.Scheduling().V1alpha1().Queues(), f)
+		}
+		_, _ = queueFactory.Scheduling().V1alpha1().QueueUnits().Informer().AddEventHandler(
 			cache.ResourceEventHandlerFuncs{
 				AddFunc:    f.onQueueUnitAddOrUpdate,
 				UpdateFunc: func(_, newObj interface{}) { f.onQueueUnitAddOrUpdate(newObj) },

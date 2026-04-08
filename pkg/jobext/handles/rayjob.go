@@ -64,7 +64,10 @@ func (j *RayJob) GetPodSetName(ownerName string, p *v1.Pod) string {
 }
 
 func (job *RayJob) PodSet(ctx context.Context, obj client.Object) []kueue.PodSet {
-	j := obj.(*rayv1.RayJob)
+	j, ok := obj.(*rayv1.RayJob)
+	if !ok {
+		return nil
+	}
 	podSets := make([]kueue.PodSet, len(j.Spec.RayClusterSpec.WorkerGroupSpecs)+1)
 
 	// head
@@ -113,7 +116,10 @@ func (job *RayJob) PodSet(ctx context.Context, obj client.Object) []kueue.PodSet
 }
 
 func (j *RayJob) Resources(ctx context.Context, obj client.Object) v1.ResourceList {
-	job := obj.(*rayv1.RayJob)
+	job, ok := obj.(*rayv1.RayJob)
+	if !ok {
+		return nil
+	}
 	totalResources := v1.ResourceList{}
 	// calculate the total resource request
 	headResource := util.GetPodRequestsAndLimits(&job.Spec.RayClusterSpec.HeadGroupSpec.Template.Spec)
@@ -140,13 +146,16 @@ func (j *RayJob) QueueUnitSuffix() string {
 }
 
 func (j *RayJob) Priority(ctx context.Context, obj client.Object) (string, *int32) {
-	job := obj.(*rayv1.RayJob)
+	job, ok := obj.(*rayv1.RayJob)
+	if !ok {
+		return "", nil
+	}
 	priorityClassName := job.Spec.RayClusterSpec.HeadGroupSpec.Template.Spec.PriorityClassName
 	priority := job.Spec.RayClusterSpec.HeadGroupSpec.Template.Spec.Priority
 
 	if priorityClassName != "" {
 		var priorityClassInstance = &schedulingv1.PriorityClass{}
-		err := j.c.Get(context.Background(), types.NamespacedName{Namespace: job.Namespace, Name: priorityClassName}, priorityClassInstance)
+		err := j.c.Get(context.Background(), types.NamespacedName{Name: priorityClassName}, priorityClassInstance)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				klog.Infof("can not find priority class name %v in k8s, we will ignore it", priorityClassName)
@@ -162,16 +171,16 @@ func (j *RayJob) Priority(ctx context.Context, obj client.Object) (string, *int3
 
 func (j *RayJob) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1.RayJob)
-	job.TypeMeta.APIVersion = rayv1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayJob"
+	job.APIVersion = rayv1.GroupVersion.String()
+	job.Kind = "RayJob"
 	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return nil
 	}
 
 	old := job
 	new := job.DeepCopy()
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
+	new.Annotations = util.MapCopy(job.Annotations)
+	new.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 
 	util.SetPodTemplateSpec(&new.Spec.RayClusterSpec.HeadGroupSpec.Template, job.Namespace, job.Name, "head", j.QueueUnitSuffix())
 	new.Spec.RayClusterSpec.HeadGroupSpec.Template.Annotations[util.RelatedAPIVersionKindAnnoKey] = "ray.io/v1/RayJob"
@@ -188,8 +197,8 @@ func (j *RayJob) Enqueue(ctx context.Context, obj client.Object, cli client.Clie
 
 func (j *RayJob) Suspend(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1.RayJob)
-	job.TypeMeta.APIVersion = rayv1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayJob"
+	job.APIVersion = rayv1.GroupVersion.String()
+	job.Kind = "RayJob"
 	if job.Spec.Suspend {
 		return nil
 	}
@@ -202,8 +211,8 @@ func (j *RayJob) Suspend(ctx context.Context, obj client.Object, cli client.Clie
 
 func (j *RayJob) Resume(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1.RayJob)
-	job.TypeMeta.APIVersion = rayv1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayJob"
+	job.APIVersion = rayv1.GroupVersion.String()
+	job.Kind = "RayJob"
 	if !job.Spec.Suspend {
 		return nil
 	}
@@ -211,7 +220,7 @@ func (j *RayJob) Resume(ctx context.Context, obj client.Object, cli client.Clien
 	old := &rayv1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new := &rayv1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new.Spec.Suspend = false
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
+	new.Annotations = util.MapCopy(job.Annotations)
 	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
@@ -264,7 +273,10 @@ func (j *RayJob) GetJobStatus(ctx context.Context, obj client.Object, client cli
 }
 
 func (j *RayJob) ManagedByQueue(ctx context.Context, obj client.Object) bool {
-	job := obj.(*rayv1.RayJob)
+	job, ok := obj.(*rayv1.RayJob)
+	if !ok {
+		return false
+	}
 	// TODO: rayjob with cluster selector should not be managed by queue
 	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return true
@@ -319,7 +331,10 @@ func (j *RayJobV1alpha1) GetPodSetName(ownerName string, p *v1.Pod) string {
 }
 
 func (job *RayJobV1alpha1) PodSet(ctx context.Context, obj client.Object) []kueue.PodSet {
-	j := obj.(*rayv1alpha1.RayJob)
+	j, ok := obj.(*rayv1alpha1.RayJob)
+	if !ok {
+		return nil
+	}
 	podSets := make([]kueue.PodSet, len(j.Spec.RayClusterSpec.WorkerGroupSpecs)+1)
 
 	// head
@@ -368,7 +383,10 @@ func (job *RayJobV1alpha1) PodSet(ctx context.Context, obj client.Object) []kueu
 }
 
 func (j *RayJobV1alpha1) Resources(ctx context.Context, obj client.Object) v1.ResourceList {
-	job := obj.(*rayv1alpha1.RayJob)
+	job, ok := obj.(*rayv1alpha1.RayJob)
+	if !ok {
+		return nil
+	}
 	totalResources := v1.ResourceList{}
 	// calculate the total resource request
 	headResource := util.GetPodRequestsAndLimits(&job.Spec.RayClusterSpec.HeadGroupSpec.Template.Spec)
@@ -395,13 +413,16 @@ func (j *RayJobV1alpha1) QueueUnitSuffix() string {
 }
 
 func (j *RayJobV1alpha1) Priority(ctx context.Context, obj client.Object) (string, *int32) {
-	job := obj.(*rayv1alpha1.RayJob)
+	job, ok := obj.(*rayv1alpha1.RayJob)
+	if !ok {
+		return "", nil
+	}
 	priorityClassName := job.Spec.RayClusterSpec.HeadGroupSpec.Template.Spec.PriorityClassName
 	priority := job.Spec.RayClusterSpec.HeadGroupSpec.Template.Spec.Priority
 
 	if priorityClassName != "" {
 		var priorityClassInstance = &schedulingv1.PriorityClass{}
-		err := j.c.Get(context.Background(), types.NamespacedName{Namespace: job.Namespace, Name: priorityClassName}, priorityClassInstance)
+		err := j.c.Get(context.Background(), types.NamespacedName{Name: priorityClassName}, priorityClassInstance)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				klog.Infof("can not find priority class name %v in k8s, we will ignore it", priorityClassName)
@@ -417,13 +438,13 @@ func (j *RayJobV1alpha1) Priority(ctx context.Context, obj client.Object) (strin
 
 func (j *RayJobV1alpha1) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1alpha1.RayJob)
-	job.TypeMeta.APIVersion = rayv1alpha1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayJob"
+	job.APIVersion = rayv1alpha1.GroupVersion.String()
+	job.Kind = "RayJob"
 
 	old := job
 	new := job.DeepCopy()
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
+	new.Annotations = util.MapCopy(job.Annotations)
+	new.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 
 	util.SetPodTemplateSpec(&new.Spec.RayClusterSpec.HeadGroupSpec.Template, job.Namespace, job.Name, "head", j.QueueUnitSuffix())
 	new.Spec.RayClusterSpec.HeadGroupSpec.Template.Annotations[util.RelatedAPIVersionKindAnnoKey] = "ray.io/v1alpha1/RayJob"
@@ -440,8 +461,8 @@ func (j *RayJobV1alpha1) Enqueue(ctx context.Context, obj client.Object, cli cli
 
 func (j *RayJobV1alpha1) Suspend(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1alpha1.RayJob)
-	job.TypeMeta.APIVersion = rayv1alpha1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayJob"
+	job.APIVersion = rayv1alpha1.GroupVersion.String()
+	job.Kind = "RayJob"
 
 	old := &rayv1alpha1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec}
 	new := &rayv1alpha1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec}
@@ -451,13 +472,13 @@ func (j *RayJobV1alpha1) Suspend(ctx context.Context, obj client.Object, cli cli
 
 func (j *RayJobV1alpha1) Resume(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1alpha1.RayJob)
-	job.TypeMeta.APIVersion = rayv1alpha1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayJob"
+	job.APIVersion = rayv1alpha1.GroupVersion.String()
+	job.Kind = "RayJob"
 
 	old := &rayv1alpha1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new := &rayv1alpha1.RayJob{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new.Spec.Suspend = false
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
+	new.Annotations = util.MapCopy(job.Annotations)
 	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
@@ -529,7 +550,7 @@ func NewRayJobReconciler(cli client.Client, config *rest.Config, scheme *runtime
 				}
 				return pods, nil
 			}}
-		rayv1.AddToScheme(scheme)
+		_ = rayv1.AddToScheme(scheme)
 		extension = framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 	} else {
 		j := &RayJobV1alpha1{
@@ -559,7 +580,7 @@ func NewRayJobReconciler(cli client.Client, config *rest.Config, scheme *runtime
 				}
 				return pods, nil
 			}}
-		rayv1alpha1.AddToScheme(scheme)
+		_ = rayv1alpha1.AddToScheme(scheme)
 		extension = framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 	}
 	return framework.NewJobHandle(0, 0, extension, false)

@@ -14,7 +14,6 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	schedv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
@@ -35,7 +34,7 @@ type Queue struct {
 	name   string
 	policy string
 	run    bool
-	queue  *v1alpha1.Queue
+	queue  *schedv1alpha1.Queue
 
 	interval time.Duration
 	stopCtx  context.CancelFunc
@@ -52,7 +51,7 @@ type Queue struct {
 	admissionChecks map[string]labels.Selector
 }
 
-func NewQueue(fw framework.MultiQueueHandle, queueUnitLister externalv1alpha1.QueueUnitLister, name, policy string, queue *v1alpha1.Queue, args map[string]string) (*Queue, error) {
+func NewQueue(fw framework.MultiQueueHandle, queueUnitLister externalv1alpha1.QueueUnitLister, name, policy string, queue *schedv1alpha1.Queue, args map[string]string) (*Queue, error) {
 	queueImpl, err := CreateSchedulingQueue(name, policy, queue, fw, queueUnitLister, args)
 	if err != nil {
 		return nil, err
@@ -72,7 +71,7 @@ func NewQueue(fw framework.MultiQueueHandle, queueUnitLister externalv1alpha1.Qu
 	return q, nil
 }
 
-func (q *Queue) DequeueSuccess(qu *v1alpha1.QueueUnit) {
+func (q *Queue) DequeueSuccess(qu *schedv1alpha1.QueueUnit) {
 	q.queueImpl.DequeueSuccess(qu)
 }
 
@@ -182,7 +181,7 @@ func ConvertToLabelSelector(ac []schedv1alpha1.AdmissionCheckWithSelector) map[s
 	return acs
 }
 
-func (q *Queue) Sync(newQueue *v1alpha1.Queue) error {
+func (q *Queue) Sync(newQueue *schedv1alpha1.Queue) error {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -193,7 +192,7 @@ func (q *Queue) Sync(newQueue *v1alpha1.Queue) error {
 	found := false
 	strategies := q.queueImpl.SupportedPolicy()
 	for _, s := range strategies {
-		if newQueue.Spec.QueuePolicy == v1alpha1.QueuePolicy(s) {
+		if newQueue.Spec.QueuePolicy == schedv1alpha1.QueuePolicy(s) {
 			found = true
 			q.queueImpl.ChangePolicy(q.policy, string(newQueue.Spec.QueuePolicy))
 			break
@@ -204,14 +203,16 @@ func (q *Queue) Sync(newQueue *v1alpha1.Queue) error {
 
 		argsStr := q.queue.Annotations[queuepolicies.QueueArgsAnnotationKey]
 		args := make(map[string]string)
-		yaml.Unmarshal([]byte(argsStr), args)
+		_ = yaml.Unmarshal([]byte(argsStr), args)
 
 		q.queueImpl.Close()
 
 		q.queueImpl, err = CreateSchedulingQueue(newQueue.Name, string(newQueue.Spec.QueuePolicy), newQueue, q.fw, q.queueUnitLister, args, items...)
 
 		for _, item := range items {
-			q.queueImpl.AddQueueUnitInfo(item)
+			if _, err := q.queueImpl.AddQueueUnitInfo(item); err != nil {
+				klog.ErrorS(err, "failed to add queueUnitInfo during queue sync", "queue", q.name)
+			}
 		}
 	}
 	q.policy = string(newQueue.Spec.QueuePolicy)
@@ -224,11 +225,11 @@ func (q *Queue) Name() string {
 	return q.name
 }
 
-func (q *Queue) SetQueueCr4Test(queue *v1alpha1.Queue) {
+func (q *Queue) SetQueueCr4Test(queue *schedv1alpha1.Queue) {
 	q.queue = queue
 }
 
-func (q *Queue) Queue() *v1alpha1.Queue {
+func (q *Queue) Queue() *schedv1alpha1.Queue {
 	return q.queue.DeepCopy()
 }
 

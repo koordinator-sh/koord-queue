@@ -51,7 +51,7 @@ var _ = Describe("PytorchJob Controller", func() {
 		schedulingv1.AddToScheme(scheme)
 		pytorchv1.AddToScheme(scheme)
 		v1.AddToScheme(scheme)
-		fakeClient = fake.NewClientBuilder().WithScheme(scheme).Build()
+		fakeClient = fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(&pytorchv1.PyTorchJob{}).Build()
 		pytorchJobController = &PytorchJob{
 			c:              fakeClient,
 			managedAllJobs: false,
@@ -450,7 +450,7 @@ var _ = Describe("PytorchJob Controller", func() {
 						metav1.LabelSelectorRequirement{
 							Key:      "pytorch-replica-type",
 							Operator: metav1.LabelSelectorOpNotIn,
-							Values:   []string{"AIMaster"},
+							Values:   []string{"master"},
 						}))
 					Expect(resv.Spec.Owners[0].LabelSelector.MatchExpressions).To(ContainElement(
 						metav1.LabelSelectorRequirement{
@@ -464,7 +464,7 @@ var _ = Describe("PytorchJob Controller", func() {
 						metav1.LabelSelectorRequirement{
 							Key:      "pytorch-replica-type",
 							Operator: metav1.LabelSelectorOpNotIn,
-							Values:   []string{"AIMaster"},
+							Values:   []string{"master"},
 						}))
 					Expect(resv.Spec.Owners[0].LabelSelector.MatchExpressions).To(ContainElement(
 						metav1.LabelSelectorRequirement{
@@ -602,6 +602,10 @@ var _ = Describe("PytorchJob Controller", func() {
 	Context("Enqueue", func() {
 		It("should enqueue job correctly", func() {
 			job := &pytorchv1.PyTorchJob{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "PyTorchJob",
+					APIVersion: "kubeflow.org/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-job",
 					Namespace: "default",
@@ -727,6 +731,10 @@ var _ = Describe("PytorchJob Controller", func() {
 	Context("Resume", func() {
 		It("should not resume already resumed job", func() {
 			job := &pytorchv1.PyTorchJob{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "PyTorchJob",
+					APIVersion: "kubeflow.org/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-job",
 					Namespace: "default",
@@ -736,12 +744,17 @@ var _ = Describe("PytorchJob Controller", func() {
 				},
 			}
 
+			Expect(fakeClient.Create(ctx, job)).To(Succeed())
 			err := pytorchJobController.Resume(ctx, job, fakeClient)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("should resume job correctly", func() {
 			job := &pytorchv1.PyTorchJob{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "PyTorchJob",
+					APIVersion: "kubeflow.org/v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-job",
 					Namespace: "default",

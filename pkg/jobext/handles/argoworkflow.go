@@ -277,7 +277,7 @@ func (a *ArgoWorkflow) GetRelatedQueueUnit(ctx context.Context, obj client.Objec
 
 func (a *ArgoWorkflow) GetRelatedJob(ctx context.Context, qu *v1alpha1.QueueUnit, client client.Client) client.Object {
 	object := a.Object()
-	client.Get(context.Background(), types.NamespacedName{Namespace: qu.GetNamespace(), Name: qu.GetName()}, object)
+	_ = client.Get(context.Background(), types.NamespacedName{Namespace: qu.GetNamespace(), Name: qu.GetName()}, object)
 	return object
 }
 
@@ -306,7 +306,7 @@ func NewWFReconciler(cli client.Client, config *rest.Config, scheme *runtime.Sch
 		po.Spec.NodeName = "mocked-node"
 		return []*v1.Pod{&po}, nil
 	}}
-	argov1alpha1.AddToScheme(scheme)
+	_ = argov1alpha1.AddToScheme(scheme)
 	extension := framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 	return framework.NewJobHandle(0, 0, extension, false)
 }

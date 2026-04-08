@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/kueue/apis/kueue/v1beta1"
 
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	versionedfake "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
 	"github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
@@ -44,6 +45,11 @@ func newTestElasticQuota(t *testing.T) *ElasticQuota {
 	registry := internalruntime.Registry{
 		Name: proxy(FakeNew),
 	}
+	pluginConfig := &config.KoordQueueConfiguration{
+		Plugins: []config.Plugin{
+			{Name: Name},
+		},
+	}
 	_, err := internalruntime.NewFramework(
 		registry,
 		nil,
@@ -52,7 +58,7 @@ func newTestElasticQuota(t *testing.T) *ElasticQuota {
 		versionedInformers,
 		record.NewFakeRecorder(100),
 		versionedclient,
-		1, nil)
+		1, pluginConfig)
 
 	if err != nil {
 		panic(err)

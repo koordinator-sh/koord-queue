@@ -58,23 +58,24 @@ func NewFakeRegistry() (runtime.Registry, map[string]framework.Plugin) {
 	if os.Getenv("QueueGroupPlugin") != "" {
 		queueGroupPlugin = strings.TrimSpace(os.Getenv("QueueGroupPlugin"))
 	}
-	if queueGroupPlugin == "resourceQuota" {
+	switch queueGroupPlugin {
+	case "resourceQuota":
 		return runtime.Registry{
 			priority.Name:      pluginproxy(priority.New, plugins),
 			defaultgroup.Name:  pluginproxy(defaultgroup.New, plugins),
 			resourcequota.Name: pluginproxy(resourcequota.New, plugins),
 		}, plugins
-	} else if queueGroupPlugin == "elasticquota" {
+	case "elasticquota":
 		return runtime.Registry{
 			priority.Name:     pluginproxy(priority.New, plugins),
 			elasticquota.Name: pluginproxy(elasticquota.FakeNew, plugins),
 		}, plugins
-	} else if queueGroupPlugin == "elasticquotav2" {
+	case "elasticquotav2":
 		return runtime.Registry{
 			priority.Name:     pluginproxy(priority.New, plugins),
 			elasticquota.Name: pluginproxy(elasticquotav1alpha1.FakeNew, plugins),
 		}, plugins
-	} else {
+	default:
 		panic("QueueGroupPlugin must be in [resourceQuota|elasticquota]")
 	}
 }

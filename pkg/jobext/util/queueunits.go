@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const AIMASTERROLENAME = "aimaster"
 const SchedulerAdmissionLabelKey = "alibabacloud.com/schedule-admission"
 const RelatedQueueUnitCacheFields = "koordqueue.relatedqueueunit.cache"
 const RelatedQueueUnitPodSetCacheFieldsForTest = "koordqueue.relatedqueueunit.podset.test"

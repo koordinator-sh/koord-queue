@@ -6,17 +6,19 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	versionedfake "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
 	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins"
+	elasticquotaplugin "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/priority"
 	"github.com/koordinator-sh/koord-queue/pkg/framework/runtime"
 	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kuberuntime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/informers"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
@@ -29,7 +31,7 @@ func NewFrameworkForTesting() (framework.Framework, map[string]framework.Plugin,
 	informers := kubeinformers.NewSharedInformerFactory(fakeClient, time.Second*30)
 	versionedclient := versionedfake.NewSimpleClientset()
 	versionedInformers := externalversions.NewSharedInformerFactory(versionedclient, 0)
-	versionedInformers.Scheduling().V1alpha1().Queues().Informer().AddIndexers(cache.Indexers{
+	_ = versionedInformers.Scheduling().V1alpha1().Queues().Informer().AddIndexers(cache.Indexers{
 		utils.AnnotationQuotaFullName: func(obj interface{}) ([]string, error) {
 			qu, ok := obj.(*v1alpha1.Queue)
 			if !ok {
@@ -39,6 +41,12 @@ func NewFrameworkForTesting() (framework.Framework, map[string]framework.Plugin,
 		},
 	})
 	registry, plugins := plugins.NewFakeRegistry()
+	pluginConfig := &config.KoordQueueConfiguration{
+		Plugins: []config.Plugin{
+			{Name: priority.Name},
+			{Name: elasticquotaplugin.Name},
+		},
+	}
 	fwk, err := runtime.NewFramework(
 		registry,
 		nil,
@@ -47,7 +55,7 @@ func NewFrameworkForTesting() (framework.Framework, map[string]framework.Plugin,
 		versionedInformers,
 		record.NewFakeRecorder(100),
 		versionedclient,
-		1, nil)
+		1, pluginConfig)
 
 	if err != nil {
 		panic(err)
@@ -74,7 +82,7 @@ func NewFakeFrameworkHandleWithQueueUnit(objects ...kuberuntime.Object) framewor
 
 type FakeHandle struct {
 	ver          externalversions.SharedInformerFactory
-	in           informers.SharedInformerFactory
+	in           kubeinformers.SharedInformerFactory
 	fakeClient   *versionedfake.Clientset
 	fakeRecorder record.EventRecorderLogger
 }
@@ -88,7 +96,7 @@ func (f *FakeHandle) GetQueueUnitQuotaName(*v1alpha1.QueueUnit) ([]string, error
 }
 
 func (f *FakeHandle) QueueInformerFactory() externalversions.SharedInformerFactory { return f.ver }
-func (f *FakeHandle) SharedInformerFactory() informers.SharedInformerFactory       { return f.in }
+func (f *FakeHandle) SharedInformerFactory() kubeinformers.SharedInformerFactory       { return f.in }
 func (f *FakeHandle) KubeConfigPath() string                                       { return "" }
 func (f *FakeHandle) QueueUnitClient() versioned.Interface                         { return f.fakeClient }
 func (f *FakeHandle) OversellRate() float64                                        { return 1 }

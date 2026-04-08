@@ -136,14 +136,18 @@ func (r *ReservationController) Reconcile(ctx context.Context, req ctrl.Request)
 
 	if queueUnit.Status.Phase == v1alpha1.SchedFailed {
 		existingResvs := &koordinatorschedulerv1alpha1.ReservationList{}
-		r.cli.List(ctx, existingResvs, client.MatchingLabels{
+		if err := r.cli.List(ctx, existingResvs, client.MatchingLabels{
 			"reserved-job-namespace": object.GetNamespace(),
 			"reserved-job-name":      object.GetName(),
-		})
+		}); err != nil {
+			logger.V(1).Info("failed to list reservations", "error", err)
+		}
 		deleted := []string{}
 		for _, existingResv := range existingResvs.Items {
 			if existingResv.Status.Phase == "Failed" || existingResv.Status.Phase == koordinatorschedulerv1alpha1.ReservationAvailable {
-				r.cli.Delete(ctx, &existingResv)
+				if err := r.cli.Delete(ctx, &existingResv); err != nil {
+					logger.V(1).Info("failed to delete reservation", "reservation", existingResv.Name, "error", err)
+				}
 				deleted = append(deleted, existingResv.Name)
 			}
 		}
@@ -156,14 +160,18 @@ func (r *ReservationController) Reconcile(ctx context.Context, req ctrl.Request)
 
 	if queueUnit.Status.Phase == v1alpha1.SchedSucceed {
 		existingResvs := &koordinatorschedulerv1alpha1.ReservationList{}
-		r.cli.List(ctx, existingResvs, client.MatchingLabels{
+		if err := r.cli.List(ctx, existingResvs, client.MatchingLabels{
 			"reserved-job-namespace": object.GetNamespace(),
 			"reserved-job-name":      object.GetName(),
-		})
+		}); err != nil {
+			logger.V(1).Info("failed to list reservations", "error", err)
+		}
 		deleted := []string{}
 		for _, existingResv := range existingResvs.Items {
 			if existingResv.Status.Phase == "Failed" {
-				r.cli.Delete(ctx, &existingResv)
+				if err := r.cli.Delete(ctx, &existingResv); err != nil {
+					logger.V(1).Info("failed to delete reservation", "reservation", existingResv.Name, "error", err)
+				}
 				deleted = append(deleted, existingResv.Name)
 			}
 		}

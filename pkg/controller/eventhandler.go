@@ -118,10 +118,14 @@ func (c *Controller) AddAllEventHandlers(queueUnitInformer cache.SharedIndexInfo
 	if os.Getenv("TestENV") == "true" {
 		return
 	}
-	go wait.PollUntilContextCancel(context.Background(), time.Minute, false, func(ctx context.Context) (done bool, err error) {
-		framework.ForgetQueueUnitInfo(c.queueUnitInformer.GetIndexer())
-		return false, nil
-	})
+	go func() {
+		if err := wait.PollUntilContextCancel(context.Background(), time.Minute, false, func(ctx context.Context) (done bool, err error) {
+			framework.ForgetQueueUnitInfo(c.queueUnitInformer.GetIndexer())
+			return false, nil
+		}); err != nil {
+			klog.Errorf("PollUntilContextCancel exited with error: %v", err)
+		}
+	}()
 }
 
 func (c *Controller) AddQueue(obj interface{}) {
@@ -196,7 +200,9 @@ func (c *Controller) AddQueueUnit(queueUnit *v1alpha1.QueueUnit) {
 	}
 	logger = logger.WithValues("queueName", queueName)
 	c.multiSchedulingQueue.SetQueueForQueueUnit(queueUnit, queueName)
-	q.AddQueueUnitInfo(framework.NewQueueUnitInfo(queueUnit))
+	if err := q.AddQueueUnitInfo(framework.NewQueueUnitInfo(queueUnit)); err != nil {
+		klog.Errorf("add queueUnitInfo to queue failed: %v", err)
+	}
 }
 
 func (c *Controller) UpdateQueueUnit(oldQu, newQu *v1alpha1.QueueUnit) {
@@ -215,7 +221,9 @@ func (c *Controller) UpdateQueueUnit(oldQu, newQu *v1alpha1.QueueUnit) {
 		// when err is nil, it means newQu doesn't belong to any queue in the system
 		// so we need to delete qu from old queue and and qu to UnitsFindNoQueue
 		if oldQOk {
-			oldQ.Delete(newQu)
+			if err := oldQ.Delete(newQu); err != nil {
+				klog.Errorf("delete queueunit from old queue failed: %v", err)
+			}
 		}
 		c.multiSchedulingQueue.AddUnitsFindNoQueue(framework.NewQueueUnitInfo(newQu))
 		return
@@ -227,7 +235,9 @@ func (c *Controller) UpdateQueueUnit(oldQu, newQu *v1alpha1.QueueUnit) {
 			"from", oldQueueName,
 			"to", queueName)
 		if oldQOk {
-			oldQ.Delete(newQu)
+			if err := oldQ.Delete(newQu); err != nil {
+				klog.Errorf("delete queueunit from old queue failed: %v", err)
+			}
 		}
 		c.multiSchedulingQueue.AddUnitsFindNoQueue(framework.NewQueueUnitInfo(newQu))
 		return
@@ -242,7 +252,9 @@ func (c *Controller) UpdateQueueUnit(oldQu, newQu *v1alpha1.QueueUnit) {
 	} else {
 		logger = logger.WithValues("from", oldQueueName, "to", q.Name())
 		if oldQOk {
-			oldQ.Delete(newQu)
+			if err := oldQ.Delete(newQu); err != nil {
+				klog.Errorf("delete queueunit from old queue failed: %v", err)
+			}
 		}
 		c.multiSchedulingQueue.SetQueueForQueueUnit(newQu, q.Name())
 		err = q.AddQueueUnitInfo(framework.NewQueueUnitInfo(newQu))
@@ -265,5 +277,7 @@ func (c *Controller) DeleteQueueUnit(queueUnit *v1alpha1.QueueUnit) {
 	if !ok {
 		return
 	}
-	q.Delete(queueUnit)
+	if err := q.Delete(queueUnit); err != nil {
+		klog.Errorf("delete queueunit from queue failed: %v", err)
+	}
 }

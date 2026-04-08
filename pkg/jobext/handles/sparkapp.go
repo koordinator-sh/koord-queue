@@ -84,17 +84,17 @@ func getExecutorRequestResource(app *v1beta2.SparkApplication) v1.ResourceList {
 
 	//Memory + MemoryOverhead correspond to executor's memory request
 	if app.Spec.Executor.Memory != nil {
-		*app.Spec.Executor.Memory = strings.Replace(*app.Spec.Executor.Memory, "m", "Mi", -1)
-		*app.Spec.Executor.Memory = strings.Replace(*app.Spec.Executor.Memory, "g", "Gi", -1)
-		*app.Spec.Executor.Memory = strings.Replace(*app.Spec.Executor.Memory, "t", "Ti", -1)
+		*app.Spec.Executor.Memory = strings.ReplaceAll(*app.Spec.Executor.Memory, "m", "Mi")
+		*app.Spec.Executor.Memory = strings.ReplaceAll(*app.Spec.Executor.Memory, "g", "Gi")
+		*app.Spec.Executor.Memory = strings.ReplaceAll(*app.Spec.Executor.Memory, "t", "Ti")
 		if value, err := resource.ParseQuantity(*app.Spec.Executor.Memory); err == nil {
 			minResource[v1.ResourceMemory] = value
 		}
 	}
 	if app.Spec.Executor.MemoryOverhead != nil {
-		*app.Spec.Executor.MemoryOverhead = strings.Replace(*app.Spec.Executor.MemoryOverhead, "m", "Mi", -1)
-		*app.Spec.Executor.MemoryOverhead = strings.Replace(*app.Spec.Executor.MemoryOverhead, "g", "Gi", -1)
-		*app.Spec.Executor.MemoryOverhead = strings.Replace(*app.Spec.Executor.MemoryOverhead, "t", "Ti", -1)
+		*app.Spec.Executor.MemoryOverhead = strings.ReplaceAll(*app.Spec.Executor.MemoryOverhead, "m", "Mi")
+		*app.Spec.Executor.MemoryOverhead = strings.ReplaceAll(*app.Spec.Executor.MemoryOverhead, "g", "Gi")
+		*app.Spec.Executor.MemoryOverhead = strings.ReplaceAll(*app.Spec.Executor.MemoryOverhead, "t", "Ti")
 		if value, err := resource.ParseQuantity(*app.Spec.Executor.MemoryOverhead); err == nil {
 			if existing, ok := minResource[v1.ResourceMemory]; ok {
 				existing.Add(value)
@@ -146,17 +146,17 @@ func getDriverRequestResource(app *v1beta2.SparkApplication) v1.ResourceList {
 
 	//Memory + MemoryOverhead correspond to driver's memory request
 	if app.Spec.Driver.Memory != nil {
-		*app.Spec.Driver.Memory = strings.Replace(*app.Spec.Driver.Memory, "m", "Mi", -1)
-		*app.Spec.Driver.Memory = strings.Replace(*app.Spec.Driver.Memory, "g", "Gi", -1)
-		*app.Spec.Driver.Memory = strings.Replace(*app.Spec.Driver.Memory, "t", "Ti", -1)
+		*app.Spec.Driver.Memory = strings.ReplaceAll(*app.Spec.Driver.Memory, "m", "Mi")
+		*app.Spec.Driver.Memory = strings.ReplaceAll(*app.Spec.Driver.Memory, "g", "Gi")
+		*app.Spec.Driver.Memory = strings.ReplaceAll(*app.Spec.Driver.Memory, "t", "Ti")
 		if value, err := resource.ParseQuantity(*app.Spec.Driver.Memory); err == nil {
 			minResource[v1.ResourceMemory] = value
 		}
 	}
 	if app.Spec.Driver.MemoryOverhead != nil {
-		*app.Spec.Driver.MemoryOverhead = strings.Replace(*app.Spec.Driver.MemoryOverhead, "m", "Mi", -1)
-		*app.Spec.Driver.MemoryOverhead = strings.Replace(*app.Spec.Driver.MemoryOverhead, "g", "Gi", -1)
-		*app.Spec.Driver.MemoryOverhead = strings.Replace(*app.Spec.Driver.MemoryOverhead, "t", "Ti", -1)
+		*app.Spec.Driver.MemoryOverhead = strings.ReplaceAll(*app.Spec.Driver.MemoryOverhead, "m", "Mi")
+		*app.Spec.Driver.MemoryOverhead = strings.ReplaceAll(*app.Spec.Driver.MemoryOverhead, "g", "Gi")
+		*app.Spec.Driver.MemoryOverhead = strings.ReplaceAll(*app.Spec.Driver.MemoryOverhead, "t", "Ti")
 		if value, err := resource.ParseQuantity(*app.Spec.Driver.MemoryOverhead); err == nil {
 			if existing, ok := minResource[v1.ResourceMemory]; ok {
 				existing.Add(value)
@@ -400,71 +400,71 @@ func (j *SparkApplication) Priority(ctx context.Context, obj client.Object) (str
 
 func (j *SparkApplication) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*v1beta2.SparkApplication)
-	job.TypeMeta.APIVersion = v1beta2.SchemeGroupVersion.String()
-	job.TypeMeta.Kind = "SparkApplication"
+	job.APIVersion = v1beta2.SchemeGroupVersion.String()
+	job.Kind = "SparkApplication"
 	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return nil
 	}
 
 	old := job
 	new := job.DeepCopy()
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
-	if len(new.Spec.Driver.SparkPodSpec.Labels) == 0 {
-		new.Spec.Driver.SparkPodSpec.Labels = make(map[string]string)
+	new.Annotations = util.MapCopy(job.Annotations)
+	new.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
+	if len(new.Spec.Driver.Labels) == 0 {
+		new.Spec.Driver.Labels = make(map[string]string)
 	}
-	new.Spec.Driver.SparkPodSpec.Labels[util.SchedulerAdmissionLabelKey] = "false"
-	if len(new.Spec.Driver.SparkPodSpec.Annotations) == 0 {
-		new.Spec.Driver.SparkPodSpec.Annotations = make(map[string]string)
+	new.Spec.Driver.Labels[util.SchedulerAdmissionLabelKey] = "false"
+	if len(new.Spec.Driver.Annotations) == 0 {
+		new.Spec.Driver.Annotations = make(map[string]string)
 	}
 	if j.QueueUnitSuffix() != "" {
-		new.Spec.Driver.SparkPodSpec.Annotations[util.RelatedQueueUnitAnnoKey] = job.Namespace + "/" + job.Name + "-" + j.QueueUnitSuffix()
+		new.Spec.Driver.Annotations[util.RelatedQueueUnitAnnoKey] = job.Namespace + "/" + job.Name + "-" + j.QueueUnitSuffix()
 	} else {
-		new.Spec.Driver.SparkPodSpec.Annotations[util.RelatedQueueUnitAnnoKey] = job.Namespace + "/" + job.Name
+		new.Spec.Driver.Annotations[util.RelatedQueueUnitAnnoKey] = job.Namespace + "/" + job.Name
 	}
-	new.Spec.Driver.SparkPodSpec.Annotations[util.RelatedPodSetAnnoKey] = "driver"
-	if len(new.Spec.Executor.SparkPodSpec.Labels) == 0 {
-		new.Spec.Executor.SparkPodSpec.Labels = make(map[string]string)
+	new.Spec.Driver.Annotations[util.RelatedPodSetAnnoKey] = "driver"
+	if len(new.Spec.Executor.Labels) == 0 {
+		new.Spec.Executor.Labels = make(map[string]string)
 	}
-	new.Spec.Executor.SparkPodSpec.Labels[util.SchedulerAdmissionLabelKey] = "false"
-	if len(new.Spec.Executor.SparkPodSpec.Annotations) == 0 {
-		new.Spec.Executor.SparkPodSpec.Annotations = make(map[string]string)
+	new.Spec.Executor.Labels[util.SchedulerAdmissionLabelKey] = "false"
+	if len(new.Spec.Executor.Annotations) == 0 {
+		new.Spec.Executor.Annotations = make(map[string]string)
 	}
-	new.Spec.Executor.SparkPodSpec.Annotations[util.RelatedQueueUnitAnnoKey] = job.Namespace + "/" + job.Name + "-" + j.QueueUnitSuffix()
-	new.Spec.Driver.SparkPodSpec.Annotations[util.RelatedPodSetAnnoKey] = "executor"
+	new.Spec.Executor.Annotations[util.RelatedQueueUnitAnnoKey] = job.Namespace + "/" + job.Name + "-" + j.QueueUnitSuffix()
+	new.Spec.Driver.Annotations[util.RelatedPodSetAnnoKey] = "executor"
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
 
 func (j *SparkApplication) Suspend(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*v1beta2.SparkApplication)
-	job.TypeMeta.APIVersion = v1beta2.SchemeGroupVersion.String()
-	job.TypeMeta.Kind = "SparkApplication"
+	job.APIVersion = v1beta2.SchemeGroupVersion.String()
+	job.Kind = "SparkApplication"
 	if job.Annotations[QueueAnnotation] == "true" {
 		return nil
 	}
 
 	old := &v1beta2.SparkApplication{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec}
 	new := &v1beta2.SparkApplication{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec}
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations[QueueAnnotation] = "true"
+	new.Annotations = util.MapCopy(job.Annotations)
+	new.Annotations[QueueAnnotation] = "true"
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
 
 func (j *SparkApplication) Resume(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*v1beta2.SparkApplication)
-	job.TypeMeta.APIVersion = v1beta2.SchemeGroupVersion.String()
-	job.TypeMeta.Kind = "SparkApplication"
+	job.APIVersion = v1beta2.SchemeGroupVersion.String()
+	job.Kind = "SparkApplication"
 	if job.Annotations[QueueAnnotation] != "true" {
 		return nil
 	}
 
 	old := &v1beta2.SparkApplication{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new := &v1beta2.SparkApplication{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
+	new.Annotations = util.MapCopy(job.Annotations)
 	if len(new.Annotations) == 0 {
 		new.Annotations = map[string]string{}
 	}
-	new.ObjectMeta.Annotations[QueueAnnotation] = "false"
+	new.Annotations[QueueAnnotation] = "false"
 	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
@@ -528,7 +528,7 @@ func NewSparkAppReconciler(cli client.Client, config *rest.Config, scheme *runti
 			}
 			return pods, nil
 		}}
-	v1beta2.AddToScheme(scheme)
+	_ = v1beta2.AddToScheme(scheme)
 	extension = framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 	return framework.NewJobHandle(0, 0, extension, false)
 }

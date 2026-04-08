@@ -159,7 +159,9 @@ func (s *Scheduler) HandleQueueNotFound(ctx context.Context, unitInfo *framework
 	queue, ok := s.multiSchedulingQueue.GetQueueByName(expectQueueName)
 	if ok {
 		klog.Infof("add qu %v to queue %v", unitInfo.Name, expectQueueName)
-		queue.AddQueueUnitInfo(unitInfo)
+		if err := queue.AddQueueUnitInfo(unitInfo); err != nil {
+			klog.Errorf("add queueUnitInfo to queue %v failed: %v", expectQueueName, err)
+		}
 		return
 	}
 	klog.Errorf("queue %v is not exist when schedule qu %v", expectQueueName, unitInfo.Name)
@@ -428,7 +430,7 @@ func (s *Scheduler) ErrorFunc(ctx context.Context, queueUnit *framework.QueueUni
 	if err != nil {
 		logger.Error(fmt.Errorf("get qu %v error %v", queueUnit.Name, err), "")
 		if errors.IsNotFound(err) {
-			q.Delete(queueUnit.Unit)
+			_ = q.Delete(queueUnit.Unit)
 			return
 		}
 		// we should drop the queueUnit, because the queueUnit may be outdated.

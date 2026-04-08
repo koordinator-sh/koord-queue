@@ -35,7 +35,7 @@ func (d *DefaultGroup) Mapping(q *v1alpha1.QueueUnit) (string, error) {
 }
 
 func (d *DefaultGroup) AddEventHandler(queueInformer clientv1alpha1.QueueInformer, handle framework.QueueManageHandle) {
-	queueInformer.Informer().AddEventHandler(cache.FilteringResourceEventHandler{
+	_, _ = queueInformer.Informer().AddEventHandler(cache.FilteringResourceEventHandler{
 		FilterFunc: func(obj interface{}) bool {
 			var q *v1alpha1.Queue
 			switch t := obj.(type) {

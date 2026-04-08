@@ -15,8 +15,8 @@ func Convert_v1_KoordQueueConfiguration_To_config_KoordQueueConfiguration(in *Ko
 	}
 
 	scheme := runtime.NewScheme()
-	localSchemeBuilder.AddToScheme(scheme)
-	config.AddToScheme(scheme)
+	_ = localSchemeBuilder.AddToScheme(scheme)
+	_ = config.AddToScheme(scheme)
 	for name, pluginConfig := range out.PluginConfigs {
 		if pluginConfig == nil {
 			continue
@@ -40,8 +40,8 @@ func Convert_config_KoordQueueConfiguration_To_v1_KoordQueueConfiguration(in *co
 	}
 
 	scheme := runtime.NewScheme()
-	localSchemeBuilder.AddToScheme(scheme)
-	config.AddToScheme(scheme)
+	_ = localSchemeBuilder.AddToScheme(scheme)
+	_ = config.AddToScheme(scheme)
 	for name, pluginConfig := range out.PluginConfigs {
 		if pluginConfig.Object == nil {
 			continue

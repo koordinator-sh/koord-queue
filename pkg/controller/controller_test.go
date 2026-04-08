@@ -8,12 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	versionedfake "github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned/fake"
 	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins"
+	elasticquota "github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquota"
+	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/priority"
 	fr "github.com/koordinator-sh/koord-queue/pkg/framework/runtime"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/multischedulingqueue"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies/schedulingqueuev2"
@@ -39,6 +42,16 @@ func NewFrameworkForTesting(extraPlugins fr.Registry) (framework.Framework, map[
 	for n, p := range extraPlugins {
 		registry[n] = p
 	}
+	pluginList := []config.Plugin{
+		{Name: priority.Name},
+		{Name: elasticquota.Name},
+	}
+	for n := range extraPlugins {
+		pluginList = append(pluginList, config.Plugin{Name: n})
+	}
+	pluginConfig := &config.KoordQueueConfiguration{
+		Plugins: pluginList,
+	}
 	fwk, err := fr.NewFramework(
 		registry,
 		nil,
@@ -47,7 +60,7 @@ func NewFrameworkForTesting(extraPlugins fr.Registry) (framework.Framework, map[
 		versionedInformers,
 		record.NewFakeRecorder(100),
 		versionedclient,
-		1, nil)
+		1, pluginConfig)
 
 	if err != nil {
 		panic(err)

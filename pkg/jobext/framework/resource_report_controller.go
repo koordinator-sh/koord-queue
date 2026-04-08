@@ -154,8 +154,7 @@ func (d *ResourceReporter) syncInFlightWorkers(ctx context.Context, log logr.Log
 	running := 0
 	pd2Res := map[string]corev1.ResourceList{}
 	for _, pod := range pods {
-		// if pod.Labels["replica-type"] == util.AIMASTERROLENAME {
-		// 	return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
+				// 	return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
 		// }
 		res := util.GetPodRequestsAndLimits(&pod.Spec)
 		pd2Res[pod.Namespace+"/"+pod.Name] = res
@@ -188,8 +187,7 @@ func (d *ResourceReporter) syncInFlightWorkers(ctx context.Context, log logr.Log
 	runningByPs := map[string]int64{}
 	resByPs := map[string]corev1.ResourceList{}
 	for ps, pss := range podsByPs {
-		// if pod.Labels["replica-type"] == util.AIMASTERROLENAME {
-		// 	return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
+				// 	return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
 		// }
 		// log.V(3).Info("sync podset", "podset", ps, "podcount", len(pss))
 		runningByPs[ps] = 0

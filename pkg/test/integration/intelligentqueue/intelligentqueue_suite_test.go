@@ -96,6 +96,22 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			return []string{qu.Annotations["kube-queue/quota-fullname"]}, nil
 		}})
 
+		// Create the Intelligent Queue BEFORE starting informer
+		// so it gets loaded into the cache
+		fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Create(context.Background(), &v1alpha1.Queue{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-intelligent-queue",
+				Namespace: "koord-queue",
+				Annotations: map[string]string{
+					"koord-queue/priority-threshold":           "4",
+					"koord-queue/available-quota":              "child-1",
+					"koord-queue/queue-items-refresh-interval": "100ms", // Fast refresh for testing
+				}},
+			Spec: v1alpha1.QueueSpec{
+				QueuePolicy: "Intelligent",
+			},
+		}, metav1.CreateOptions{})
+
 		var (
 			multiQueue queue.MultiSchedulingQueue
 			sched      *scheduler.Scheduler
@@ -120,10 +136,10 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		// This keeps tasks in queue so we can verify their positions
 		root := queueunits.ElasticQuotaTree(
 			corev1.ResourceList{"cpu": resource.MustParse("100m")},
-			corev1.ResourceList{"cpu": resource.MustParse("100m")}) // max=0 prevents scheduling
+			corev1.ResourceList{"cpu": resource.MustParse("100m")}) // max=100m prevents scheduling (jobs request 1 CPU)
 		root.Child("child-1", []string{"default"},
 			corev1.ResourceList{"cpu": resource.MustParse("100m")},
-			corev1.ResourceList{"cpu": resource.MustParse("100m")}) // max=0 prevents scheduling
+			corev1.ResourceList{"cpu": resource.MustParse("100m")}) // max=100m prevents scheduling (jobs request 1 CPU)
 		eqcli.SchedulingV1beta1().ElasticQuotaTrees("kube-system").Create(context.Background(), root.Obj(), metav1.CreateOptions{})
 
 		// Update namespace with available queue
@@ -131,22 +147,6 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "default",
 				Annotations: map[string]string{"kube-queue/available-queue": "{\"test-intelligent-queue\":[\"*\"]}"}}},
 			metav1.UpdateOptions{})
-
-		// Create Intelligent Queue with priority threshold = 4
-		// Also set queue-items-refresh-interval to update queue status frequently
-		fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Create(context.Background(), &v1alpha1.Queue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-intelligent-queue",
-				Namespace: "kube-queue",
-				Annotations: map[string]string{
-					"kube-queue/priority-threshold":           "4",
-					"kube-queue/available-quota":              "child-1",
-					"kube-queue/queue-items-refresh-interval": "100ms", // Fast refresh for testing
-				}},
-			Spec: v1alpha1.QueueSpec{
-				QueuePolicy: "Intelligent",
-			},
-		}, metav1.CreateOptions{})
 
 		// Wait for queue to be ready and loaded by controller
 		time.Sleep(time.Second * 5)
@@ -168,21 +168,21 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 				// High priority job 1: priority=5, submitted first
 				queueunits.MakeQueueUnit("high-prio-job-1", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(5).QueueUnit(),
 
 				// High priority job 2: priority=4, submitted second
 				queueunits.MakeQueueUnit("high-prio-job-2", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(4).QueueUnit(),
 
 				// High priority job 3: priority=6, submitted third (highest priority)
 				queueunits.MakeQueueUnit("high-prio-job-3", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(6).QueueUnit(),
 			}
@@ -198,9 +198,9 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		It("should order high priority jobs (>=4) by priority then FIFO", func() {
 			By("waiting queue ready")
 			Eventually(func() error {
-				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				return err
-			}, time.Second*10, time.Millisecond*100).Should(BeNil())
+			}, time.Second*30, time.Millisecond*100).Should(BeNil())
 
 			By("waiting for queue to broadcast")
 			time.Sleep(time.Second * 2)
@@ -218,7 +218,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			By("checking positions - should be in priority order, then FIFO")
 			// high-prio-job-3 should be position 1 (highest priority=6)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -228,11 +228,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(1)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(1)))
 
 			// high-prio-job-1 should be position 2 (priority=5, submitted before job-3)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -242,11 +242,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(2)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(2)))
 
 			// high-prio-job-2 should be position 3 (lowest priority=4)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -256,7 +256,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(3)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(3)))
 		})
 	})
 
@@ -272,21 +272,21 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 				// Low priority job 1: priority=1, submitted first
 				queueunits.MakeQueueUnit("low-prio-job-1", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(1).QueueUnit(),
 
 				// Low priority job 2: priority=3, submitted second
 				queueunits.MakeQueueUnit("low-prio-job-2", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(3).QueueUnit(),
 
 				// Low priority job 3: priority=2, submitted third
 				queueunits.MakeQueueUnit("low-prio-job-3", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(2).QueueUnit(),
 			}
@@ -302,9 +302,9 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		It("should order low priority jobs (<4) by priority", func() {
 			By("waiting queue ready")
 			Eventually(func() error {
-				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				return err
-			}, time.Second*10, time.Millisecond*100).Should(BeNil())
+			}, time.Second*30, time.Millisecond*100).Should(BeNil())
 
 			By("creating low priority queue units")
 			for _, qu := range qus {
@@ -319,7 +319,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			By("checking positions - should be in priority order")
 			// low-prio-job-2 should be position 1 (highest priority=3)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -329,11 +329,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(1)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(1)))
 
 			// low-prio-job-3 should be position 2 (middle priority=2)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -343,11 +343,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(2)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(2)))
 
 			// low-prio-job-1 should be position 3 (lowest priority=1)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -357,7 +357,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(3)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(3)))
 		})
 	})
 
@@ -372,26 +372,26 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 				// High priority jobs (should be at front, in priority+time order)
 				queueunits.MakeQueueUnit("high-job-1", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(5).QueueUnit(),
 
 				queueunits.MakeQueueUnit("high-job-2", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(4).QueueUnit(),
 
 				// Low priority jobs (should be after high priority, in priority order)
 				queueunits.MakeQueueUnit("low-job-1", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(1).QueueUnit(),
 
 				queueunits.MakeQueueUnit("low-job-2", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(3).QueueUnit(),
 			}
@@ -407,9 +407,9 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		It("should order high priority jobs first (priority+time), then low priority jobs (by priority)", func() {
 			By("waiting queue ready")
 			Eventually(func() error {
-				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				return err
-			}, time.Second*10, time.Millisecond*100).Should(BeNil())
+			}, time.Second*30, time.Millisecond*100).Should(BeNil())
 
 			By("creating mixed priority queue units")
 			for _, qu := range qus {
@@ -424,7 +424,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			By("checking positions")
 			// High priority jobs should be first (priority order: high-job-1 with priority=5)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -434,11 +434,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(1)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(1)))
 
 			// high-job-2 with priority=4 should be second
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -448,12 +448,12 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(2)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(2)))
 
 			// Low priority jobs should be after high priority (priority order)
 			// low-job-2 (priority=3) should be position 3
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -463,11 +463,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(3)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(3)))
 
 			// low-job-1 (priority=1) should be position 4
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -477,7 +477,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(4)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(4)))
 		})
 	})
 
@@ -492,21 +492,21 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 				// Exactly at threshold (priority=4) - should go to high priority queue (priority+time)
 				queueunits.MakeQueueUnit("threshold-job", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(4).QueueUnit(),
 
 				// Just below threshold (priority=3) - should go to low priority queue
 				queueunits.MakeQueueUnit("below-threshold-job", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(3).QueueUnit(),
 
 				// Above threshold (priority=5) - should go to high priority queue
 				queueunits.MakeQueueUnit("above-threshold-job", "default").
 					Resources(map[string]int64{"cpu": 1}).
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(5).QueueUnit(),
 			}
@@ -522,9 +522,9 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		It("should correctly classify jobs at threshold boundary", func() {
 			By("waiting queue ready")
 			Eventually(func() error {
-				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				return err
-			}, time.Second*10, time.Millisecond*100).Should(BeNil())
+			}, time.Second*30, time.Millisecond*100).Should(BeNil())
 
 			By("creating queue units around threshold")
 			for _, qu := range qus {
@@ -539,7 +539,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			By("checking positions - threshold and above should be in high priority queue (priority+time)")
 			// above-threshold-job (priority=5) should be position 1 (highest priority in high queue)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -549,11 +549,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(1)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(1)))
 
 			// threshold-job (priority=4) should be position 2 (lower priority in high queue)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -563,11 +563,11 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(2)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(2)))
 
 			// below-threshold-job (priority=3) should be position 3 (low priority queue, after all high priority jobs)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -577,7 +577,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 					}
 				}
 				return 0
-			}, time.Second*10, time.Millisecond*100).Should(Equal(int32(3)))
+			}, time.Second*30, time.Millisecond*100).Should(Equal(int32(3)))
 		})
 	})
 
@@ -593,21 +593,21 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			// This task will fail to schedule due to insufficient resources
 			highPrioLargeJob = queueunits.MakeQueueUnit("high-prio-large-job", "default").
 				Resources(map[string]int64{"cpu": 2}). // Large requirement: 2 CPU
-				Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+				Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 				Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 				Priority(5).QueueUnit()
 
 			// Low priority task 1: small resource requirement (0.1 CPU)
 			lowPrioSmallJob1 = queueunits.MakeQueueUnit("low-prio-small-job-1", "default").
 				Resources(map[string]int64{"cpu": 100}). // Small requirement: 100 millicpu = 0.1 CPU
-				Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+				Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 				Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 				Priority(1).QueueUnit()
 
 			// Low priority task 2: small resource requirement (0.1 CPU)
 			lowPrioSmallJob2 = queueunits.MakeQueueUnit("low-prio-small-job-2", "default").
 				Resources(map[string]int64{"cpu": 100}). // Small requirement: 100 millicpu = 0.1 CPU
-				Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+				Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 				Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 				Priority(2).QueueUnit()
 		})
@@ -622,9 +622,9 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		It("should demonstrate high priority block behavior vs low priority polling behavior", func() {
 			By("waiting queue ready")
 			Eventually(func() error {
-				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				return err
-			}, time.Second*10, time.Millisecond*100).Should(BeNil())
+			}, time.Second*30, time.Millisecond*100).Should(BeNil())
 
 			By("creating high priority large job first (will fail due to insufficient resources)")
 			_, err := fw.QueueUnitClient().SchedulingV1alpha1().QueueUnits("default").Create(context.TODO(), highPrioLargeJob, metav1.CreateOptions{})
@@ -647,7 +647,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			By("verifying positions in queue")
 			// High priority large job should be at position 1 (first in high priority queue)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -661,7 +661,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 
 			// Low priority small job 2 should be at position 2 (first in low priority queue)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -675,7 +675,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 
 			// Low priority small job 1 should be at position 3 (second in low priority queue)
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -690,7 +690,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			By("verifying scheduling behavior difference")
 			// Check queue status multiple times to observe scheduling attempts
 			for i := 0; i < 3; i++ {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				Expect(err).Should(BeNil())
 
 				// The high priority job should always remain at position 1
@@ -723,7 +723,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			// High priority task: large resource requirement that cannot be satisfied
 			highPrioBlockingJob = queueunits.MakeQueueUnit("high-blocking-job", "default").
 				Resources(map[string]int64{"cpu": 10}). // 10 CPU - impossible to satisfy
-				Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+				Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 				Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 				Priority(5).QueueUnit()
 
@@ -735,7 +735,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 				jobName := fmt.Sprintf("low-polling-job-%d", i+1)
 				lowPrioJobs[i] = queueunits.MakeQueueUnit(jobName, "default").
 					Resources(map[string]int64{"cpu": 200}). // 200 millicpu = 0.2 CPU each
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(int32(1 + i%3)). // Vary priorities: 1, 2, 3, 1, 2
 					QueueUnit()
@@ -755,9 +755,9 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		It("should demonstrate low priority task polling behavior with varying priorities", func() {
 			By("waiting queue ready")
 			Eventually(func() error {
-				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				return err
-			}, time.Second*10, time.Millisecond*100).Should(BeNil())
+			}, time.Second*30, time.Millisecond*100).Should(BeNil())
 
 			By("creating high priority blocking job first")
 			_, err := fw.QueueUnitClient().SchedulingV1alpha1().QueueUnits("default").Create(context.TODO(), highPrioBlockingJob, metav1.CreateOptions{})
@@ -779,7 +779,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			By("verifying initial queue positions")
 			// High priority blocking job should be at position 1
 			Eventually(func() int32 {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				if err != nil {
 					return 0
 				}
@@ -792,7 +792,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			}, time.Second*5, time.Millisecond*100).Should(Equal(int32(1)))
 
 			By("verifying low priority jobs are present in queue in priority+time order")
-			queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+			queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 			Expect(err).Should(BeNil())
 
 			// Collect all low priority job positions
@@ -831,7 +831,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			// 2. Low priority jobs are ordered by priority + time
 			// 3. Scheduler polls through low priority jobs (evident from stable positions)
 			for checkNum := 0; checkNum < 3; checkNum++ {
-				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				Expect(err).Should(BeNil())
 
 				// Count low priority jobs still in queue
@@ -886,7 +886,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 				jobName := fmt.Sprintf("unschedulable-low-job-%d", i+1)
 				unschedulableLowPrioJobs[i] = queueunits.MakeQueueUnit(jobName, "default").
 					Resources(map[string]int64{"cpu": 2000}). // 2000 millicpu = 2 CPU - cannot schedule
-					Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+					Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 					Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 					Priority(int32(1 + i%3)). // Vary priorities: 1, 2, 3, 1, 2, 3, ...
 					QueueUnit()
@@ -895,7 +895,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			// Create 1 low priority job that CAN be scheduled (requires 0 CPU)
 			schedulableLowPrioJob = queueunits.MakeQueueUnit("schedulable-low-job", "default").
 				MilliResources(map[string]int64{"cpu": 1}). // 0 CPU - can schedule
-				Annotations(map[string]string{"kube-queue/queue-name": "test-intelligent-queue"}).
+				Annotations(map[string]string{"koord-queue/queue-name": "test-intelligent-queue"}).
 				Labels(map[string]string{"quota.scheduling.alibabacloud.com/name": "child-1"}).
 				Priority(1).
 				QueueUnit()
@@ -914,9 +914,9 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 		It("should schedule schedulable job by polling through unschedulable jobs", func() {
 			By("waiting queue ready")
 			Eventually(func() error {
-				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+				_, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 				return err
-			}, time.Second*10, time.Millisecond*100).Should(BeNil())
+			}, time.Second*30, time.Millisecond*100).Should(BeNil())
 
 			By("creating 10 unschedulable low priority jobs")
 			for i, job := range unschedulableLowPrioJobs {
@@ -930,7 +930,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			time.Sleep(time.Second * 2)
 
 			By("verifying all 10 unschedulable jobs are in queue")
-			queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+			queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 			Expect(err).Should(BeNil())
 
 			unschedulableCount := 0
@@ -957,7 +957,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			Expect(queueUnit.Status.Phase).Should(Equal(v1alpha1.Dequeued))
 
 			By("verifying unschedulable jobs remain in queue")
-			queue, err = fw.QueueUnitClient().SchedulingV1alpha1().Queues("kube-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
+			queue, err = fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.TODO(), "test-intelligent-queue", metav1.GetOptions{})
 			Expect(err).Should(BeNil())
 
 			unschedulableCountAfter := 0

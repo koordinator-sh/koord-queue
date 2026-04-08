@@ -33,7 +33,7 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/controller"
 	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	"github.com/koordinator-sh/koord-queue/pkg/visibility"
-	"gomodules.xyz/jsonpatch/v2"
+	jsonpatch "gomodules.xyz/jsonpatch/v2"
 
 	kueueversioned "sigs.k8s.io/kueue/client-go/clientset/versioned"
 	kueue "sigs.k8s.io/kueue/client-go/informers/externalversions"
@@ -79,7 +79,7 @@ func loadConfig(data []byte) (*config.KoordQueueConfiguration, error) {
 		// because the field will be cleared later by API machinery during
 		// conversion. See KoordQueueConfiguration internal type definition for
 		// more details.
-		cfgObj.TypeMeta.APIVersion = gvk.GroupVersion().String()
+		cfgObj.APIVersion = gvk.GroupVersion().String()
 		return cfgObj, nil
 	}
 	return nil, fmt.Errorf("couldn't decode as KubeSchedulerConfiguration, got %s: ", gvk)

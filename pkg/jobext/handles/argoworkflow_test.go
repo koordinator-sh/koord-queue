@@ -51,6 +51,7 @@ var _ = Describe("ArgoWorkflow", func() {
 		Expect(corev1.AddToScheme(scheme)).To(Succeed())
 		Expect(batchv1.AddToScheme(scheme)).To(Succeed())
 		Expect(wfv1.AddToScheme(scheme)).To(Succeed())
+		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 
 		workflowReconciler = &ArgoWorkflow{
 			c: clientgofake.NewClientBuilder().WithScheme(scheme).Build(),
@@ -389,6 +390,7 @@ memory: 100Mi`,
 			})
 
 			It("should add enqueued condition and annotations to workflow", func() {
+				Expect(workflowReconciler.c.Create(ctx, workflow)).To(Succeed())
 				err := workflowReconciler.Enqueue(ctx, workflow, workflowReconciler.c)
 				Expect(err).To(BeNil())
 
@@ -424,6 +426,7 @@ memory: 100Mi`,
 
 			It("should do nothing when workflow is already suspended", func() {
 				workflow.Spec.Suspend = ptr.To(true)
+				Expect(workflowReconciler.c.Create(ctx, workflow)).To(Succeed())
 				err := workflowReconciler.Suspend(ctx, workflow, workflowReconciler.c)
 				Expect(err).To(BeNil())
 
@@ -439,6 +442,7 @@ memory: 100Mi`,
 
 			It("should suspend workflow when not already suspended", func() {
 				workflow.Spec.Suspend = nil
+				Expect(workflowReconciler.c.Create(ctx, workflow)).To(Succeed())
 				err := workflowReconciler.Suspend(ctx, workflow, workflowReconciler.c)
 				Expect(err).To(BeNil())
 
@@ -463,6 +467,7 @@ memory: 100Mi`,
 
 			It("should do nothing when workflow is not suspended", func() {
 				workflow.Spec.Suspend = ptr.To(false)
+				Expect(workflowReconciler.c.Create(ctx, workflow)).To(Succeed())
 				err := workflowReconciler.Resume(ctx, workflow, workflowReconciler.c)
 				Expect(err).To(BeNil())
 
@@ -478,6 +483,7 @@ memory: 100Mi`,
 
 			It("should resume workflow when suspended", func() {
 				workflow.Spec.Suspend = ptr.To(true)
+				Expect(workflowReconciler.c.Create(ctx, workflow)).To(Succeed())
 				err := workflowReconciler.Resume(ctx, workflow, workflowReconciler.c)
 				Expect(err).To(BeNil())
 

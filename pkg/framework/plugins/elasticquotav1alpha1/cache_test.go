@@ -250,7 +250,7 @@ func Test_cacheImpl_CheckUsage(t *testing.T) {
 				} else {
 					queueUnit.Unit.Annotations[utils.AnnotationActualQuotaOversoldType] = utils.QuotaOversoldTypeForce
 				}
-				cache.Reserve(r.quotaKey, queueUnit)
+				_ = cache.Reserve(r.quotaKey, queueUnit)
 			}
 
 			unit := &api.QueueUnit{}
@@ -293,7 +293,7 @@ func TestThreeLevelQuotaE2E(t *testing.T) {
 			utils.AnnotationActualQuotaOversoldType: utils.QuotaOversoldTypeForbidden,
 		}
 		queueUnit31 := framework.NewQueueUnitInfo(unit31)
-		cache.Reserve("test31", queueUnit31)
+		_ = cache.Reserve("test31", queueUnit31)
 
 		unit32 := &api.QueueUnit{}
 		unit32.UID = "32"
@@ -307,7 +307,7 @@ func TestThreeLevelQuotaE2E(t *testing.T) {
 			utils.AnnotationActualQuotaOversoldType: utils.QuotaOversoldTypeForbidden,
 		}
 		queueUnit32 := framework.NewQueueUnitInfo(unit32)
-		cache.Reserve("test32", queueUnit32)
+		_ = cache.Reserve("test32", queueUnit32)
 
 		unit2 := &api.QueueUnit{}
 		unit2.UID = "2"
@@ -323,7 +323,7 @@ func TestThreeLevelQuotaE2E(t *testing.T) {
 		queueUnit2 := framework.NewQueueUnitInfo(unit2)
 		err := cache.CheckUsage("test2", queueUnit2, 1)
 		assert.True(t, err == nil)
-		cache.Reserve("test2", queueUnit2)
+		_ = cache.Reserve("test2", queueUnit2)
 
 		unit1 := &api.QueueUnit{}
 		unit1.UID = "1"
@@ -339,7 +339,7 @@ func TestThreeLevelQuotaE2E(t *testing.T) {
 		queueUnit1 := framework.NewQueueUnitInfo(unit1)
 		err = cache.CheckUsage("test1", queueUnit1, 1)
 		assert.True(t, err == nil)
-		cache.Reserve("test1", queueUnit1)
+		_ = cache.Reserve("test1", queueUnit1)
 
 		assert.Equal(t, int64(2), cache.quotas["test31"].Used["cpu"])
 		assert.Equal(t, int64(2), cache.quotas["test31"].SelfUsed["cpu"])
@@ -369,10 +369,10 @@ func TestThreeLevelQuotaE2E(t *testing.T) {
 		assert.Equal(t, int64(10), cache.quotas["test1"].SelfGuaranteedUsed["cpu"])
 		assert.Equal(t, int64(10), cache.quotas["test1"].ChildrenGuaranteedUsed["cpu"])
 
-		cache.Unreserve("test31", queueUnit31)
-		cache.Unreserve("test32", queueUnit32)
-		cache.Unreserve("test2", queueUnit2)
-		cache.Unreserve("test1", queueUnit1)
+		_ = cache.Unreserve("test31", queueUnit31)
+		_ = cache.Unreserve("test32", queueUnit32)
+		_ = cache.Unreserve("test2", queueUnit2)
+		_ = cache.Unreserve("test1", queueUnit1)
 
 		assert.Equal(t, int64(0), cache.quotas["test31"].Used["cpu"])
 		assert.Equal(t, int64(0), cache.quotas["test31"].SelfUsed["cpu"])
@@ -428,7 +428,7 @@ func TestThreeLevelQuotaE2E(t *testing.T) {
 		queueUnit2 := framework.NewQueueUnitInfo(unit2)
 		err := cache.CheckUsage("test2", queueUnit2, 1)
 		assert.True(t, err == nil)
-		cache.Reserve("test2", queueUnit2)
+		_ = cache.Reserve("test2", queueUnit2)
 
 		unit31 := &api.QueueUnit{}
 		unit31.UID = "31"
@@ -511,7 +511,7 @@ func Test_cacheImpl_Reserve_Unreserve(t *testing.T) {
 		{
 			err := cache.Reserve("test1", queueUnit1)
 			assert.True(t, err == nil)
-			cache.Reserve("test1", queueUnit1)
+			_ = cache.Reserve("test1", queueUnit1)
 			assert.True(t, err == nil)
 
 			err = cache.Reserve("test1", queueUnit2)

@@ -39,7 +39,11 @@ func main() {
 	flag.Parse()
 	s.Register(flag.CommandLine)
 	http.Handle("/metrics", promhttp.Handler())
-	go http.ListenAndServe(":10259", nil)
+	go func() {
+		if err := http.ListenAndServe(":10259", nil); err != nil {
+			log.Printf("metrics server failed: %v", err)
+		}
+	}()
 
 	if err := app.Run(s); err != nil {
 		log.Fatalln(err)

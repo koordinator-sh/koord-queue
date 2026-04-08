@@ -89,7 +89,12 @@ func NewPriorityQueue(name string,
 
 		lastResetTime: time.Now(),
 
-		reclaimProtectTime: fw.GetReclaimProtectTime(),
+		reclaimProtectTime: func() time.Duration {
+			if fw != nil {
+				return fw.GetReclaimProtectTime()
+			}
+			return 0
+		}(),
 	}
 	if q.Annotations[MaxDepthAnnotation] != "" {
 		maxDepth, err := strconv.ParseInt(q.Annotations[MaxDepthAnnotation], 10, 32)

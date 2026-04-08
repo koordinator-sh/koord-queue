@@ -12,55 +12,11 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/utils"
 
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 )
-
-// deprecated
-// tryPreempt find if assumed queue units are the most prioritized
-// queue units in queue, if not, queue will try to preempt them.
-// At the beginning of the prempt, queue will set queue unit status
-// to Preempted, job-extensions will delete the pods and other resources
-// in cluster for Preempted queue units. After the deletion of resources,
-// job-extensions will set queue unit status to Enqueued.
-//
-// Algorithm: When we find a high priority queue units in queue need to
-// preempt, we preempt from the assumed queue units from low priority to
-// high priority until the released resource is enough for the high priority
-// queue units to run.
-//
-// q.lock should be obtained outside
-func (q *PriorityQueue) tryPreempt() {
-	if len(q.assumed) == 0 {
-		return
-	}
-	if !q.preemptFlag.CompareAndSwap(0, 1) {
-		klog.V(1).Infof("queue %s is preempting, not allowed to preempt again", q.name)
-		return
-	}
-
-	start := time.Now()
-	assumed := make([]*framework.QueueUnitInfo, 0, len(q.assumed))
-	for k := range q.assumed {
-		if _, ok := q.queueUnits[k]; !ok {
-			continue
-		}
-		assumed = append(assumed, q.queueUnits[k])
-	}
-	preemptedQueueUnitKeys, preempted := q.findQueueUnitsToPreempt(assumed)
-	if len(preemptedQueueUnitKeys) == 0 {
-		q.preemptFlag.CompareAndSwap(1, 0)
-		klog.V(1).Infof("no victims found in queue %s, start at %v", q.name, start.Format(time.TimeOnly))
-		return
-	}
-	klog.V(1).Infof("preempt queue units in queue %s: %v, start at %v", q.name, strings.Join(preemptedQueueUnitKeys, ","), start.Format(time.TimeOnly))
-	q.preemptQueueUnits(preempted, nil, start)
-	q.preemptFlag.CompareAndSwap(1, 0)
-	klog.V(1).Infof("preempt in queue %s completed(%v), start at %v, last %vs", q.name, strings.Join(preemptedQueueUnitKeys, ","), start.Format(time.TimeOnly), time.Since(start).Seconds())
-}
 
 func (q *PriorityQueue) preemptQueueUnits(preempted []*framework.QueueUnitInfo, ps map[string]map[string]framework.Admission, start time.Time) {
 	if q.fw.QueueUnitClient() == nil {
@@ -108,55 +64,6 @@ func (q *PriorityQueue) preemptQueueUnits(preempted []*framework.QueueUnitInfo, 
 		}(p)
 	}
 	wg.Wait()
-}
-
-// deprecated
-func (q *PriorityQueue) findQueueUnitsToPreempt(assumed []*framework.QueueUnitInfo) ([]string, []*framework.QueueUnitInfo) {
-	releasedResource := v1.ResourceList{}
-	preemptorResource := v1.ResourceList{}
-	preemtped := []*framework.QueueUnitInfo{}
-	preemptedQueueUnitKeys := []string{}
-	slices.SortFunc(assumed, q.lessFunc)
-	for _, quInfo := range q.queue {
-		key := quInfo.Unit.Namespace + "/" + quInfo.Unit.Name
-		if _, ok := q.assumed[key]; ok {
-			continue
-		}
-		if q.blocked {
-			quotas, err := q.fw.GetQueueUnitQuotaName(quInfo.Unit)
-			if err == nil && len(quotas) > 0 {
-				if _, ok := q.blockedQuota.Load(quotas[0]); ok {
-					continue
-				}
-			}
-		}
-		if len(assumed) == 0 {
-			break
-		}
-		if assumed[len(assumed)-1] == nil {
-			klog.InfoS("assumed is empty")
-		} else if assumed[len(assumed)-1].Unit == nil {
-			klog.InfoS("assumed unit is empty")
-		}
-		if q.lessFunc(quInfo, assumed[len(assumed)-1]) < 0 {
-			Add(preemptorResource, quInfo.Unit.Spec.Resource)
-			// find a low priority assumed pod
-			if !IsLargeThan(releasedResource, preemptorResource) {
-				// released resource not enough
-				for len(assumed) > 0 && q.lessFunc(quInfo, assumed[len(assumed)-1]) < 0 && !IsLargeThan(releasedResource, preemptorResource) {
-					last := assumed[len(assumed)-1]
-					preemtped = append(preemtped, last)
-					preemptedQueueUnitKeys = append(preemptedQueueUnitKeys, last.Unit.Namespace+"/"+last.Unit.Name)
-					assumed = assumed[:len(assumed)-1]
-					Add(releasedResource, last.Unit.Spec.Resource)
-				}
-			}
-		} else {
-			// find a low priority queue unit, stop
-			break
-		}
-	}
-	return preemptedQueueUnitKeys, preemtped
 }
 
 func (q *PriorityQueue) Preempt(ctx context.Context, qi *framework.QueueUnitInfo) error {
@@ -254,30 +161,6 @@ func (q *PriorityQueue) dryRunPreemption(preemptor *framework.QueueUnitInfo, ass
 		}
 	}
 	return preemptedQueueUnitKeys, preemtped, preemptedReplicas
-}
-
-// a += b
-func Add(a, b v1.ResourceList) {
-	for rName, rQuant := range b {
-		if _, ok := a[rName]; !ok {
-			a[rName] = rQuant.DeepCopy()
-			continue
-		}
-
-		t := a[rName]
-		t.Add(rQuant)
-		a[rName] = t
-	}
-}
-
-// return true if all a > b for all resource types
-func IsLargeThan(a, b v1.ResourceList) bool {
-	for rName, rQuant := range b {
-		if rQuant.Cmp(a[rName]) > 0 {
-			return false
-		}
-	}
-	return true
 }
 
 // return true if all a > b for all resource types

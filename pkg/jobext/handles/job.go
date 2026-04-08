@@ -238,7 +238,7 @@ func (j *Job) QueueUnitSuffix() string {
 
 func NewJobReconciler(cli client.Client, config *rest.Config, scheme *runtime.Scheme, managedAllJobs bool, args string) framework.JobHandle {
 	j := &Job{podlister: cli, managedAllJobs: managedAllJobs}
-	batchv1.AddToScheme(scheme)
+	_ = batchv1.AddToScheme(scheme)
 	extension := framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 	return framework.NewJobHandle(0, 0, extension, false)
 }

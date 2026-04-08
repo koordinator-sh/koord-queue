@@ -76,7 +76,7 @@ func NewController(kubeConfigPath string, enableStrictConsistency bool, stopCh <
 	queueFactory := cfg.QueueFactory
 	informerFactory := cfg.InformersFactory
 	schemeModified := scheme.Scheme
-	v1alpha1.AddToScheme(schemeModified)
+	_ = v1alpha1.AddToScheme(schemeModified)
 	queueInformer := queueFactory.Scheduling().V1alpha1().Queues().Informer()
 	queueUnitLister := queueFactory.Scheduling().V1alpha1().QueueUnits().Lister()
 	queueUnitInformer := queueFactory.Scheduling().V1alpha1().QueueUnits().Informer()

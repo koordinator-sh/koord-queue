@@ -77,13 +77,13 @@ func newVisibilityServerConfig(conf *rest.Config) *genericapiserver.RecommendedC
 	binaryVersion := utilversion.MustParse(versionInfo.String())
 	version := strings.Split(versionInfo.String(), "-")[0]
 	// enable OpenAPI schemas
-	c.Config.EffectiveVersion = basecompatibility.NewEffectiveVersion(binaryVersion, false, binaryVersion, binaryVersion.SubtractMinor(2))
-	c.Config.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(generatedopenapi.GetOpenAPIDefinitions, openapinamer.NewDefinitionNamer(apis.Scheme))
-	c.Config.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(generatedopenapi.GetOpenAPIDefinitions, openapinamer.NewDefinitionNamer(apis.Scheme))
-	c.Config.OpenAPIConfig.Info.Title = "Koord-queue visibility-server"
-	c.Config.OpenAPIV3Config.Info.Title = "Koord-queue visibility-server"
-	c.Config.OpenAPIConfig.Info.Version = version
-	c.Config.OpenAPIV3Config.Info.Version = version
+	c.EffectiveVersion = basecompatibility.NewEffectiveVersion(binaryVersion, false, binaryVersion, binaryVersion.SubtractMinor(2))
+	c.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(generatedopenapi.GetOpenAPIDefinitions, openapinamer.NewDefinitionNamer(apis.Scheme))
+	c.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(generatedopenapi.GetOpenAPIDefinitions, openapinamer.NewDefinitionNamer(apis.Scheme))
+	c.OpenAPIConfig.Info.Title = "Koord-queue visibility-server"
+	c.OpenAPIV3Config.Info.Title = "Koord-queue visibility-server"
+	c.OpenAPIConfig.Info.Version = version
+	c.OpenAPIV3Config.Info.Version = version
 
 	c.EnableMetrics = true
 

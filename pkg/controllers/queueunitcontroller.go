@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
-	"k8s.io/klog/v2/klogr"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // QueueUnitController will update QueueUnit Status to Dequeued once QueueUnit's all admissionChecks
@@ -32,7 +32,7 @@ type QueueUnitController struct {
 }
 
 func NewQueueUnitController(workers int64, enableStrictDequeueMode bool, cli versioned.Interface, informer cache.SharedIndexInformer, lister externalv1alpha1.QueueUnitLister) *QueueUnitController {
-	logger := klogr.New().WithName("QueueUnit controller")
+	logger := log.Log.WithName("QueueUnit controller")
 	quc := &QueueUnitController{
 		queueUnitClient:   cli,
 		queueUnitInformer: informer,
@@ -43,7 +43,7 @@ func NewQueueUnitController(workers int64, enableStrictDequeueMode bool, cli ver
 
 	quc.ControllerBaseImpl = NewControllerBase(int(workers), logger, []cache.InformerSynced{informer.HasSynced}, quc.reconcile, workqueue.DefaultTypedItemBasedRateLimiter[string]())
 
-	informer.AddEventHandler(cache.FilteringResourceEventHandler{
+	_, _ = informer.AddEventHandler(cache.FilteringResourceEventHandler{
 		FilterFunc: func(obj interface{}) bool {
 			qu, ok := obj.(*v1alpha1.QueueUnit)
 			if !ok {
@@ -130,7 +130,7 @@ func (q *QueueUnitController) reconcile(key string) (Result, error) {
 }
 
 func updateQueueUnitStatus(queueUnitCp *v1alpha1.QueueUnit, enableStrictDequeueMode bool, logger logr.Logger) bool {
-	var state State = StateReady
+	var state = StateReady
 	now := metav1.Now()
 	pendingAdmissionChecks := []string{}
 	for _, check := range queueUnitCp.Status.AdmissionChecks {

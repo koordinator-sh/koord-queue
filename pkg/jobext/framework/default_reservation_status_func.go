@@ -76,7 +76,7 @@ func ReservationStatus(ctx context.Context, obj client.Object, qu *v1alpha1.Queu
 		retMsg += fmt.Sprintf("{%v:%v},", k, v)
 		count++
 		if count >= limit {
-			retMsg += fmt.Sprintf("...")
+			retMsg += "..."
 			break
 		}
 	}

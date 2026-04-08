@@ -101,28 +101,22 @@ func (j *PytorchJob) Reservation(ctx context.Context, obj client.Object) ([]koor
 
 		labelSelector := &metav1.LabelSelector{}
 		switch role {
-		// case util.AIMASTERROLENAME:
-		// 	// TODO:
-		// 	labelSelector.MatchLabels = map[string]string{
-		// 		"job-name":             strings.Replace(job.Name, "/", "-", -1),
-		// 		"pytorch-replica-type": util.AIMASTERROLENAME,
-		// 	}
 		case pytorchv1.PyTorchReplicaTypeMaster:
 			labelSelector.MatchExpressions = []metav1.LabelSelectorRequirement{
 				{
 					Key:      "pytorch-replica-type",
 					Operator: metav1.LabelSelectorOpNotIn,
-					Values:   []string{util.AIMASTERROLENAME},
+					Values:   []string{"master"},
 				},
 				{
 					Key:      "job-name",
 					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{strings.Replace(job.Name, "/", "-", -1)},
+					Values:   []string{strings.ReplaceAll(job.Name, "/", "-")},
 				},
 			}
 			// TODO:
 			// labelSelector.MatchLabels = map[string]string{
-			// 	"job-name":             strings.Replace(job.Name, "/", "-", -1),
+			// 	"job-name":             strings.ReplaceAll(job.Name, "/", "-"),
 			// 	"pytorch-replica-type": "master",
 			// }
 		case pytorchv1.PyTorchReplicaTypeWorker:
@@ -130,17 +124,17 @@ func (j *PytorchJob) Reservation(ctx context.Context, obj client.Object) ([]koor
 				{
 					Key:      "pytorch-replica-type",
 					Operator: metav1.LabelSelectorOpNotIn,
-					Values:   []string{util.AIMASTERROLENAME},
+					Values:   []string{"master"},
 				},
 				{
 					Key:      "job-name",
 					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{strings.Replace(job.Name, "/", "-", -1)},
+					Values:   []string{strings.ReplaceAll(job.Name, "/", "-")},
 				},
 			}
 			// TODO:
 			// labelSelector.MatchLabels = map[string]string{
-			// 	"job-name":             strings.Replace(job.Name, "/", "-", -1),
+			// 	"job-name":             strings.ReplaceAll(job.Name, "/", "-"),
 			// 	"pytorch-replica-type": "worker",
 			// }
 		}
@@ -152,10 +146,10 @@ func (j *PytorchJob) Reservation(ctx context.Context, obj client.Object) ([]koor
 		}
 		templateCopy.Namespace = job.Namespace
 		delete(templateCopy.Labels, "alibabacloud.com/schedule-admission")
-		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "pod-group.scheduling.sigs.k8s.io/name", framework.Suffix)
-		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "pod-group.scheduling.sigs.k8s.io", framework.Suffix)
-		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "scheduling.x-k8s.io/pod-group", framework.Suffix)
-		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "network-topology-job-name", framework.Suffix)
+		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "pod-group.scheduling.sigs.k8s.io/name", j.QueueUnitSuffix())
+		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "pod-group.scheduling.sigs.k8s.io", j.QueueUnitSuffix())
+		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "scheduling.x-k8s.io/pod-group", j.QueueUnitSuffix())
+		modifyGroupLabelsOrAnnotations(templateCopy.Labels, "network-topology-job-name", j.QueueUnitSuffix())
 		for i := 0; i < replicas; i++ {
 			resv := koordinatorschedulerv1alpha1.Reservation{
 				ObjectMeta: metav1.ObjectMeta{
@@ -168,7 +162,7 @@ func (j *PytorchJob) Reservation(ctx context.Context, obj client.Object) ([]koor
 				},
 			}
 			if netName != "" {
-				resv.Labels["network-topology-job-name"] = netName + "-" + framework.Suffix
+				resv.Labels["network-topology-job-name"] = netName + "-" + j.QueueUnitSuffix()
 				resv.Labels["network-topology-job-namespace"] = netNs
 			}
 			resvs = append(resvs, resv)
@@ -227,7 +221,7 @@ func (j *PytorchJob) Priority(ctx context.Context, obj client.Object) (string, *
 	var priorityClassName string
 	var priority *int32
 	for role := range job.Spec.PyTorchReplicaSpecs {
-		if r := strings.ToLower(string(role)); r == util.AIMASTERROLENAME {
+		if role == pytorchv1.PyTorchReplicaTypeMaster {
 			klog.Infof("skip search priority in role %v for job %v", role, job.Name)
 			continue
 		}
@@ -258,7 +252,7 @@ func (j *PytorchJob) Priority(ctx context.Context, obj client.Object) (string, *
 func (j *PytorchJob) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*pytorchv1.PyTorchJob)
 	for roleName, roleSpec := range job.Spec.PyTorchReplicaSpecs {
-		if roleName == util.AIMASTERROLENAME {
+		if roleName == pytorchv1.PyTorchReplicaTypeMaster {
 			continue
 		}
 		util.SetPodTemplateSpec(&roleSpec.Template, job.Namespace, job.Name, strings.ToLower(string(roleName)), j.QueueUnitSuffix())
@@ -314,7 +308,7 @@ func (r *PytorchJob) deleteJobResources(pytorchjob *pytorchv1.PyTorchJob) error 
 	pods, err := r.GetPodsForJob(pytorchjob)
 	filteredPods := []*v1.Pod{}
 	for _, p := range pods {
-		if p.Labels["replica-type"] == util.AIMASTERROLENAME {
+		if p.Labels["replica-type"] == "master" {
 			continue
 		}
 		if p.Spec.NodeName != "" {
@@ -349,7 +343,7 @@ func (r *PytorchJob) GenLabels(jobName string) map[string]string {
 	groupName := "kubeflow.org"
 	return map[string]string{
 		"group-name": groupName,
-		"job-name":   strings.Replace(jobName, "/", "-", -1),
+		"job-name":   strings.ReplaceAll(jobName, "/", "-"),
 	}
 }
 
@@ -513,7 +507,7 @@ func (j *PytorchJob) Resume(ctx context.Context, obj client.Object, cli client.C
 	if os.Getenv("PAI_ENV") != "" {
 		delete(new.Annotations, QueueAnnotation)
 	} else {
-		new.ObjectMeta.Annotations[QueueAnnotation] = "false"
+		new.Annotations[QueueAnnotation] = "false"
 	}
 	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
@@ -521,7 +515,7 @@ func (j *PytorchJob) Resume(ctx context.Context, obj client.Object, cli client.C
 
 func (j *PytorchJob) GetJobStatus(ctx context.Context, obj client.Object, client client.Client) (framework.JobStatus, time.Time) {
 	job := obj.(*pytorchv1.PyTorchJob)
-	var running, queuing bool = false, false
+	var running, queuing = false, false
 	var runningTransTime, queuingTransTime time.Time
 	for _, cond := range job.Status.Conditions {
 		if cond.Type == commonv1.JobSucceeded && cond.Status == v1.ConditionTrue {
@@ -573,7 +567,7 @@ func NewPytorchJobReconciler(cli client.Client, config *rest.Config, scheme *run
 		podControl:     control.RealPodControl{KubeClient: c, Recorder: record.NewBroadcaster().NewRecorder(scheme, v1.EventSource{Component: "pytorch-opeartor-extension"})},
 		svcControl:     control.RealServiceControl{KubeClient: c, Recorder: record.NewBroadcaster().NewRecorder(scheme, v1.EventSource{Component: "pytorch-opeartor-extension"})},
 	}
-	pytorchv1.AddToScheme(scheme)
+	_ = pytorchv1.AddToScheme(scheme)
 	extension := framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 
 	op := tfOption{}
@@ -581,8 +575,8 @@ func NewPytorchJobReconciler(cli client.Client, config *rest.Config, scheme *run
 	if err != nil {
 		log.Fatalf("failed to parse args for pytorchjob extension, content:%v", args)
 	}
-	var rt time.Duration = 0
-	var bt time.Duration = time.Minute
+	var rt time.Duration
+	var bt = time.Minute
 	if op.RunningTimeout != nil {
 		rt = *op.RunningTimeout
 	}

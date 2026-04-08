@@ -13,7 +13,7 @@ func SetDefaults_ElasticQuotaTreeArgs(obj *ElasticQuotaArgs) {
 
 func SetDefaults_KoordQueueConfiguration(obj *KoordQueueConfiguration) {
 	scheme := runtime.NewScheme()
-	localSchemeBuilder.AddToScheme(scheme)
+	_ = localSchemeBuilder.AddToScheme(scheme)
 	if len(obj.Plugins) == 0 {
 		obj.Plugins = []Plugin{
 			{Name: "Priority"},

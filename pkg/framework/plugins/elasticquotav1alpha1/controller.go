@@ -51,8 +51,6 @@ func (ctrl *Controller) syncQueueStatusWorker() {
 		}
 		ctrl.syncQueueStatus(queue, summaries[queue.Name])
 	}
-
-	return
 }
 
 func (ctrl *Controller) syncQueueStatus(q *queuev1.Queue, summary *ElasticQuotaDebugInfo) {

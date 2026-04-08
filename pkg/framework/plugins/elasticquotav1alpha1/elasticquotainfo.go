@@ -154,8 +154,8 @@ func (info *ElasticQuotaInfo) CheckUsage(currentQuota string,
 	queueUnitRes := utils.TransResourceList(queueUnit.Unit.Spec.Resource)
 	queueUnitQuota := getQuotaName(queueUnit.Unit)
 
-	var limit map[v1.ResourceName]int64 = info.Max
-	var used map[v1.ResourceName]int64 = info.Used
+	var limit = info.Max
+	var used = info.Used
 
 	if len(limit) == 0 && len(queueUnitRes) != 0 {
 		klog.Infof("limit is empty, itemName:%v, queueUnitQuota:%v, currentQuota:%v, "+

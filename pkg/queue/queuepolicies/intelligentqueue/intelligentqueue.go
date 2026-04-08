@@ -45,23 +45,6 @@ type IntelligentQueue struct {
 	lowNextIdx int32
 }
 
-// fifoLess compares queue units by timestamp only (FIFO)
-func fifoLess(a, b *framework.QueueUnitInfo) int {
-	if a.Unit.UID == b.Unit.UID {
-		return 0
-	}
-	if a.InitialAttemptTimestamp.After(b.InitialAttemptTimestamp) {
-		return 1
-	} else if a.InitialAttemptTimestamp.Before(b.InitialAttemptTimestamp) {
-		return -1
-	} else if a.Name < b.Name {
-		return -1
-	} else if a.Name > b.Name {
-		return 1
-	}
-	return 0
-}
-
 // priorityLess compares queue units by priority and timestamp
 func priorityLess(a, b *framework.QueueUnitInfo) int {
 	prioA := int32(0)

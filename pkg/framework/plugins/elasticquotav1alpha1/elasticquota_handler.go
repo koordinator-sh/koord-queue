@@ -68,7 +68,7 @@ func (eq *ElasticQuota) Delete(obj interface{}) {
 	eq.cache.DeleteQuota(elasticQuota)
 
 	ctx := context.Background()
-	retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	_ = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		err := eq.handle.QueueUnitClient().SchedulingV1alpha1().Queues(KoordQueueNamespace).
 			Delete(ctx, elasticQuota.Name, metav1.DeleteOptions{})
 		if err != nil {
@@ -94,7 +94,7 @@ func toQuota(obj interface{}) *v1alpha1.ElasticQuota {
 
 func (eq *ElasticQuota) tryCreateOrUpdateQueueCr(elasticQuota *v1alpha1.ElasticQuota) {
 	ctx := context.Background()
-	retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	_ = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		existQueueCr, errGet := eq.handle.QueueUnitClient().SchedulingV1alpha1().
 			Queues(KoordQueueNamespace).Get(ctx, elasticQuota.Name, metav1.GetOptions{})
 

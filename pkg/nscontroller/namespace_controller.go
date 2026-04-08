@@ -82,10 +82,10 @@ func removeAvailableQueuesIfExists(ctx context.Context, client client.Client, ns
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/reconcile
 func (r *NamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := Log.WithValues("namespace", req.NamespacedName.Name)
+	log := Log.WithValues("namespace", req.Name)
 
 	ns := corev1.Namespace{}
-	err := r.Client.Get(ctx, req.NamespacedName, &ns)
+	err := r.Get(ctx, req.NamespacedName, &ns)
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -185,7 +185,7 @@ func (r *NamespaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			}
 			elasticquotatree.AddQueueStr(ns.Annotations, str)
 		}
-		return ctrl.Result{}, r.Client.Update(ctx, &ns)
+		return ctrl.Result{}, r.Update(ctx, &ns)
 	}
 
 	return ctrl.Result{}, nil
@@ -212,7 +212,7 @@ func (r *NamespaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			log = log.WithValues("queue", queue.Name)
 			newQueue := &v1alpha1.Queue{}
 			quotas := []string{}
-			err := r.Client.Get(ctx, types.NamespacedName{Name: queue.Name, Namespace: queue.Namespace}, newQueue)
+			err := r.Get(ctx, types.NamespacedName{Name: queue.Name, Namespace: queue.Namespace}, newQueue)
 			r.lock.RLock()
 			if err == nil && queue.DeletionTimestamp == nil {
 				quotas = elasticquotatree.GetAvailableQuotasInQueue(queue)

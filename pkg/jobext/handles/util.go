@@ -25,29 +25,6 @@ func RecheckDeletionTimestamp(getObject func() (metav1.Object, error)) func() er
 	}
 }
 
-func setK8sCondition(old []metav1.Condition, ctype string, status metav1.ConditionStatus, msg string, reason string) (bool, []metav1.Condition) {
-	for i, condition := range old {
-		now := metav1.Now()
-		if condition.Type == ctype && condition.Status != status {
-			old[i].Status = status
-			old[i].LastTransitionTime = now
-			old[i].Message = msg
-			old[i].Reason = reason
-			return true, old
-		} else if condition.Type == ctype && condition.Status == status {
-			return false, old
-		}
-	}
-	old = append(old, metav1.Condition{
-		Type:               string(ctype),
-		LastTransitionTime: metav1.Now(),
-		Status:             status,
-		Message:            msg,
-		Reason:             reason,
-	})
-	return true, old
-}
-
 func setCondition(status *commonv1.JobStatus, t commonv1.JobConditionType, st v1.ConditionStatus, msg string) bool {
 	needUpdate := false
 	found := false

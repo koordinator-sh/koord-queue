@@ -52,6 +52,7 @@ var _ = Describe("RayJob Controller", func() {
 		ctx = context.Background()
 		scheme = runtime.NewScheme()
 		rayv1.AddToScheme(scheme)
+		schedulingv1.AddToScheme(scheme)
 		fakeClient = fake.NewClientBuilder().WithScheme(scheme).Build()
 		rayJobController = &RayJob{
 			c:              fakeClient,

@@ -69,10 +69,7 @@ func (c *cacheImpl) CheckUsage(queueUnitQuota string, queueUnit *framework.Queue
 	visited := sets.NewString()
 	visitedQuotaPath := make([]string, 0)
 	currentQuota := queueUnitQuota
-	for {
-		if currentQuota == KoordRootQuota {
-			break
-		}
+	for currentQuota != KoordRootQuota {
 		if visited.Has(currentQuota) {
 			errMsg := fmt.Sprintf("CheckUsage found cycle reference, item:%v, quotaName:%v, visited quota: %s",
 				queueUnit.Name, currentQuota, strings.Join(visitedQuotaPath, ","))

@@ -3,7 +3,6 @@ package framework
 import (
 	"context"
 	"strings"
-	"sync"
 	"time"
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
@@ -45,7 +44,6 @@ type GenericJobReconciler struct {
 
 	jobHandles map[string]JobHandle
 
-	lock                  sync.Mutex
 	processedReservations map[string]int
 	lastSeenResrvations   map[string]resourceVersionWithTime
 	// ConstructQueueunits func(ctx context.Context, obj client.Object, client client.Client) []*v1alpha1.QueueUnit
@@ -365,7 +363,7 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.V(1).Info("resume generic job due to related queueunit dequeued")
 			return ctrl.Result{RequeueAfter: handle.runningTimeout}, handle.genericJobExtension.Resume(ctx, object, d.client)
 		}
-		var lastUpdateTime time.Time = time.Now()
+		var lastUpdateTime = time.Now()
 		if queueUnit.Status.LastUpdateTime != nil {
 			lastUpdateTime = queueUnit.Status.LastUpdateTime.Time
 		}
@@ -390,15 +388,19 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// status == Enqueued
 		if queueUnit.Status.Phase == v1alpha1.Enqueued {
 			existingResvs := &koordinatorschedulerv1alpha1.ReservationList{}
-			d.client.List(ctx, existingResvs, client.MatchingLabels{
+			if err := d.client.List(ctx, existingResvs, client.MatchingLabels{
 				"reserved-job-namespace": object.GetNamespace(),
 				"reserved-job-name":      object.GetName(),
-			})
+			}); err != nil {
+				log.V(1).Info("failed to list reservations", "error", err)
+			}
 			trace.Step("ListReservations")
 			deleted := []string{}
 			for _, existingResv := range existingResvs.Items {
 				if existingResv.Status.Phase == "Failed" || existingResv.Status.Phase == koordinatorschedulerv1alpha1.ReservationAvailable {
-					d.client.Delete(ctx, &existingResv)
+					if err := d.client.Delete(ctx, &existingResv); err != nil {
+						log.V(1).Info("failed to delete reservation", "reservation", existingResv.Name, "error", err)
+					}
 					deleted = append(deleted, existingResv.Name)
 				}
 			}

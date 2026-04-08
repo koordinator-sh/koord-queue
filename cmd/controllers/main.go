@@ -196,12 +196,12 @@ func run(cfg *rest.Config, opt *ControllerOptions) error {
 
 	// Add schemes
 	if opt.EnableReservation {
-		koordinatorschedulerv1alpha1.AddToScheme(mgr.GetScheme())
+		_ = koordinatorschedulerv1alpha1.AddToScheme(mgr.GetScheme())
 	}
 	if opt.EnableNetworkAware {
-		networkv1alpha1.AddToScheme(mgr.GetScheme())
+		_ = networkv1alpha1.AddToScheme(mgr.GetScheme())
 	}
-	schv1alpha1.AddToScheme(mgr.GetScheme())
+	_ = schv1alpha1.AddToScheme(mgr.GetScheme())
 
 	// Setup cache indexes
 	if err := setupCacheIndexes(mgr); err != nil {

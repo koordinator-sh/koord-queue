@@ -177,13 +177,13 @@ func (c *ContainerWrapper) Image(image string) *ContainerWrapper {
 
 // HostPort sets `hostPort` as the host port of the inner Container.
 func (c *ContainerWrapper) HostPort(hostPort int32) *ContainerWrapper {
-	c.Container.Ports = []v1.ContainerPort{{HostPort: hostPort}}
+	c.Ports = []v1.ContainerPort{{HostPort: hostPort}}
 	return c
 }
 
 // ContainerPort sets `ports` as the ports of the inner Container.
 func (c *ContainerWrapper) ContainerPort(ports []v1.ContainerPort) *ContainerWrapper {
-	c.Container.Ports = ports
+	c.Ports = ports
 	return c
 }
 
@@ -309,7 +309,7 @@ func (p *PodWrapper) Name(s string) *PodWrapper {
 
 // Name sets `s` as the name of the inner pod.
 func (p *PodWrapper) HostNetwork(h bool) *PodWrapper {
-	p.Pod.Spec.HostNetwork = h
+	p.Spec.HostNetwork = h
 	return p
 }
 
@@ -936,28 +936,28 @@ func (p *PersistentVolumeClaimWrapper) Annotation(key, value string) *Persistent
 // VolumeName sets `name` as the volume name of the inner
 // PersistentVolumeClaim.
 func (p *PersistentVolumeClaimWrapper) VolumeName(name string) *PersistentVolumeClaimWrapper {
-	p.PersistentVolumeClaim.Spec.VolumeName = name
+	p.Spec.VolumeName = name
 	return p
 }
 
 // AccessModes sets `accessModes` as the access modes of the inner
 // PersistentVolumeClaim.
 func (p *PersistentVolumeClaimWrapper) AccessModes(accessModes []v1.PersistentVolumeAccessMode) *PersistentVolumeClaimWrapper {
-	p.PersistentVolumeClaim.Spec.AccessModes = accessModes
+	p.Spec.AccessModes = accessModes
 	return p
 }
 
 // Resources sets `resources` as the resource requirements of the inner
 // PersistentVolumeClaim.
 func (p *PersistentVolumeClaimWrapper) Resources(resources v1.VolumeResourceRequirements) *PersistentVolumeClaimWrapper {
-	p.PersistentVolumeClaim.Spec.Resources = resources
+	p.Spec.Resources = resources
 	return p
 }
 
 // StorageClassName sets `StorageClassName` as the StorageClassName of the inner
 // PersistentVolumeClaim.
 func (p *PersistentVolumeClaimWrapper) StorageClassName(name *string) *PersistentVolumeClaimWrapper {
-	p.PersistentVolumeClaim.Spec.StorageClassName = name
+	p.Spec.StorageClassName = name
 	return p
 }
 
@@ -983,26 +983,26 @@ func (p *PersistentVolumeWrapper) Name(s string) *PersistentVolumeWrapper {
 // AccessModes sets `accessModes` as the access modes of the inner
 // PersistentVolume.
 func (p *PersistentVolumeWrapper) AccessModes(accessModes []v1.PersistentVolumeAccessMode) *PersistentVolumeWrapper {
-	p.PersistentVolume.Spec.AccessModes = accessModes
+	p.Spec.AccessModes = accessModes
 	return p
 }
 
 // Capacity sets `capacity` as the resource list of the inner PersistentVolume.
 func (p *PersistentVolumeWrapper) Capacity(capacity v1.ResourceList) *PersistentVolumeWrapper {
-	p.PersistentVolume.Spec.Capacity = capacity
+	p.Spec.Capacity = capacity
 	return p
 }
 
 // HostPathVolumeSource sets `src` as the host path volume source of the inner
 // PersistentVolume.
 func (p *PersistentVolumeWrapper) HostPathVolumeSource(src *v1.HostPathVolumeSource) *PersistentVolumeWrapper {
-	p.PersistentVolume.Spec.HostPath = src
+	p.Spec.HostPath = src
 	return p
 }
 
 // PersistentVolumeSource sets `src` as the pv source of the inner
 func (p *PersistentVolumeWrapper) PersistentVolumeSource(src v1.PersistentVolumeSource) *PersistentVolumeWrapper {
-	p.PersistentVolume.Spec.PersistentVolumeSource = src
+	p.Spec.PersistentVolumeSource = src
 	return p
 }
 
@@ -1030,16 +1030,16 @@ func (p *PersistentVolumeWrapper) Labels(labels map[string]string) *PersistentVo
 
 // Label sets a {k,v} pair to the pv.
 func (p *PersistentVolumeWrapper) Label(k, v string) *PersistentVolumeWrapper {
-	if p.PersistentVolume.ObjectMeta.Labels == nil {
-		p.PersistentVolume.ObjectMeta.Labels = make(map[string]string)
+	if p.ObjectMeta.Labels == nil {
+		p.ObjectMeta.Labels = make(map[string]string)
 	}
-	p.PersistentVolume.ObjectMeta.Labels[k] = v
+	p.ObjectMeta.Labels[k] = v
 	return p
 }
 
 // StorageClassName sets `StorageClassName` of the inner PersistentVolume.
 func (p *PersistentVolumeWrapper) StorageClassName(name string) *PersistentVolumeWrapper {
-	p.PersistentVolume.Spec.StorageClassName = name
+	p.Spec.StorageClassName = name
 	return p
 }
 
@@ -1082,10 +1082,10 @@ func (s *StorageClassWrapper) AllowedTopologies(topologies []v1.TopologySelector
 
 // Label sets a {k,v} pair to the inner StorageClass label.
 func (s *StorageClassWrapper) Label(k, v string) *StorageClassWrapper {
-	if s.ObjectMeta.Labels == nil {
-		s.ObjectMeta.Labels = make(map[string]string)
+	if s.Labels == nil {
+		s.Labels = make(map[string]string)
 	}
-	s.ObjectMeta.Labels[k] = v
+	s.Labels[k] = v
 	return s
 }
 

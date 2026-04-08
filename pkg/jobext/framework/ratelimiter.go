@@ -16,6 +16,7 @@ type ItemBasedRateLimiter struct {
 	itemMp map[string]*rate.Limiter
 }
 
+//nolint:staticcheck // SA1019: workqueue.RateLimiter is deprecated but still needed for interface compatibility
 var _ workqueue.RateLimiter = &ItemBasedRateLimiter{}
 
 func (r *ItemBasedRateLimiter) When(item interface{}) time.Duration {

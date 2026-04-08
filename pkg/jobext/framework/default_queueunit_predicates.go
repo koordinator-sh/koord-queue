@@ -7,7 +7,6 @@ import (
 )
 
 type UpdatePredicate struct {
-	d *GenericJobReconciler
 }
 
 // Create returns true if the Create event should be processed

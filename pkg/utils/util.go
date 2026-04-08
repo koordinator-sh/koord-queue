@@ -363,7 +363,7 @@ func UpdateQueueUnitStatusAndAnnotations(name string, namespace string, queueNam
 	var queueUnit *v1alpha1.QueueUnit
 	var err error
 
-	retry.OnError(*getEndlessRetry(),
+	err = retry.OnError(*getEndlessRetry(),
 		func(err error) bool {
 			return errors.IsTooManyRequests(err) || errors.IsConflict(err)
 		},

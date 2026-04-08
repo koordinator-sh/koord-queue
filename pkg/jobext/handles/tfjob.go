@@ -123,7 +123,7 @@ func (j *TfJob) Priority(ctx context.Context, obj client.Object) (string, *int32
 	var priorityClassName string
 	var priority *int32
 	for role := range job.Spec.TFReplicaSpecs {
-		if r := strings.ToLower(string(role)); r == util.AIMASTERROLENAME {
+		if role == tfjobv1.TFReplicaTypeMaster {
 			klog.Infof("skip search priority in role %v for job %v", role, job.Name)
 			continue
 		}
@@ -154,7 +154,7 @@ func (j *TfJob) Priority(ctx context.Context, obj client.Object) (string, *int32
 func (j *TfJob) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*tfjobv1.TFJob)
 	for roleName, roleSpec := range job.Spec.TFReplicaSpecs {
-		if roleName == util.AIMASTERROLENAME {
+		if roleName == tfjobv1.TFReplicaTypeMaster {
 			continue
 		}
 		util.SetPodTemplateSpec(&roleSpec.Template, job.Namespace, job.Name, strings.ToLower(string(roleName)), j.QueueUnitSuffix())
@@ -198,7 +198,7 @@ func (tc *TfJob) deleteJobResources(tfjob *tfjobv1.TFJob) error {
 	pods, err := tc.GetPodsForJob(tfjob)
 	filteredPods := []*v1.Pod{}
 	for _, p := range pods {
-		if p.Labels["replica-type"] == util.AIMASTERROLENAME {
+		if p.Labels["replica-type"] == "master" {
 			continue
 		}
 		filteredPods = append(filteredPods, p)
@@ -230,7 +230,7 @@ func (jc *TfJob) GenLabels(jobName string) map[string]string {
 	groupName := "kubeflow.org"
 	return map[string]string{
 		"group-name": groupName,
-		"job-name":   strings.Replace(jobName, "/", "-", -1),
+		"job-name":   strings.ReplaceAll(jobName, "/", "-"),
 	}
 }
 
@@ -394,7 +394,7 @@ func (j *TfJob) Resume(ctx context.Context, obj client.Object, cli client.Client
 	if os.Getenv("PAI_ENV") != "" {
 		delete(new.Annotations, QueueAnnotation)
 	} else {
-		new.ObjectMeta.Annotations[QueueAnnotation] = "false"
+		new.Annotations[QueueAnnotation] = "false"
 	}
 	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	patch := client.MergeFrom(old)
@@ -403,7 +403,7 @@ func (j *TfJob) Resume(ctx context.Context, obj client.Object, cli client.Client
 
 func (j *TfJob) GetJobStatus(ctx context.Context, obj client.Object, client client.Client) (framework.JobStatus, time.Time) {
 	job := obj.(*tfjobv1.TFJob)
-	var running, queuing bool = false, false
+	var running, queuing = false, false
 	var runningTransTime, queuingTransTime time.Time
 	for _, cond := range job.Status.Conditions {
 		if cond.Type == commonv1.JobSucceeded && cond.Status == v1.ConditionTrue {
@@ -460,7 +460,7 @@ func NewTfJobReconciler(cli client.Client, config *rest.Config, scheme *runtime.
 		podControl:     control.RealPodControl{KubeClient: c, Recorder: record.NewBroadcaster().NewRecorder(scheme, v1.EventSource{Component: "tf-opeartor-extension"})},
 		svcControl:     control.RealServiceControl{KubeClient: c, Recorder: record.NewBroadcaster().NewRecorder(scheme, v1.EventSource{Component: "tf-opeartor-extension"})},
 	}
-	tfjobv1.AddToScheme(scheme)
+	_ = tfjobv1.AddToScheme(scheme)
 	extension := framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 
 	op := tfOption{}
@@ -468,8 +468,8 @@ func NewTfJobReconciler(cli client.Client, config *rest.Config, scheme *runtime.
 	if err != nil {
 		log.Fatalf("failed to parse args for tfjob extension, content:\n%v\n err: %v", args, err)
 	}
-	var rt time.Duration = 0
-	var bt time.Duration = time.Minute
+	var rt time.Duration
+	var bt = time.Minute
 	if op.RunningTimeout != nil {
 		rt = *op.RunningTimeout
 	}
@@ -507,17 +507,17 @@ func (j *TfJob) Reservation(ctx context.Context, obj client.Object) ([]koordinat
 				{
 					Key:      "tf-replica-type",
 					Operator: metav1.LabelSelectorOpNotIn,
-					Values:   []string{util.AIMASTERROLENAME},
+					Values:   []string{"master"},
 				},
 				{
 					Key:      "job-name",
 					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{strings.Replace(job.Name, "/", "-", -1)},
+					Values:   []string{strings.ReplaceAll(job.Name, "/", "-")},
 				},
 			}
 			// TODO:
 			// labelSelector.MatchLabels = map[string]string{
-			// 	"job-name":             strings.Replace(job.Name, "/", "-", -1),
+			// 	"job-name":             strings.ReplaceAll(job.Name, "/", "-"),
 			// 	"pytorch-replica-type": "worker",
 			// }
 		}

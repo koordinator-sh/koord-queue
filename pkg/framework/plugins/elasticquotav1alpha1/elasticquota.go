@@ -86,7 +86,7 @@ func New(_ runtime.Object, handle framework.Handle) (framework.Plugin, error) {
 }
 
 func (eq *ElasticQuota) initHandler() {
-	eq.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, _ = eq.informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    eq.Add,
 		UpdateFunc: eq.Update,
 		DeleteFunc: eq.Delete,
@@ -101,6 +101,9 @@ func (eq *ElasticQuota) initHandler() {
 // the parent.
 func (eq *ElasticQuota) LoadQuotaAndQueueUnits() {
 	quotas, err := eq.eqClient.SchedulingV1alpha1().ElasticQuotas("kube-system").List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
 	for _, q := range quotas.Items {
 		quota := q.DeepCopy()
 		eq.tryCreateOrUpdateQueueCr(quota)

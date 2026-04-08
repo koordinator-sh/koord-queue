@@ -79,7 +79,7 @@ func (r *ReservationController) ReconcileReservations(ctx context.Context, log l
 	reservationHandle := r.reservationHandles[jobTypeKey]
 	resvs, err := reservationHandle.Reservation(ctx, object)
 	if err != nil {
-		util.UpdateQueueUnitStatus(queueUnit, v1alpha1.SchedReady, err.Error(), r.cli)
+		_ = util.UpdateQueueUnitStatus(queueUnit, v1alpha1.SchedReady, err.Error(), r.cli)
 		return false, "", "", err
 	}
 
@@ -125,10 +125,12 @@ func (r *ReservationController) ReconcileReservations(ctx context.Context, log l
 		}
 	}
 	existingResvs := &koordinatorschedulerv1alpha1.ReservationList{}
-	r.cli.List(ctx, existingResvs, client.MatchingLabels{
+	if err := r.cli.List(ctx, existingResvs, client.MatchingLabels{
 		"reserved-job-namespace": object.GetNamespace(),
 		"reserved-job-name":      object.GetName(),
-	})
+	}); err != nil {
+		log.V(1).Info("failed to list existing reservations", "error", err)
+	}
 	if len(existingResvs.Items) == 0 && len(resvs) > 0 {
 		log.V(0).Info("no reservation found, try to create reservations for job")
 		return true, "", "", r.CreateReservations(ctx, log, resvs)
@@ -146,7 +148,9 @@ func (r *ReservationController) ReconcileReservations(ctx context.Context, log l
 	for _, existingResv := range existingResvs.Items {
 		if existingResv.Status.Phase == "Failed" {
 			deleted = true
-			r.cli.Delete(ctx, &existingResv)
+			if err := r.cli.Delete(ctx, &existingResv); err != nil {
+				log.V(1).Info("failed to delete reservation", "reservation", existingResv.Name, "error", err)
+			}
 		}
 	}
 	if deleted {

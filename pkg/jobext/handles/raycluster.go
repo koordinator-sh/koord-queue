@@ -136,16 +136,16 @@ func (j *RayCluster) Priority(ctx context.Context, obj client.Object) (string, *
 
 func (j *RayCluster) Enqueue(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1.RayCluster)
-	job.TypeMeta.APIVersion = rayv1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayCluster"
+	job.APIVersion = rayv1.GroupVersion.String()
+	job.Kind = "RayCluster"
 	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return nil
 	}
 
 	old := job
 	new := job.DeepCopy()
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
-	new.ObjectMeta.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
+	new.Annotations = util.MapCopy(job.Annotations)
+	new.Annotations["koord-queue/job-enqueue-timestamp"] = time.Now().String()
 
 	util.SetPodTemplateSpec(&new.Spec.HeadGroupSpec.Template, job.Namespace, job.Name, headGroupPodSetName, j.QueueUnitSuffix())
 	new.Spec.HeadGroupSpec.Template.Annotations[util.RelatedAPIVersionKindAnnoKey] = "ray.io/v1/RayCluster"
@@ -162,8 +162,8 @@ func (j *RayCluster) Enqueue(ctx context.Context, obj client.Object, cli client.
 
 func (j *RayCluster) Suspend(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1.RayCluster)
-	job.TypeMeta.APIVersion = rayv1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayCluster"
+	job.APIVersion = rayv1.GroupVersion.String()
+	job.Kind = "RayCluster"
 	if job.Spec.Suspend != nil && *job.Spec.Suspend {
 		return nil
 	}
@@ -176,8 +176,8 @@ func (j *RayCluster) Suspend(ctx context.Context, obj client.Object, cli client.
 
 func (j *RayCluster) Resume(ctx context.Context, obj client.Object, cli client.Client) error {
 	job := obj.(*rayv1.RayCluster)
-	job.TypeMeta.APIVersion = rayv1.GroupVersion.String()
-	job.TypeMeta.Kind = "RayCluster"
+	job.APIVersion = rayv1.GroupVersion.String()
+	job.Kind = "RayCluster"
 	if job.Spec.Suspend == nil || !*job.Spec.Suspend {
 		return nil
 	}
@@ -185,7 +185,7 @@ func (j *RayCluster) Resume(ctx context.Context, obj client.Object, cli client.C
 	old := &rayv1.RayCluster{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new := &rayv1.RayCluster{TypeMeta: job.TypeMeta, ObjectMeta: job.ObjectMeta, Spec: job.Spec, Status: job.Status}
 	new.Spec.Suspend = ptr.To(false)
-	new.ObjectMeta.Annotations = util.MapCopy(job.ObjectMeta.Annotations)
+	new.Annotations = util.MapCopy(job.Annotations)
 	new.Annotations["koord-queue/job-dequeue-timestamp"] = time.Now().String()
 	return cli.Patch(ctx, new, client.MergeFrom(old))
 }
@@ -237,7 +237,7 @@ func NewRayClusterReconciler(cli client.Client, config *rest.Config, scheme *run
 	var extension framework.GenericJobExtension
 	j := &RayCluster{
 		managedAllJobs: managedAllJobs, c: cli}
-	rayv1.AddToScheme(scheme)
+	_ = rayv1.AddToScheme(scheme)
 	extension = framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
 	return framework.NewJobHandle(0, 0, extension, false)
 }
