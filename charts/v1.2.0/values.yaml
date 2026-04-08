@@ -4,7 +4,7 @@
 
 global:
   # the prefix of all image
-  imagePrefix: registry-cn-beijing.ack.aliyuncs.com
+  imagePrefix: ghcr.io
 
 tolerations: []
 isNeedNotebookExtension: false
@@ -27,8 +27,8 @@ admissionCheckController:
 
 controller:
   image:
-    repository: acs/kube-queue
-    tag: v1.3.0.b826c293
+    repository: koordinatorsh/koord-queue
+    tag: latest
   # resources of koord-queue-controller container
   queueGroupPlugin: elasticquotav2
   enableBlockingMode: false

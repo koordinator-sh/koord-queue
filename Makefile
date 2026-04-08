@@ -20,6 +20,7 @@ build-queue: fixcodec
 	GOOS=$(GOOS) GOARCH=$(GOARCH) $(BUILDENVVAR) go build -ldflags '-w' -o bin/koord-queue cmd/main.go	
 
 .PHONY: fixcodec
+fixcodec:
 	hack/fix-codec-factory.sh
 
 .PHONY: update-vendor
