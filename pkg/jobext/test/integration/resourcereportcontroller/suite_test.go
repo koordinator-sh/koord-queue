@@ -13,9 +13,11 @@ import (
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
@@ -113,9 +115,34 @@ var _ = BeforeSuite(func() {
 	v1alpha1.AddToScheme(k8sManager.GetScheme())
 	koordinatorschedulerv1alpha1.AddToScheme(k8sManager.GetScheme())
 
+	// The reporter resolves a queue unit's pods through these indexes, the same way the
+	// production controller registers them in cmd/controllers. Without them every List by
+	// field selector fails and the reporter never reconciles anything.
+	Expect(k8sManager.GetCache().IndexField(ctx, &corev1.Pod{}, util.PodsByOwnersCacheFields, func(o client.Object) []string {
+		p, ok := o.(*corev1.Pod)
+		if !ok {
+			return nil
+		}
+		res := []string{}
+		for _, owner := range p.OwnerReferences {
+			res = append(res, fmt.Sprintf("%v/%v", owner.Kind, owner.Name))
+		}
+		return res
+	})).To(Succeed())
+	Expect(k8sManager.GetFieldIndexer().IndexField(ctx, &corev1.Pod{}, util.RelatedQueueUnitCacheFields, func(o client.Object) []string {
+		pod, ok := o.(*corev1.Pod)
+		if !ok {
+			return []string{}
+		}
+		return []string{pod.Annotations[util.RelatedQueueUnitAnnoKey]}
+	})).To(Succeed())
+
 	rayClusterCtrl := handles.NewRayClusterReconciler(k8sManager.GetClient(), k8sManager.GetConfig(), k8sManager.GetScheme(), false, "")
 	rayJobCtrl := handles.NewRayJobReconciler(k8sManager.GetClient(), k8sManager.GetConfig(), k8sManager.GetScheme(), false, "v1", "")
-	rr := framework.NewResourceReporter(k8sManager.GetClient(), k8sManager.GetScheme(), rayClusterCtrl, rayJobCtrl)
+	// Several specs drive a plain batch/v1 Job; without its handle the reporter cannot resolve
+	// the job type and silently skips every reconcile for them.
+	jobCtrl := handles.NewJobReconciler(k8sManager.GetClient(), k8sManager.GetConfig(), k8sManager.GetScheme(), true, "")
+	rr := framework.NewResourceReporter(k8sManager.GetClient(), k8sManager.GetScheme(), rayClusterCtrl, rayJobCtrl, jobCtrl)
 	Expect(rr.SetupWithManager(k8sManager, 1, 100)).ToNot(HaveOccurred())
 	framework.EnableReservation = true
 
