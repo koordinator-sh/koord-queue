@@ -367,16 +367,20 @@ func TestGetQueueUnitsByQuota(t *testing.T) {
 	versionedclient.SchedulingV1alpha1().QueueUnits("test").Create(context.Background(), unit1, metav1.CreateOptions{})
 	versionedclient.SchedulingV1alpha1().QueueUnits("test").Create(context.Background(), unit2, metav1.CreateOptions{})
 
-	time.Sleep(time.Millisecond * 20)
-
 	controller.queueUnitLister = queueUnitLister
 
-	// Test with nil result (error case)
 	quotaName := "quota1"
-	units := controller.GetQueueUnitsByQuota(quotaName, &apiv1alpha1.QueueUnitOptions{
-		Phase: string(v1alpha1.Enqueued),
-	})
-	assert.Equal(t, 2, len(units))
+	var units []apiv1alpha1.QueueUnit
+	// The informer has to observe both creations before the lister can return them. Waiting a
+	// fixed 20ms was enough locally but not on a loaded CI runner, where the lister came back
+	// empty and the assertions below panicked on an empty slice.
+	assert.Eventually(t, func() bool {
+		units = controller.GetQueueUnitsByQuota(quotaName, &apiv1alpha1.QueueUnitOptions{
+			Phase: string(v1alpha1.Enqueued),
+		})
+		return len(units) == 2
+	}, 10*time.Second, 20*time.Millisecond, "informer never caught up with the created queue units")
+
 	sort.Slice(units, func(i, j int) bool {
 		return units[i].Name < units[j].Name
 	})
