@@ -6,6 +6,9 @@ type JobHandle struct {
 	typeName       string
 	runningTimeout time.Duration
 	backoffTime    time.Duration
+	// partialRunningTimeout bounds how long a job may hold admitted replicas that never
+	// start running. Zero disables the check.
+	partialRunningTimeout time.Duration
 
 	genericJobExtension      GenericJobExtension
 	requeueJobExtension      RequeueJobExtension
@@ -15,11 +18,12 @@ type JobHandle struct {
 	enableRunningToPending bool
 }
 
-func NewJobHandle(rt, bft time.Duration, ext GenericJobExtension, enableRunningToPending bool) JobHandle {
+func NewJobHandle(rt, bft, prt time.Duration, ext GenericJobExtension, enableRunningToPending bool) JobHandle {
 	jh := JobHandle{
 		typeName:               ext.GVK().GroupVersion().String() + "/" + ext.GVK().Kind,
 		runningTimeout:         rt,
 		backoffTime:            bft,
+		partialRunningTimeout:  prt,
 		genericJobExtension:    ext,
 		enableRunningToPending: enableRunningToPending,
 	}

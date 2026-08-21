@@ -589,5 +589,9 @@ func NewPytorchJobReconciler(cli client.Client, config *rest.Config, scheme *run
 	if op.BackoffTimeout != nil {
 		bt = *op.BackoffTimeout
 	}
-	return framework.NewJobHandle(rt, bt, extension, false)
+	var prt time.Duration
+	if op.PartialRunningTimeout != nil {
+		prt = *op.PartialRunningTimeout
+	}
+	return framework.NewJobHandle(rt, bt, prt, extension, false)
 }

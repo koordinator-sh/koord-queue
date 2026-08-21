@@ -141,7 +141,7 @@ var _ = BeforeSuite(func() {
 	rayJobCtrl := handles.NewRayJobReconciler(k8sManager.GetClient(), k8sManager.GetConfig(), k8sManager.GetScheme(), false, "v1", "")
 	// Several specs drive a plain batch/v1 Job; without its handle the reporter cannot resolve
 	// the job type and silently skips every reconcile for them.
-	jobCtrl := handles.NewJobReconciler(k8sManager.GetClient(), k8sManager.GetConfig(), k8sManager.GetScheme(), true, "")
+	jobCtrl := handles.NewJobReconciler(k8sManager.GetClient(), k8sManager.GetConfig(), k8sManager.GetScheme(), true, "partialRunningTimeout: 5s")
 	rr := framework.NewResourceReporter(k8sManager.GetClient(), k8sManager.GetScheme(), rayClusterCtrl, rayJobCtrl, jobCtrl)
 	Expect(rr.SetupWithManager(k8sManager, 1, 100)).ToNot(HaveOccurred())
 	framework.EnableReservation = true

@@ -18,8 +18,10 @@ package handles
 
 import (
 	"context"
+	"log"
 	"time"
 
+	"gopkg.in/yaml.v3"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
@@ -236,9 +238,32 @@ func (j *Job) QueueUnitSuffix() string {
 	return ""
 }
 
+type jobOption struct {
+	RunningTimeout        *time.Duration `yaml:"runningTimeout,omitempty"`
+	BackoffTimeout        *time.Duration `yaml:"backoffTimeout,omitempty"`
+	PartialRunningTimeout *time.Duration `yaml:"partialRunningTimeout,omitempty"`
+}
+
 func NewJobReconciler(cli client.Client, config *rest.Config, scheme *runtime.Scheme, managedAllJobs bool, args string) framework.JobHandle {
 	j := &Job{podlister: cli, managedAllJobs: managedAllJobs}
 	_ = batchv1.AddToScheme(scheme)
 	extension := framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
-	return framework.NewJobHandle(0, 0, extension, false)
+
+	op := jobOption{}
+	if args != "" {
+		if err := yaml.Unmarshal([]byte(args), &op); err != nil {
+			log.Fatalf("failed to parse args for job extension, content:\n%v\n err: %v", args, err)
+		}
+	}
+	var rt, bt, prt time.Duration
+	if op.RunningTimeout != nil {
+		rt = *op.RunningTimeout
+	}
+	if op.BackoffTimeout != nil {
+		bt = *op.BackoffTimeout
+	}
+	if op.PartialRunningTimeout != nil {
+		prt = *op.PartialRunningTimeout
+	}
+	return framework.NewJobHandle(rt, bt, prt, extension, false)
 }

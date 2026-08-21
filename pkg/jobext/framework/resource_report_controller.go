@@ -37,6 +37,10 @@ type ResourceReporter struct {
 	processedReservations map[string]int
 	lastSeenResrvations   map[string]resourceVersionWithTime
 
+	// partialRunningFirstSeen records, per admission, when Running first fell short of
+	// Replicas, so the shortfall can be timed out instead of held forever.
+	partialRunningFirstSeen map[string]time.Time
+
 	// observedPods records, per admission (keyed by "<ns>/<qu>/<podset>"), the pod
 	// names the controller has actually seen occupying an admitted slot. A pod that
 	// was observed and is now gone is a confirmed external deletion (e.g. scheduler
@@ -58,7 +62,9 @@ func NewResourceReporter(cli client.Client, scheme *runtime.Scheme, handles ...J
 		jobHandles:            map[string]JobHandle{},
 		processedReservations: map[string]int{},
 		lastSeenResrvations:   map[string]resourceVersionWithTime{},
-		observedPods:          map[string]sets.Set[string]{},
+
+		partialRunningFirstSeen: map[string]time.Time{},
+		observedPods:            map[string]sets.Set[string]{},
 	}
 
 	for _, handle := range handles {
@@ -371,6 +377,14 @@ func (d *ResourceReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return reconcile.Result{}, err
 	}
 
+	if handle.partialRunningTimeout > 0 {
+		if updated, requeueAfter := d.reconcilePartialRunningTimeout(log, queueUnit, handle.partialRunningTimeout); updated {
+			return reconcile.Result{}, d.client.Status().Update(ctx, queueUnit)
+		} else if requeueAfter > 0 {
+			return reconcile.Result{RequeueAfter: requeueAfter}, nil
+		}
+	}
+
 	jobStatus, _ := handle.genericJobExtension.GetJobStatus(ctx, object, d.client)
 	if jobStatus != Running && jobStatus != Pending {
 		return ctrl.Result{}, nil
@@ -458,6 +472,51 @@ func (d *ResourceReporter) forgetObservedPods(quKey string) {
 			delete(d.observedPods, key)
 		}
 	}
+}
+
+// reconcilePartialRunningTimeout checks if Running < Replicas has persisted beyond the configured timeout.
+// If so, it reduces Replicas to Running to release unused quota.
+// Returns (updated, requeueAfter): updated=true means Replicas was changed;
+// requeueAfter>0 means a timeout is pending and reconcile should be retried.
+func (d *ResourceReporter) reconcilePartialRunningTimeout(
+	log logr.Logger,
+	qu *v1alpha1.QueueUnit,
+	timeout time.Duration,
+) (bool, time.Duration) {
+	if qu.Status.Phase != v1alpha1.Running && qu.Status.Phase != v1alpha1.Dequeued {
+		return false, 0
+	}
+	updated := false
+	var minRemaining time.Duration
+	quKey := qu.Namespace + "/" + qu.Name
+	for i, ad := range qu.Status.Admissions {
+		key := quKey + "/" + ad.Name
+		if ad.Running >= ad.Replicas {
+			delete(d.partialRunningFirstSeen, key)
+			continue
+		}
+		// Running < Replicas
+		firstSeen, exists := d.partialRunningFirstSeen[key]
+		if !exists {
+			d.partialRunningFirstSeen[key] = time.Now()
+			firstSeen = time.Now()
+		}
+		elapsed := time.Since(firstSeen)
+		if elapsed >= timeout {
+			log.Info("partial running timeout: reducing replicas to running count",
+				"podset", ad.Name, "replicas", ad.Replicas, "running", ad.Running,
+				"timeout", timeout, "elapsed", elapsed)
+			qu.Status.Admissions[i].Replicas = ad.Running
+			delete(d.partialRunningFirstSeen, key)
+			updated = true
+		} else {
+			remaining := timeout - elapsed
+			if minRemaining == 0 || remaining < minRemaining {
+				minRemaining = remaining
+			}
+		}
+	}
+	return updated, minRemaining
 }
 
 func (d *ResourceReporter) reconcileReclaim(admission []v1alpha1.Admission, admitted map[string][]*corev1.Pod) (xorAdmit map[string][]*corev1.Pod) {

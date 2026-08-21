@@ -227,10 +227,6 @@ var _ = Describe("ResourceReporter Integration Tests", func() {
 	})
 
 	It("should reclaim Replicas via partialRunningTimeout after scheduler preempts a pod", func() {
-		// partialRunningTimeout has not been synced into this tree: JobHandle carries no such
-		// timeout, so the reporter never runs the check and Replicas stay put. The spec is kept
-		// rather than deleted, so it starts exercising the feature as soon as it is synced.
-		Skip("partialRunningTimeout is not implemented in this tree yet")
 		const (
 			jobName       = "victim-job-prt"
 			queueUnitName = "victim-job-prt" // QueueUnitSuffix is "" for Job type
