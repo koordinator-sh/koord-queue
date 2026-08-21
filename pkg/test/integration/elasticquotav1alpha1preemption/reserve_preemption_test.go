@@ -105,7 +105,7 @@ var _ = DescribeTable("ElasticQuotaV2 Reserve-level preemption",
 			g.Expect(qu.Status.Admissions).NotTo(BeEmpty())
 			g.Expect(qu.Status.Admissions[0].Replicas).To(Equal(int64(1)))
 			g.Expect(qu.Status.Admissions[0].ReclaimState).To(BeNil(), "victim not preempted yet")
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		By("creating the high-priority preemptor (Filter passes -> Reserve preempts victim)")
 		_, err = cli.SchedulingV1alpha1().QueueUnits(unitNS).Create(ctx, preemptibleUnit(preemptorName, 100, "1"), metav1.CreateOptions{})
@@ -119,7 +119,7 @@ var _ = DescribeTable("ElasticQuotaV2 Reserve-level preemption",
 			g.Expect(qu.Status.Admissions[0].ReclaimState).NotTo(BeNil(),
 				"preemption should work with %s policy, victim should have ReclaimState", policy)
 			g.Expect(qu.Status.Admissions[0].ReclaimState.Replicas).To(Equal(int64(1)))
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		By("verifying preemptor is Dequeued")
 		Eventually(func(g Gomega) {
@@ -129,7 +129,7 @@ var _ = DescribeTable("ElasticQuotaV2 Reserve-level preemption",
 				"preemptor should be Dequeued with %s policy, got phase: %s, msg: %s", policy, qu.Status.Phase, qu.Status.Message)
 			g.Expect(qu.Status.Admissions).NotTo(BeEmpty())
 			g.Expect(qu.Status.Admissions[0].Replicas).To(Equal(int64(1)))
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 	},
 	Entry("with Priority policy", "Priority"),
 	Entry("with Block policy", "Block"),

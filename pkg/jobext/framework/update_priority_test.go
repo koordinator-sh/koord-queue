@@ -154,7 +154,7 @@ func TestUpdateQueueUnitPriority(t *testing.T) {
 				priority:          tc.jobPriority,
 			}
 
-			handle := NewJobHandle(time.Minute, time.Minute, ext, false)
+			handle := NewJobHandle(time.Minute, time.Minute, 0, ext, false)
 			reconciler := NewJobReconcilerWithJobExtension(cl, s, handle)
 
 			updated, err := reconciler.updateQueueUnitPriority(context.Background(), handle, obj, qu)

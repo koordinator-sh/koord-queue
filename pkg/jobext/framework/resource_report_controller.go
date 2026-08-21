@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -14,6 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,6 +36,22 @@ type ResourceReporter struct {
 
 	processedReservations map[string]int
 	lastSeenResrvations   map[string]resourceVersionWithTime
+
+	// partialRunningFirstSeen records, per admission, when Running first fell short of
+	// Replicas, so the shortfall can be timed out instead of held forever.
+	partialRunningFirstSeen map[string]time.Time
+
+	// observedPods records, per admission (keyed by "<ns>/<qu>/<podset>"), the pod
+	// names the controller has actually seen occupying an admitted slot. A pod that
+	// was observed and is now gone is a confirmed external deletion (e.g. scheduler
+	// preemption); a slot for which no pod ever appeared is simply not created yet.
+	// This lets reconcilePodDeletion tell the two apart without a time window whose
+	// correct length depends on job size and controller throughput.
+	//
+	// Guarded by observedPodsMu because the reconciler may run with more than one
+	// worker. Entries are pruned when the QueueUnit is deleted (see SetupWithManager).
+	observedPodsMu sync.Mutex
+	observedPods   map[string]sets.Set[string]
 }
 
 func NewResourceReporter(cli client.Client, scheme *runtime.Scheme, handles ...JobHandle) *ResourceReporter {
@@ -44,6 +62,9 @@ func NewResourceReporter(cli client.Client, scheme *runtime.Scheme, handles ...J
 		jobHandles:            map[string]JobHandle{},
 		processedReservations: map[string]int{},
 		lastSeenResrvations:   map[string]resourceVersionWithTime{},
+
+		partialRunningFirstSeen: map[string]time.Time{},
+		observedPods:            map[string]sets.Set[string]{},
 	}
 
 	for _, handle := range handles {
@@ -85,6 +106,9 @@ func (d *ResourceReporter) SetupWithManager(mgr ctrl.Manager, workers int, wqQPS
 			if err != nil {
 				return
 			}
+			// Forget the deleted QueueUnit's observed-pod state; it is keyed by
+			// QueueUnit and would otherwise leak once the QueueUnit is gone.
+			d.forgetObservedPods(qu.Namespace + "/" + qu.Name)
 			if qu.Status.Phase == v1alpha1.Enqueued || qu.Status.Phase == "" {
 				return
 			}
@@ -345,8 +369,20 @@ func (d *ResourceReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return reconcile.Result{}, d.client.Status().Update(ctx, queueUnit)
 	}
 
+	if updated := d.reconcilePodDeletion(queueUnit, podsByPs); updated {
+		return reconcile.Result{}, d.client.Status().Update(ctx, queueUnit)
+	}
+
 	if updated, err := d.reconcileOveradmission(ctx, log, queueUnit, podsByPs); updated {
 		return reconcile.Result{}, err
+	}
+
+	if handle.partialRunningTimeout > 0 {
+		if updated, requeueAfter := d.reconcilePartialRunningTimeout(log, queueUnit, handle.partialRunningTimeout); updated {
+			return reconcile.Result{}, d.client.Status().Update(ctx, queueUnit)
+		} else if requeueAfter > 0 {
+			return reconcile.Result{RequeueAfter: requeueAfter}, nil
+		}
 	}
 
 	jobStatus, _ := handle.genericJobExtension.GetJobStatus(ctx, object, d.client)
@@ -363,6 +399,124 @@ func (d *ResourceReporter) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	return d.syncInFlightWorkers(ctx, log, queueUnit, pods, podsByPs)
+}
+
+// reconcilePodDeletion handles pods that are deleted externally (e.g. by the
+// scheduler's preemption) without going through ReclaimState. For a Dequeued
+// QueueUnit it shrinks Admission.Replicas to release the freed quota.
+//
+// The hard part is that, while a QueueUnit is Dequeued, "Replicas > live pods"
+// is ambiguous: the missing pods may have been deleted, or the job controller
+// may simply not have created them yet. Instead of guessing with a time window
+// (whose correct length depends on job size and controller throughput), we
+// remember which pods we have actually observed occupying an admitted slot. A
+// pod we saw before and no longer see is a confirmed deletion; a slot whose pod
+// never appeared is left untouched. On controller restart the memory is empty,
+// so at worst we keep Replicas too high for a while — that only over-counts
+// quota usage, never under-counts it, so it cannot cause over-admission.
+func (d *ResourceReporter) reconcilePodDeletion(qu *v1alpha1.QueueUnit, podsByPs map[string][]*corev1.Pod) bool {
+	if qu.Status.Phase != v1alpha1.Dequeued {
+		return false
+	}
+	d.observedPodsMu.Lock()
+	defer d.observedPodsMu.Unlock()
+
+	quKey := qu.Namespace + "/" + qu.Name
+	updated := false
+	for i, ad := range qu.Status.Admissions {
+		if ad.ReclaimState != nil {
+			continue // already handled by reconcileReclaim
+		}
+		key := quKey + "/" + ad.Name
+
+		live := sets.New[string]()
+		for _, pod := range podsByPs[ad.Name] {
+			if pod.Status.Phase != corev1.PodFailed && pod.Status.Phase != corev1.PodSucceeded {
+				live.Insert(pod.Name)
+			}
+		}
+
+		observed, ok := d.observedPods[key]
+		if !ok {
+			observed = sets.New[string]()
+			d.observedPods[key] = observed
+		}
+		// Pods currently occupying a slot are (re)recorded as observed.
+		observed.Insert(live.UnsortedList()...)
+
+		// Pods we recorded before but no longer see are confirmed deletions.
+		gone := observed.Difference(live)
+		if gone.Len() == 0 {
+			continue
+		}
+		reduceBy := int64(gone.Len())
+		if reduceBy > ad.Replicas {
+			reduceBy = ad.Replicas
+		}
+		qu.Status.Admissions[i].Replicas = ad.Replicas - reduceBy
+		// Stop counting the confirmed-gone pods on subsequent reconciles.
+		observed.Delete(gone.UnsortedList()...)
+		updated = true
+	}
+	return updated
+}
+
+// forgetObservedPods drops all observed-pod state for a QueueUnit. Called from
+// the QueueUnit delete handler so the map does not grow without bound.
+func (d *ResourceReporter) forgetObservedPods(quKey string) {
+	d.observedPodsMu.Lock()
+	defer d.observedPodsMu.Unlock()
+	prefix := quKey + "/"
+	for key := range d.observedPods {
+		if strings.HasPrefix(key, prefix) {
+			delete(d.observedPods, key)
+		}
+	}
+}
+
+// reconcilePartialRunningTimeout checks if Running < Replicas has persisted beyond the configured timeout.
+// If so, it reduces Replicas to Running to release unused quota.
+// Returns (updated, requeueAfter): updated=true means Replicas was changed;
+// requeueAfter>0 means a timeout is pending and reconcile should be retried.
+func (d *ResourceReporter) reconcilePartialRunningTimeout(
+	log logr.Logger,
+	qu *v1alpha1.QueueUnit,
+	timeout time.Duration,
+) (bool, time.Duration) {
+	if qu.Status.Phase != v1alpha1.Running && qu.Status.Phase != v1alpha1.Dequeued {
+		return false, 0
+	}
+	updated := false
+	var minRemaining time.Duration
+	quKey := qu.Namespace + "/" + qu.Name
+	for i, ad := range qu.Status.Admissions {
+		key := quKey + "/" + ad.Name
+		if ad.Running >= ad.Replicas {
+			delete(d.partialRunningFirstSeen, key)
+			continue
+		}
+		// Running < Replicas
+		firstSeen, exists := d.partialRunningFirstSeen[key]
+		if !exists {
+			d.partialRunningFirstSeen[key] = time.Now()
+			firstSeen = time.Now()
+		}
+		elapsed := time.Since(firstSeen)
+		if elapsed >= timeout {
+			log.Info("partial running timeout: reducing replicas to running count",
+				"podset", ad.Name, "replicas", ad.Replicas, "running", ad.Running,
+				"timeout", timeout, "elapsed", elapsed)
+			qu.Status.Admissions[i].Replicas = ad.Running
+			delete(d.partialRunningFirstSeen, key)
+			updated = true
+		} else {
+			remaining := timeout - elapsed
+			if minRemaining == 0 || remaining < minRemaining {
+				minRemaining = remaining
+			}
+		}
+	}
+	return updated, minRemaining
 }
 
 func (d *ResourceReporter) reconcileReclaim(admission []v1alpha1.Admission, admitted map[string][]*corev1.Pod) (xorAdmit map[string][]*corev1.Pod) {

@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -636,6 +637,139 @@ func Test_syncInFlightWorkers(t *testing.T) {
 				return a.Name < b.Name
 			})); diff != "" {
 				t.Errorf("case (%v), unexpected resource diff (-want, +got):\n%s", tt.name, diff)
+			}
+		})
+	}
+}
+
+func TestReconcilePartialRunningTimeout(t *testing.T) {
+	timeout := 5 * time.Minute
+
+	tests := []struct {
+		name            string
+		phase           string
+		admissions      []v1alpha1.Admission
+		firstSeen       map[string]time.Time // pre-populated firstSeen entries
+		expectUpdated   bool
+		expectReplicas  map[string]int64 // podset name -> expected replicas after
+		expectFirstSeen map[string]bool  // podset key -> should exist in firstSeen after
+	}{
+		{
+			name:  "Running < Replicas, first observation — record but don't reclaim",
+			phase: string(v1alpha1.Running),
+			admissions: []v1alpha1.Admission{
+				{Name: "ps-1", Replicas: 4, Running: 2},
+			},
+			firstSeen:       map[string]time.Time{},
+			expectUpdated:   false,
+			expectReplicas:  map[string]int64{"ps-1": 4},
+			expectFirstSeen: map[string]bool{"default/test-qu/ps-1": true},
+		},
+		{
+			name:  "Running < Replicas, timeout exceeded — reduce replicas",
+			phase: string(v1alpha1.Running),
+			admissions: []v1alpha1.Admission{
+				{Name: "ps-1", Replicas: 4, Running: 2},
+			},
+			firstSeen:       map[string]time.Time{"default/test-qu/ps-1": time.Now().Add(-10 * time.Minute)},
+			expectUpdated:   true,
+			expectReplicas:  map[string]int64{"ps-1": 2},
+			expectFirstSeen: map[string]bool{"default/test-qu/ps-1": false},
+		},
+		{
+			name:  "Running < Replicas, not yet timed out — no change",
+			phase: string(v1alpha1.Running),
+			admissions: []v1alpha1.Admission{
+				{Name: "ps-1", Replicas: 4, Running: 2},
+			},
+			firstSeen:       map[string]time.Time{"default/test-qu/ps-1": time.Now().Add(-2 * time.Minute)},
+			expectUpdated:   false,
+			expectReplicas:  map[string]int64{"ps-1": 4},
+			expectFirstSeen: map[string]bool{"default/test-qu/ps-1": true},
+		},
+		{
+			name:  "Running >= Replicas — clear record",
+			phase: string(v1alpha1.Running),
+			admissions: []v1alpha1.Admission{
+				{Name: "ps-1", Replicas: 3, Running: 3},
+			},
+			firstSeen:       map[string]time.Time{"default/test-qu/ps-1": time.Now().Add(-10 * time.Minute)},
+			expectUpdated:   false,
+			expectReplicas:  map[string]int64{"ps-1": 3},
+			expectFirstSeen: map[string]bool{"default/test-qu/ps-1": false},
+		},
+		{
+			name:  "Wrong phase (Enqueued) — skip",
+			phase: string(v1alpha1.Enqueued),
+			admissions: []v1alpha1.Admission{
+				{Name: "ps-1", Replicas: 4, Running: 2},
+			},
+			firstSeen:       map[string]time.Time{},
+			expectUpdated:   false,
+			expectReplicas:  map[string]int64{"ps-1": 4},
+			expectFirstSeen: map[string]bool{"default/test-qu/ps-1": false},
+		},
+		{
+			name:  "Dequeued phase — should work",
+			phase: string(v1alpha1.Dequeued),
+			admissions: []v1alpha1.Admission{
+				{Name: "ps-1", Replicas: 4, Running: 1},
+			},
+			firstSeen:       map[string]time.Time{"default/test-qu/ps-1": time.Now().Add(-10 * time.Minute)},
+			expectUpdated:   true,
+			expectReplicas:  map[string]int64{"ps-1": 1},
+			expectFirstSeen: map[string]bool{"default/test-qu/ps-1": false},
+		},
+		{
+			name:  "Multiple podsets — mixed",
+			phase: string(v1alpha1.Running),
+			admissions: []v1alpha1.Admission{
+				{Name: "ps-1", Replicas: 4, Running: 4}, // healthy
+				{Name: "ps-2", Replicas: 3, Running: 1}, // timed out
+			},
+			firstSeen: map[string]time.Time{
+				"default/test-qu/ps-1": time.Now().Add(-10 * time.Minute),
+				"default/test-qu/ps-2": time.Now().Add(-10 * time.Minute),
+			},
+			expectUpdated:  true,
+			expectReplicas: map[string]int64{"ps-1": 4, "ps-2": 1},
+			expectFirstSeen: map[string]bool{
+				"default/test-qu/ps-1": false, // cleared because Running >= Replicas
+				"default/test-qu/ps-2": false, // cleared because reclaim happened
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			qu := &v1alpha1.QueueUnit{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-qu", Namespace: "default"},
+				Status: v1alpha1.QueueUnitStatus{
+					Phase:      v1alpha1.QueueUnitPhase(tt.phase),
+					Admissions: tt.admissions,
+				},
+			}
+
+			reporter := &ResourceReporter{
+				partialRunningFirstSeen: map[string]time.Time{},
+			}
+			for k, v := range tt.firstSeen {
+				reporter.partialRunningFirstSeen[k] = v
+			}
+
+			updated, _ := reporter.reconcilePartialRunningTimeout(klog.Background(), qu, timeout)
+
+			assert.Equal(t, tt.expectUpdated, updated)
+			for psName, expectedReplicas := range tt.expectReplicas {
+				for _, ad := range qu.Status.Admissions {
+					if ad.Name == psName {
+						assert.Equal(t, expectedReplicas, ad.Replicas, "replicas mismatch for %s", psName)
+					}
+				}
+			}
+			for key, shouldExist := range tt.expectFirstSeen {
+				_, exists := reporter.partialRunningFirstSeen[key]
+				assert.Equal(t, shouldExist, exists, "firstSeen key %s existence mismatch", key)
 			}
 		})
 	}

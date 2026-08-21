@@ -104,7 +104,7 @@ var _ = Describe("ElasticQuotaV2 victim re-scheduling after reclaim", Ordered, f
 			g.Expect(qu.Status.Admissions).NotTo(BeEmpty())
 			g.Expect(qu.Status.Admissions[0].Replicas).To(Equal(int64(1)))
 			g.Expect(qu.Status.Admissions[0].ReclaimState).To(BeNil())
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		By("creating the high-priority preemptor (Filter passes -> Reserve preempts victim)")
 		_, err = cli.SchedulingV1alpha1().QueueUnits(unitNS).Create(ctx, preemptibleUnit("reclaim-preemptor", 100, "1"), metav1.CreateOptions{})
@@ -117,7 +117,7 @@ var _ = Describe("ElasticQuotaV2 victim re-scheduling after reclaim", Ordered, f
 			g.Expect(qu.Status.Admissions).NotTo(BeEmpty())
 			g.Expect(qu.Status.Admissions[0].ReclaimState).NotTo(BeNil())
 			g.Expect(qu.Status.Admissions[0].ReclaimState.Replicas).To(Equal(int64(1)))
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		By("verifying preemptor is Dequeued")
 		Eventually(func(g Gomega) {
@@ -126,7 +126,7 @@ var _ = Describe("ElasticQuotaV2 victim re-scheduling after reclaim", Ordered, f
 			g.Expect(qu.Status.Phase).To(Equal(v1alpha1.Dequeued))
 			g.Expect(qu.Status.Admissions).NotTo(BeEmpty())
 			g.Expect(qu.Status.Admissions[0].Replicas).To(Equal(int64(1)))
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		By("simulating preemptor Pods Running (so it leaves assumed)")
 		Eventually(func(g Gomega) {
@@ -165,6 +165,6 @@ var _ = Describe("ElasticQuotaV2 victim re-scheduling after reclaim", Ordered, f
 				"victim should have a fresh admission with Replicas=1")
 			g.Expect(qu.Status.Admissions[0].ReclaimState).To(BeNil(),
 				"victim's new admission should not have ReclaimState")
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 	})
 })

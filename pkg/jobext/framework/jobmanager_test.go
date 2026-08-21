@@ -128,7 +128,7 @@ func TestGetPodSetName(t *testing.T) {
 				},
 			},
 			jobHandles: map[string]JobHandle{
-				"batch/v1/Job": NewJobHandle(time.Minute, time.Minute, &mockGenericJobExtension{}, false),
+				"batch/v1/Job": NewJobHandle(time.Minute, time.Minute, 0, &mockGenericJobExtension{}, false),
 			},
 			expectedPodSetName: "worker",
 		},
