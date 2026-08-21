@@ -46,6 +46,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
+// preemptionTimeout bounds every Eventually in this suite. A queue unit created before the
+// scheduler has registered its queue is parked and only retried by the find-no-queue flush
+// (every 10s), after which it still waits for the queue's own schedule interval (15s). On a
+// loaded runner that recovery path can run right up against a 30s deadline, which is what made
+// these specs flake. This leaves enough margin to absorb both intervals plus scheduling.
+const preemptionTimeout = 90 * time.Second
+
 var (
 	ctx    context.Context
 	cancel context.CancelFunc

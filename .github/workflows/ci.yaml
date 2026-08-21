@@ -75,8 +75,18 @@ jobs:
         go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
         echo "KUBEBUILDER_ASSETS=$(setup-envtest use 1.33 -p path)" >> $GITHUB_ENV
     - name: Run integration tests
-      # -p 1 keeps the packages sequential. Each one starts its own envtest control plane
-      # (etcd plus kube-apiserver), and running several at once starves them on a shared
-      # runner: the apiserver stops answering and specs fail with connection refused on
-      # assertions that have nothing to do with the change under test.
-      run: GOWORK=off go test -mod=mod ./pkg/test/integration/... ./pkg/jobext/test/integration/... -count=1 -p 1 -v
+      # Give each integration package its own `go test` process. Each brings up its own envtest
+      # control plane (etcd plus kube-apiserver); a separate process guarantees that control
+      # plane is torn down before the next package starts, and keeps one package's failure and
+      # logs isolated from the rest instead of aborting the whole run. Packages run one at a
+      # time (never in parallel) so their control planes do not contend for the runner.
+      run: |
+        set -uo pipefail
+        pkgs=$(GOWORK=off go list ./pkg/test/integration/... ./pkg/jobext/test/integration/...)
+        rc=0
+        for pkg in $pkgs; do
+          echo "::group::$pkg"
+          GOWORK=off go test -mod=mod "$pkg" -count=1 -v || rc=1
+          echo "::endgroup::"
+        done
+        exit $rc

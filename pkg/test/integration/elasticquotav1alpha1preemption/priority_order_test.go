@@ -103,7 +103,7 @@ var _ = Describe("ElasticQuotaV2 priority ordering after preemption", Ordered, f
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(qu.Status.Phase).To(Equal(v1alpha1.Dequeued))
 			g.Expect(qu.Status.Admissions[0].Replicas).To(Equal(int64(1)))
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		By("creating high-priority task C (priority=100) — preempts A, C is Dequeued")
 		_, err = cli.SchedulingV1alpha1().QueueUnits(unitNS).Create(ctx, preemptibleUnit("order-high-c", 100, "1"), metav1.CreateOptions{})
@@ -115,7 +115,7 @@ var _ = Describe("ElasticQuotaV2 priority ordering after preemption", Ordered, f
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(qu.Status.Phase).To(Equal(v1alpha1.Dequeued),
 				"C should be Dequeued after preempting A, got phase: %s", qu.Status.Phase)
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		// Verify A was preempted (ReclaimState set)
 		Eventually(func(g Gomega) {
@@ -156,7 +156,7 @@ var _ = Describe("ElasticQuotaV2 priority ordering after preemption", Ordered, f
 			g.Expect(qu.Status.Phase).To(Equal(v1alpha1.Dequeued),
 				"B should be Dequeued after C leaves assumed, got phase: %s", qu.Status.Phase)
 			g.Expect(qu.Status.Admissions[0].Replicas).To(Equal(int64(1)))
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		// A should still NOT be re-scheduled (updating still set, reclaim not done)
 		Consistently(func() bool {
@@ -199,6 +199,6 @@ var _ = Describe("ElasticQuotaV2 priority ordering after preemption", Ordered, f
 				"A should have a fresh admission with Replicas=1 after re-scheduling")
 			g.Expect(qu.Status.Admissions[0].ReclaimState).To(BeNil(),
 				"A's new admission should not have ReclaimState")
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 	})
 })

@@ -109,7 +109,7 @@ var _ = Describe("ElasticQuotaV2 queue-level preemption", Ordered, func() {
 			g.Expect(qu.Status.Admissions).NotTo(BeEmpty())
 			g.Expect(qu.Status.Admissions[0].Replicas).To(Equal(int64(1)))
 			g.Expect(qu.Status.Admissions[0].ReclaimState).To(BeNil(), "victim not preempted yet")
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 
 		By("creating the high-priority preemptor whose request exhausts the quota (Filter -> Unschedulable -> q.Preempt)")
 		_, err = cli.SchedulingV1alpha1().QueueUnits(unitNS).Create(ctx, preemptibleUnit("preemptor", 100, "2"), metav1.CreateOptions{})
@@ -123,6 +123,6 @@ var _ = Describe("ElasticQuotaV2 queue-level preemption", Ordered, func() {
 			g.Expect(qu.Status.Admissions[0].ReclaimState).NotTo(BeNil(),
 				"a higher-priority unit should have caused the victim to be marked for reclamation")
 			g.Expect(qu.Status.Admissions[0].ReclaimState.Replicas).To(Equal(int64(1)))
-		}, 30*time.Second, 200*time.Millisecond).Should(Succeed())
+		}, preemptionTimeout, 200*time.Millisecond).Should(Succeed())
 	})
 })
