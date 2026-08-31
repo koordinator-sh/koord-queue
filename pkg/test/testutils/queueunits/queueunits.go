@@ -105,6 +105,18 @@ func (q *QueueUnitWrapper) Priority(p int32) *QueueUnitWrapper {
 	return q
 }
 
+// Active sets spec.active, which controls whether the queue unit may be admitted.
+func (q *QueueUnitWrapper) Active(active bool) *QueueUnitWrapper {
+	q.queueunit.Spec.Active = ptr.To(active)
+	return q
+}
+
+// MaximumExecutionTime caps how long the job may execute once its pods start running.
+func (q *QueueUnitWrapper) MaximumExecutionTime(seconds int32) *QueueUnitWrapper {
+	q.queueunit.Spec.MaximumExecutionTimeSeconds = ptr.To(seconds)
+	return q
+}
+
 func (q *QueueUnitWrapper) QueueUnit() *v1alpha1.QueueUnit {
 	return q.queueunit
 }

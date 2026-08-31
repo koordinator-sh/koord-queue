@@ -530,7 +530,7 @@ func NewSparkAppReconciler(cli client.Client, config *rest.Config, scheme *runti
 		}}
 	_ = v1beta2.AddToScheme(scheme)
 	extension = framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
-	return framework.NewJobHandle(0, 0, extension, false)
+	return framework.NewJobHandle(0, 0, 0, extension, false)
 }
 
 var _ framework.GenericReservationJobExtension = &SparkApplication{}

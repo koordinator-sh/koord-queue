@@ -115,6 +115,38 @@ type QueueUnitSpec struct {
 	PriorityClassName string         `json:"priorityClassName,omitempty" protobuf:"bytes,6,opt,name=priorityClassName"`
 
 	Request corev1.ResourceList `json:"request,omitempty" protobuf:"bytes,7,opt,name=queue"`
+
+	// active determines whether the queue unit can be admitted into its queue.
+	// Setting active from true to false evicts the job and releases its quota, and the
+	// queue unit is no longer scheduled. A nil value is treated as true.
+	// +optional
+	Active *bool `json:"active,omitempty" protobuf:"varint,8,opt,name=active"`
+
+	// maximumExecutionTimeSeconds limits how long the job is allowed to execute, counted
+	// from the moment its pods actually start running. Time spent waiting for admission or
+	// for pods to start does not count. Once exceeded, the queue unit is deactivated.
+	// +optional
+	MaximumExecutionTimeSeconds *int32 `json:"maximumExecutionTimeSeconds,omitempty" protobuf:"varint,9,opt,name=maximumExecutionTimeSeconds"`
+}
+
+// RequeueState tracks how many times a queue unit has been re-queued with backoff and
+// when it becomes eligible for the next attempt.
+type RequeueState struct {
+	// count is the number of times the queue unit has been re-queued after a backoff.
+	// +optional
+	Count int32 `json:"count,omitempty"`
+	// requeueAt is the time at which the queue unit becomes eligible for re-queueing.
+	// +optional
+	RequeueAt *metav1.Time `json:"requeueAt,omitempty"`
+}
+
+// ReclaimablePod reports how many pods of a podSet no longer need their reserved quota.
+type ReclaimablePod struct {
+	// name is the podSet name, matching Admission.Name.
+	Name string `json:"name"`
+	// count is the number of pods whose reservation is no longer needed. It only increases
+	// while the queue unit holds a reservation.
+	Count int32 `json:"count"`
 }
 
 type ReclaimState struct {
@@ -158,6 +190,36 @@ type QueueUnitStatus struct {
 	// +kubebuilder:validation:MaxItems=32
 	Admissions       []Admission  `json:"admissions" patchStrategy:"merge" patchMergeKey:"name"`
 	LastAllocateTime *metav1.Time `json:"lastAllocateTime,omitempty"`
+
+	// conditions hold the latest available observations of the queue unit current state.
+	// Phase stays the authoritative state; conditions are an observation window for users
+	// and external tooling and are never used to make scheduling decisions.
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	// +patchStrategy=merge
+	// +patchMergeKey=type
+	// +kubebuilder:validation:MaxItems=8
+	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
+
+	// requeueState holds the backoff state used when the queue unit is re-queued after
+	// a running timeout or a failed admission check.
+	// +optional
+	RequeueState *RequeueState `json:"requeueState,omitempty"`
+
+	// reclaimablePods keeps track of the number of pods per podSet whose reserved quota is
+	// no longer needed, reported by the job extension as pods reach a terminal state.
+	// +optional
+	// +listType=map
+	// +listMapKey=name
+	// +kubebuilder:validation:MaxItems=32
+	ReclaimablePods []ReclaimablePod `json:"reclaimablePods,omitempty"`
+
+	// accumulatedPastExecutionTimeSeconds holds the total time, in seconds, the job spent
+	// executing during previous admit-evict cycles. It is reset when the queue unit is
+	// deactivated for exceeding its maximum execution time.
+	// +optional
+	AccumulatedPastExecutionTimeSeconds *int32 `json:"accumulatedPastExecutionTimeSeconds,omitempty"`
 }
 
 type PodState struct {
@@ -187,6 +249,40 @@ type QueueUnitList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []QueueUnit `json:"items"`
+}
+
+// Condition types reported in QueueUnitStatus.Conditions. They mirror the Phase state
+// machine using the standard metav1.Condition representation.
+const (
+	// QueueUnitQuotaReserved means the queue unit has reserved quota in its queue.
+	QueueUnitQuotaReserved = "QuotaReserved"
+	// QueueUnitAdmitted means the queue unit has been admitted and its job is released to run.
+	QueueUnitAdmitted = "Admitted"
+	// QueueUnitPodsReady means the pods of the queue unit have started running.
+	QueueUnitPodsReady = "PodsReady"
+	// QueueUnitFinished means the job of the queue unit terminated, either succeeded or failed.
+	QueueUnitFinished = "Finished"
+	// QueueUnitEvicted means the queue unit lost its admission and its resources are reclaimed.
+	QueueUnitEvicted = "Evicted"
+)
+
+// Reasons reported on the Evicted condition.
+const (
+	// QueueUnitEvictedByDeactivation means the queue unit was deactivated via spec.active.
+	QueueUnitEvictedByDeactivation = "Deactivated"
+	// QueueUnitEvictedByBackoffTimeout means the queue unit was re-queued after a timeout.
+	QueueUnitEvictedByBackoffTimeout = "BackoffTimeout"
+	// QueueUnitEvictedByPreemption means the queue unit was preempted by a higher priority one.
+	QueueUnitEvictedByPreemption = "Preempted"
+	// QueueUnitEvictedByMaximumExecutionTimeExceeded means the job ran longer than allowed by
+	// spec.maximumExecutionTimeSeconds.
+	QueueUnitEvictedByMaximumExecutionTimeExceeded = "MaximumExecutionTimeExceeded"
+)
+
+// IsQueueUnitActive reports whether the queue unit is allowed to be admitted. An unset
+// active field means active, so queue units created before the field existed keep working.
+func IsQueueUnitActive(qu *QueueUnit) bool {
+	return qu.Spec.Active == nil || *qu.Spec.Active
 }
 
 // Suspend is a flag that instructs the job operator to suspend processing this job

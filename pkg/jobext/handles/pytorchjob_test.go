@@ -102,7 +102,7 @@ var _ = Describe("PytorchJob Controller", func() {
 				Spec: commonv1.PyTorchJobSpec{
 					PyTorchReplicaSpecs: map[commonv1.ReplicaType]*commonv1.ReplicaSpec{
 						commonv1.PyTorchJobReplicaTypeMaster: {
-							Replicas: ptr.To[int32](2),
+							Replicas: ptr.To[int32](1),
 							Template: v1.PodTemplateSpec{
 								Spec: v1.PodSpec{
 									Containers: []v1.Container{
@@ -115,7 +115,7 @@ var _ = Describe("PytorchJob Controller", func() {
 							},
 						},
 						commonv1.PyTorchJobReplicaTypeWorker: {
-							Replicas: ptr.To[int32](1),
+							Replicas: ptr.To[int32](2),
 							Template: v1.PodTemplateSpec{
 								Spec: v1.PodSpec{
 									Containers: []v1.Container{

@@ -1,4 +1,4 @@
-package elasticquotav1alpha1preemption_test
+package workloadapi_test
 
 import (
 	"context"
@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	listerv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/koordinator-sh/koord-queue/cmd/app/options"
 	ctrl "github.com/koordinator-sh/koord-queue/pkg/controller"
 	"github.com/koordinator-sh/koord-queue/pkg/controllers"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
@@ -46,13 +46,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
-// preemptionTimeout bounds every Eventually in this suite. A queue unit created before the
-// scheduler has registered its queue is parked and only retried by the find-no-queue flush
-// (every 10s), after which it still waits for the queue's own schedule interval (15s). On a
-// loaded runner that recovery path can run right up against a 30s deadline, which is what made
-// these specs flake. This leaves enough margin to absorb both intervals plus scheduling.
-const preemptionTimeout = 90 * time.Second
-
+// This suite exercises the QueueUnit API additions that align kube-queue with the upstream
+// Kueue Workload API (conditions, spec.active, requeueState, partial
+// admission) against a real apiserver, so CRD schema gaps are caught as well as logic bugs.
 var (
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -72,9 +68,9 @@ var (
 	queueInformer            cache.SharedIndexInformer
 )
 
-func TestElasticQuotaV1alpha1Preemption(t *testing.T) {
+func TestWorkloadAPI(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "ElasticQuotaV2 Queue-Level Preemption Integration Suite")
+	RunSpecs(t, "QueueUnit Workload API Integration Suite")
 }
 
 func getFirstFoundEnvTestBinaryDir() string {
@@ -131,9 +127,8 @@ func addTestIndexer(qif externalversions.SharedInformerFactory) {
 }
 
 var _ = BeforeSuite(func() {
-	// TestENV (mixed case) makes the controller skip its 1-minute ForgetQueueUnitInfo poll goroutine
-	// (eventhandler.go), which otherwise nil-derefs an unset field during a long teardown. The tree
-	// plugin's TestENV queue-naming path is not exercised here (this suite uses the v1alpha1 plugin).
+	// TestENV (mixed case) makes the controller skip its 1-minute ForgetQueueUnitInfo poll
+	// goroutine (eventhandler.go), which otherwise nil-derefs during a long teardown.
 	os.Setenv("TestENV", "true")
 	options.SetDefaultPreemptibleForTest(true)
 
@@ -142,15 +137,11 @@ var _ = BeforeSuite(func() {
 
 	By("bootstrapping test environment with envtest")
 	testEnv = &envtest.Environment{
-		// Queue/QueueUnit CRDs live under jobext/test/config/crd; the ElasticQuota (v1alpha1) CRD
-		// is authored under ./crd because the repo ships no manifest for it.
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "..", "..", "jobext", "test", "config", "crd"),
 			filepath.Join(".", "crd"),
 		},
-		ErrorIfCRDPathMissing: true,
-		// Give the apiserver extra time to stop: background scheduler/controller goroutines keep
-		// issuing requests until ctx cancellation propagates, which can delay a clean shutdown.
+		ErrorIfCRDPathMissing:   true,
 		ControlPlaneStopTimeout: 60 * time.Second,
 	}
 	testEnv.BinaryAssetsDirectory = getFirstFoundEnvTestBinaryDir()
@@ -167,7 +158,6 @@ var _ = BeforeSuite(func() {
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	Expect(err).NotTo(HaveOccurred())
 
-	// Create the koord-queue namespace (Queue objects live here).
 	_, err = kubeClient.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{Name: "koord-queue"},
 	}, metav1.CreateOptions{})
@@ -193,13 +183,10 @@ var _ = BeforeSuite(func() {
 	v1alpha1.AddToScheme(schemeModified)
 	recorder := eventBroadcaster.NewRecorder(schemeModified, corev1.EventSource{Component: utils.ControllerAgentName})
 
-	By("building the framework with the real elasticquotav1alpha1 (ElasticQuotaV2) plugin")
-	// Unlike plugins.NewFakeRegistry (which forces the fake ElasticQuota client), register the real
-	// New constructors so the plugin talks to the envtest apiserver via cfg. NewFramework only
-	// instantiates plugins listed in pluginconfig.Plugins, so enable every registry entry explicitly.
+	By("building the framework with the real elasticquotav1alpha1 plugin")
 	registry := runtime.Registry{
-		priority.Name:         priority.New,
-		"ElasticQuota":          elasticquotav1alpha1.New, // key "ElasticQuota"; plugin Name() == "ElasticQuotaV2"
+		priority.Name:  priority.New,
+		"ElasticQuota": elasticquotav1alpha1.New,
 	}
 	pluginConfig := &config.KoordQueueConfiguration{
 		Plugins: []config.Plugin{{Name: priority.Name}, {Name: "ElasticQuota"}},
@@ -241,12 +228,8 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	cancel()
-	// Let the scheduler/controller goroutines observe cancellation and stop hitting the apiserver
-	// before we shut it down, so envtest's Stop() doesn't race a stream of in-flight requests.
 	time.Sleep(time.Second)
 	if testEnv != nil {
-		// A teardown timeout is environmental (a slow apiserver shutdown) and must not fail the
-		// suite: the spec result stands on its own. Surface it as a log line instead.
 		if err := testEnv.Stop(); err != nil {
 			GinkgoWriter.Printf("warning: failed to stop test environment cleanly: %v\n", err)
 		}

@@ -451,8 +451,9 @@ func (j *TfJob) ManagedByQueue(ctx context.Context, obj client.Object) bool {
 }
 
 type tfOption struct {
-	RunningTimeout *time.Duration `yaml:"runningTimeout,omitempty"`
-	BackoffTimeout *time.Duration `yaml:"backoffTimeout,omitempty"`
+	RunningTimeout        *time.Duration `yaml:"runningTimeout,omitempty"`
+	BackoffTimeout        *time.Duration `yaml:"backoffTimeout,omitempty"`
+	PartialRunningTimeout *time.Duration `yaml:"partialRunningTimeout,omitempty"`
 }
 
 func NewTfJobReconciler(cli client.Client, config *rest.Config, scheme *runtime.Scheme, managedAllJobs bool, args string) framework.JobHandle {
@@ -478,8 +479,12 @@ func NewTfJobReconciler(cli client.Client, config *rest.Config, scheme *runtime.
 	if op.BackoffTimeout != nil {
 		bt = *op.BackoffTimeout
 	}
+	var prt time.Duration
+	if op.PartialRunningTimeout != nil {
+		prt = *op.PartialRunningTimeout
+	}
 
-	return framework.NewJobHandle(rt, bt, extension, false)
+	return framework.NewJobHandle(rt, bt, prt, extension, false)
 }
 
 var _ framework.GenericReservationJobExtension = &TfJob{}

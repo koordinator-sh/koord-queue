@@ -10,6 +10,7 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/features"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	"k8s.io/klog/v2"
@@ -126,6 +127,11 @@ func (bq *BaseQueue) GetQueueMaxResetDuration(queueLen int) time.Duration {
 func (bq *BaseQueue) ShouldSkipQueueUnit(qu *framework.QueueUnitInfo) bool {
 	// Skip if already satisfied
 	if utils.IsQueueUnitSatisfied(qu.Unit) {
+		return true
+	}
+
+	// Skip if deactivated: an inactive queue unit must never be admitted
+	if features.Enabled(features.QueueUnitActive) && !v1alpha1.IsQueueUnitActive(qu.Unit) {
 		return true
 	}
 

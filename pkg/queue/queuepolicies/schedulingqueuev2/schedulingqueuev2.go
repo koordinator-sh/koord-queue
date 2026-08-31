@@ -14,6 +14,7 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/features"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
 	"github.com/koordinator-sh/koord-queue/pkg/utils"
@@ -186,6 +187,12 @@ func (q *PriorityQueue) findNextQueueUnit() (int32, *framework.QueueUnitInfo) {
 		qu = q.queue[q.nextIdx]
 		key := qu.Unit.Namespace + "/" + qu.Unit.Name
 		if _, updating := q.updating[key]; updating {
+			q.nextIdx++
+			continue
+		}
+		// A deactivated queue unit keeps its place in the queue but is never handed to the
+		// scheduler, so it holds no quota while it is inactive.
+		if features.Enabled(features.QueueUnitActive) && !v1alpha1.IsQueueUnitActive(qu.Unit) {
 			q.nextIdx++
 			continue
 		}
@@ -551,7 +558,12 @@ func (q *PriorityQueue) Update(old, new *v1alpha1.QueueUnit) error {
 		return nil
 	}
 	// add queueUnit to queue if not present
-	if _, ok := q.queueUnits[key]; !ok || old.Spec.Priority != new.Spec.Priority {
+	// An activation change must refresh the cached copy as well: findNextQueueUnit reads the
+	// cached object, so a stale inactive copy would keep the unit skipped forever. Rewinding
+	// the scan cursor and waking the queue lets the reactivated unit be picked up again.
+	activationChanged := features.Enabled(features.QueueUnitActive) &&
+		v1alpha1.IsQueueUnitActive(old) != v1alpha1.IsQueueUnitActive(new)
+	if _, ok := q.queueUnits[key]; !ok || old.Spec.Priority != new.Spec.Priority || activationChanged {
 		oqi := framework.NewQueueUnitInfo(old)
 		qi := framework.NewQueueUnitInfo(new)
 		index, found := slices.BinarySearchFunc(q.queue, oqi, q.lessFunc)
@@ -561,6 +573,12 @@ func (q *PriorityQueue) Update(old, new *v1alpha1.QueueUnit) error {
 		index, _ = slices.BinarySearchFunc(q.queue, qi, q.lessFunc)
 		q.queue = slices.Insert(q.queue, index, qi)
 		q.queueUnits[key] = qi
+	}
+	if activationChanged {
+		q.resetNextIdxFlag = true
+		klog.V(2).InfoS("queue unit activation changed", "queue", q.name, "qu", klog.KObj(new),
+			"active", v1alpha1.IsQueueUnitActive(new))
+		defer q.cond.Broadcast()
 	}
 	_, updating := q.updating[key]
 	//

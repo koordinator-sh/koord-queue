@@ -308,5 +308,5 @@ func NewWFReconciler(cli client.Client, config *rest.Config, scheme *runtime.Sch
 	}}
 	_ = argov1alpha1.AddToScheme(scheme)
 	extension := framework.NewGenericJobExtensionWithJob(j, j.ManagedByQueue)
-	return framework.NewJobHandle(0, 0, extension, false)
+	return framework.NewJobHandle(0, 0, 0, extension, false)
 }

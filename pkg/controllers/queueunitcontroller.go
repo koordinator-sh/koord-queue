@@ -10,6 +10,7 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	externalv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	"sigs.k8s.io/kueue/apis/kueue/v1beta1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -120,6 +121,7 @@ func (q *QueueUnitController) reconcile(key string) (Result, error) {
 	if !needUpdate {
 		return Result{}, nil
 	}
+	utils.SyncQueueUnitConditions(&queueUnitCp.Status)
 
 	_, err = q.queueUnitClient.SchedulingV1alpha1().QueueUnits(namespace).UpdateStatus(context.Background(), queueUnitCp, metav1.UpdateOptions{})
 	if err != nil {
@@ -153,6 +155,9 @@ func updateQueueUnitStatus(queueUnitCp *v1alpha1.QueueUnit, enableStrictDequeueM
 		queueUnitCp.Status.Phase = v1alpha1.Backoff
 		queueUnitCp.Status.LastUpdateTime = &now
 		queueUnitCp.Status.Message = "admission check failed"
+		// Count the attempt so repeated check failures back off progressively. There is no
+		// per-queue backoff time here, so the shared default is used as the base.
+		utils.RecordQueueUnitRequeueState(&queueUnitCp.Status, 0, now.Time)
 		needUpdate = true
 	} else if state == StateReady && !enableStrictDequeueMode {
 		queueUnitCp.Status.Phase = v1alpha1.Dequeued
