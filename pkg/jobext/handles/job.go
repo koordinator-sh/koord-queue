@@ -18,7 +18,10 @@ package handles
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -106,17 +109,49 @@ func (j *Job) PodSet(ctx context.Context, obj client.Object) []kueue.PodSet {
 	if job.Spec.Completions != nil {
 		completion = int(*job.Spec.Completions)
 	}
-	succeed := job.Status.Succeeded
-	realParallelism := parallelism
-	if completion-int(succeed) < parallelism {
-		realParallelism = completion - int(succeed)
+	remaining := completion - int(job.Status.Succeeded)
+	if ptr.Deref(job.Spec.CompletionMode, batchv1.NonIndexedCompletion) == batchv1.IndexedCompletion && job.Status.FailedIndexes != nil {
+		// Failed indexes will not be retried. Status.Failed counts Pod attempts,
+		// including retryable failures, so it must not be subtracted here.
+		failed, err := countFailedIndexes(*job.Status.FailedIndexes, completion)
+		if err != nil {
+			klog.FromContext(ctx).Error(err, "ignoring invalid failedIndexes", "job", klog.KObj(job))
+		} else {
+			remaining -= failed
+		}
 	}
 	ps = append(ps, kueue.PodSet{
 		Name:     job.Name,
 		Template: job.Spec.Template,
-		Count:    int32(realParallelism),
+		Count:    int32(min(parallelism, max(0, remaining))),
 	})
 	return ps
+}
+
+// countFailedIndexes counts the sorted, non-overlapping indexes/ranges in Job
+// status, e.g. "1,3-5,7". Count ranges directly rather than expanding each index.
+func countFailedIndexes(indexes string, completions int) (int, error) {
+	if indexes == "" {
+		return 0, nil
+	}
+	count, previousEnd := 0, -1
+	for _, interval := range strings.Split(indexes, ",") {
+		first, last, isRange := strings.Cut(interval, "-")
+		start, err := strconv.Atoi(first)
+		if err != nil {
+			return 0, fmt.Errorf("invalid failed index %q: %w", interval, err)
+		}
+		end := start
+		if isRange {
+			end, err = strconv.Atoi(last)
+		}
+		if err != nil || start <= previousEnd || end < start || end >= completions {
+			return 0, fmt.Errorf("invalid failed index range %q for %d completions", interval, completions)
+		}
+		count += end - start + 1
+		previousEnd = end
+	}
+	return count, nil
 }
 
 func (j *Job) Priority(ctx context.Context, obj client.Object) (string, *int32) {
