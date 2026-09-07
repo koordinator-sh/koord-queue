@@ -117,11 +117,12 @@ func TestReconcileOveradmission(t *testing.T) {
 	_ = v1.AddToScheme(scheme)
 
 	tests := []struct {
-		name           string
-		queueUnit      *v1alpha1.QueueUnit
-		pods           []v1.Pod
-		expectedAdmits []kueue.PodSet
-		expectRequeue  bool
+		name            string
+		queueUnit       *v1alpha1.QueueUnit
+		pods            []v1.Pod
+		expectedAdmits  []kueue.PodSet
+		expectedReclaim *v1alpha1.ReclaimState
+		expectRequeue   bool
 	}{
 		{
 			name: "No overadmission",
@@ -231,6 +232,62 @@ func TestReconcileOveradmission(t *testing.T) {
 			},
 			expectRequeue: true,
 		},
+		{
+			name: "Released admission fully satisfies reclaim",
+			queueUnit: &v1alpha1.QueueUnit{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-qu", Namespace: "default"},
+				Spec:       v1alpha1.QueueUnitSpec{PodSets: []kueue.PodSet{{Name: "ps-1", Count: 1}}},
+				Status: v1alpha1.QueueUnitStatus{Admissions: []v1alpha1.Admission{{
+					Name: "ps-1", Replicas: 3, ReclaimState: &v1alpha1.ReclaimState{Replicas: 1},
+				}}},
+			},
+			pods: []v1.Pod{{
+				ObjectMeta: metav1.ObjectMeta{Name: "pod-1", Namespace: "default", Annotations: map[string]string{
+					util.RelatedQueueUnitAnnoKey: "default/test-qu", util.RelatedPodSetAnnoKey: "ps-1",
+				}},
+				Status: v1.PodStatus{Phase: v1.PodRunning},
+			}},
+			expectedAdmits: []kueue.PodSet{{Name: "ps-1", Count: 1}},
+			expectRequeue:  true,
+		},
+		{
+			name: "Released admission partially satisfies reclaim",
+			queueUnit: &v1alpha1.QueueUnit{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-qu", Namespace: "default"},
+				Spec:       v1alpha1.QueueUnitSpec{PodSets: []kueue.PodSet{{Name: "ps-1", Count: 2}}},
+				Status: v1alpha1.QueueUnitStatus{Admissions: []v1alpha1.Admission{{
+					Name: "ps-1", Replicas: 4, ReclaimState: &v1alpha1.ReclaimState{Replicas: 3},
+				}}},
+			},
+			pods: []v1.Pod{{
+				ObjectMeta: metav1.ObjectMeta{Name: "pod-1", Namespace: "default", Annotations: map[string]string{
+					util.RelatedQueueUnitAnnoKey: "default/test-qu", util.RelatedPodSetAnnoKey: "ps-1",
+				}},
+				Status: v1.PodStatus{Phase: v1.PodRunning},
+			}},
+			expectedAdmits:  []kueue.PodSet{{Name: "ps-1", Count: 2}},
+			expectedReclaim: &v1alpha1.ReclaimState{Replicas: 1},
+			expectRequeue:   true,
+		},
+		{
+			name: "Reclaim remains when no admission is released",
+			queueUnit: &v1alpha1.QueueUnit{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-qu", Namespace: "default"},
+				Spec:       v1alpha1.QueueUnitSpec{PodSets: []kueue.PodSet{{Name: "ps-1", Count: 2}}},
+				Status: v1alpha1.QueueUnitStatus{Admissions: []v1alpha1.Admission{{
+					Name: "ps-1", Replicas: 2, ReclaimState: &v1alpha1.ReclaimState{Replicas: 1},
+				}}},
+			},
+			pods: []v1.Pod{{
+				ObjectMeta: metav1.ObjectMeta{Name: "pod-1", Namespace: "default", Annotations: map[string]string{
+					util.RelatedQueueUnitAnnoKey: "default/test-qu", util.RelatedPodSetAnnoKey: "ps-1",
+				}},
+				Status: v1.PodStatus{Phase: v1.PodRunning},
+			}},
+			expectedAdmits:  []kueue.PodSet{{Name: "ps-1", Count: 2}},
+			expectedReclaim: &v1alpha1.ReclaimState{Replicas: 1},
+			expectRequeue:   false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -282,6 +339,7 @@ func TestReconcileOveradmission(t *testing.T) {
 			for i := range tt.expectedAdmits {
 				assert.Equal(t, tt.expectedAdmits[i].Name, newQu.Status.Admissions[i].Name)
 				assert.Equal(t, tt.expectedAdmits[i].Count, int32(newQu.Status.Admissions[i].Replicas))
+				assert.Equal(t, tt.expectedReclaim, newQu.Status.Admissions[i].ReclaimState)
 			}
 		})
 	}
