@@ -30,7 +30,11 @@ go.work.sum
 # Editor/IDE
 .idea/
 .vscode/
-.qoder
+# Ignore local .qoder state but keep the shared build-and-deploy skill tracked.
+.qoder/*
+!.qoder/skills/
+.qoder/skills/*
+!.qoder/skills/build-and-deploy/
 .DS_Store
 
 vendor
