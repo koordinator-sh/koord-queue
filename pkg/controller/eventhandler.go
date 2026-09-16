@@ -273,11 +273,7 @@ func (c *Controller) DeleteQueueUnit(queueUnit *v1alpha1.QueueUnit) {
 	}
 
 	c.scheduler.FinishedInc()
-	_, q, ok := c.getQueueByUnit(queueUnit)
-	if !ok {
-		return
-	}
-	if err := q.Delete(queueUnit); err != nil {
-		klog.Errorf("delete queueunit from queue failed: %v", err)
-	}
+	// Delete the queueunit from its queue and clear the qu->queue mapping,
+	// otherwise entries in queueUnitToQueue leak as QueueUnits come and go.
+	c.multiSchedulingQueue.DeleteQueueUnit(queueUnit)
 }

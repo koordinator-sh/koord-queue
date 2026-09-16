@@ -100,11 +100,18 @@ func (mq *MultiSchedulingQueue) GetQueueForQueueUnit(qu *v1alpha1.QueueUnit) str
 func (mq *MultiSchedulingQueue) DeleteQueueUnit(qu *v1alpha1.QueueUnit) {
 	mq.Lock()
 	defer mq.Unlock()
-	q := mq.queueMap[mq.queueUnitToQueue[qu.Namespace+"/"+qu.Name]]
+	key := qu.Namespace + "/" + qu.Name
+	q := mq.queueMap[mq.queueUnitToQueue[key]]
 	if q != nil {
-		q.Delete(qu)
+		if err := q.Delete(qu); err != nil {
+			klog.Errorf("delete queueunit %v from its queue failed: %v", key, err)
+		}
 	}
-	delete(mq.queueUnitToQueue, qu.Namespace+"/"+qu.Name)
+	delete(mq.queueUnitToQueue, key)
+	// queueUnitNotFoundNotified is keyed by QueueUnitInfo.Name, which is the
+	// namespace/name composite. Without this the set grows without bound whenever
+	// QueueUnits that never matched a Queue are created and deleted repeatedly.
+	mq.queueUnitNotFoundNotified.Delete(key)
 }
 
 func NewMultiSchedulingQueue(fw framework.MultiQueueHandle, podInitialBackoffSeconds int, podMaxBackoffSeconds int, queueUnitLister externalv1alpha1.QueueUnitLister, enableStrictConsistency bool, recorder record.EventRecorder) (queue.MultiSchedulingQueue, error) {
@@ -164,7 +171,11 @@ func (mq *MultiSchedulingQueue) Start(ctx context.Context) {
 func (mq *MultiSchedulingQueue) AddUnitsFindNoQueue(q *framework.QueueUnitInfo) {
 	mq.Lock()
 	defer mq.Unlock()
-	delete(mq.queueMap, q.Unit.Namespace+"/"+q.Unit.Name)
+	// The intent, per the MultiSchedulingQueue interface contract, is to clear the
+	// qu->queue mapping. Deleting from queueMap with a ns/name key was always a
+	// no-op because queue names never contain "/", which left a stale mapping
+	// behind and routed later Complete/delete events to the wrong queue.
+	delete(mq.queueUnitToQueue, q.Unit.Namespace+"/"+q.Unit.Name)
 	mq.queueUnitFindNoQueue = append(mq.queueUnitFindNoQueue, q)
 }
 
@@ -173,6 +184,10 @@ func (mq *MultiSchedulingQueue) flushUnitsFindNoQueue() {
 	for _, qu := range mq.queueUnitFindNoQueue {
 		newQu, err := mq.queueUnitLister.QueueUnits(qu.Unit.Namespace).Get(qu.Unit.Name)
 		if err != nil {
+			// The QueueUnit is gone, so it is dropped from queueUnitFindNoQueue here.
+			// Drop its notified marker as well, otherwise the set keeps entries for
+			// QueueUnits whose delete event never reached DeleteQueueUnit.
+			mq.queueUnitNotFoundNotified.Delete(qu.Name)
 			continue
 		}
 		qu.Unit = newQu
@@ -230,7 +245,13 @@ func (mq *MultiSchedulingQueue) Close() {
 func (mq *MultiSchedulingQueue) Add(q *v1alpha1.Queue) error {
 	mq.Lock()
 	defer mq.Unlock()
+	return mq.addLocked(q)
+}
 
+// addLocked registers a queue. The caller must already hold mq's write lock;
+// it exists so lock holders (e.g. Update) can add a queue without re-locking
+// the non-reentrant mutex, which would deadlock.
+func (mq *MultiSchedulingQueue) addLocked(q *v1alpha1.Queue) error {
 	// Name is name for the moment
 	name := q.Name
 	if _, ok := mq.queueMap[name]; ok {
@@ -285,7 +306,10 @@ func (mq *MultiSchedulingQueue) Update(old *v1alpha1.Queue, new *v1alpha1.Queue)
 	name := new.Name
 	currentQueue, ok := mq.queueMap[name]
 	if !ok {
-		return mq.Add(new)
+		// Update() already holds the write lock; use the lock-free variant,
+		// otherwise Add() re-locks the non-reentrant mutex and deadlocks the
+		// whole scheduling queue.
+		return mq.addLocked(new)
 	}
 
 	oldTmp := &v1alpha1.Queue{ObjectMeta: v1.ObjectMeta{Labels: old.Labels, Annotations: old.Annotations}, Spec: old.Spec}
