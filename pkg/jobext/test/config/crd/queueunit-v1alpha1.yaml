@@ -54,6 +54,12 @@ spec:
           spec:
             description: QueueUnitSpec defines the desired state of QueueUnit
             properties:
+              active:
+                description: |-
+                  active determines whether the queue unit can be admitted into its queue.
+                  Setting active from true to false evicts the job and releases its quota, and the
+                  queue unit is no longer scheduled. A nil value is treated as true.
+                type: boolean
               consumerRef:
                 description: |-
                   ObjectReference contains enough information to let you inspect or modify the referred object.
@@ -115,6 +121,13 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              maximumExecutionTimeSeconds:
+                description: |-
+                  maximumExecutionTimeSeconds limits how long the job is allowed to execute, counted
+                  from the moment its pods actually start running. Time spent waiting for admission or
+                  for pods to start does not count. Once exceeded, the queue unit is deactivated.
+                format: int32
+                type: integer
               podSet:
                 description: |-
                   podSets is a list of sets of homogeneous pods, each described by a Pod spec
@@ -8246,6 +8259,13 @@ spec:
           status:
             description: QueueUnitStatus defines the observed state of QueueUnit
             properties:
+              accumulatedPastExecutionTimeSeconds:
+                description: |-
+                  accumulatedPastExecutionTimeSeconds holds the total time, in seconds, the job spent
+                  executing during previous admit-evict cycles. It is reset when the queue unit is
+                  deactivated for exceeding its maximum execution time.
+                format: int32
+                type: integer
               admissionChecks:
                 description: admissionChecks list all the admission checks required
                   by the workload and the current status
@@ -8418,6 +8438,70 @@ spec:
               attempts:
                 format: int64
                 type: integer
+              conditions:
+                description: |-
+                  conditions hold the latest available observations of the queue unit current state.
+                  Phase stays the authoritative state; conditions are an observation window for users
+                  and external tooling and are never used to make scheduling decisions.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                maxItems: 8
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
               lastAllocateTime:
                 format: date-time
                 type: string
@@ -8434,6 +8518,48 @@ spec:
                     type: integer
                   running:
                     type: integer
+                type: object
+              reclaimablePods:
+                description: |-
+                  reclaimablePods keeps track of the number of pods per podSet whose reserved quota is
+                  no longer needed, reported by the job extension as pods reach a terminal state.
+                items:
+                  description: ReclaimablePod reports how many pods of a podSet no
+                    longer need their reserved quota.
+                  properties:
+                    count:
+                      description: |-
+                        count is the number of pods whose reservation is no longer needed. It only increases
+                        while the queue unit holds a reservation.
+                      format: int32
+                      type: integer
+                    name:
+                      description: name is the podSet name, matching Admission.Name.
+                      type: string
+                  required:
+                  - count
+                  - name
+                  type: object
+                maxItems: 32
+                type: array
+                x-kubernetes-list-map-keys:
+                - name
+                x-kubernetes-list-type: map
+              requeueState:
+                description: |-
+                  requeueState holds the backoff state used when the queue unit is re-queued after
+                  a running timeout or a failed admission check.
+                properties:
+                  count:
+                    description: count is the number of times the queue unit has been
+                      re-queued after a backoff.
+                    format: int32
+                    type: integer
+                  requeueAt:
+                    description: requeueAt is the time at which the queue unit becomes
+                      eligible for re-queueing.
+                    format: date-time
+                    type: string
                 type: object
             required:
             - attempts

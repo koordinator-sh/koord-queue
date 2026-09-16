@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	queueutils "github.com/koordinator-sh/koord-queue/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,6 +50,7 @@ func UpdateQueueUnitStatus(queueUnit *v1alpha1.QueueUnit, status v1alpha1.QueueU
 	if status == v1alpha1.Succeed || status == v1alpha1.Failed {
 		newQu.Status.Admissions = []v1alpha1.Admission{}
 	}
+	queueutils.SyncQueueUnitConditions(&newQu.Status)
 
 	return cli.Status().Update(context.Background(), newQu)
 }

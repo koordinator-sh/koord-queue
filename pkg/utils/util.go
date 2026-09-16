@@ -411,6 +411,9 @@ func UpdateQueueUnitStatusAndAnnotations(name string, namespace string, queueNam
 
 			if !reflect.DeepEqual(newQueueUnit.Status, *status) {
 				newQueueUnit.Status = *status
+				// Mirror the phase into conditions in the same UpdateStatus call, so the
+				// observation window costs no extra API request.
+				SyncQueueUnitConditions(&newQueueUnit.Status)
 				queueUnit, err = client.SchedulingV1alpha1().QueueUnits(namespace).UpdateStatus(
 					context.Background(), newQueueUnit, metav1.UpdateOptions{})
 				if err != nil {

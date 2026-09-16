@@ -10,6 +10,7 @@ import (
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
+	queueutils "github.com/koordinator-sh/koord-queue/pkg/utils"
 	"golang.org/x/time/rate"
 
 	corev1 "k8s.io/api/core/v1"
@@ -296,6 +297,9 @@ func (d *GenericJobReconciler) createQueueUnit(ctx context.Context, handle JobHa
 			PriorityClassName: pc,
 			Priority:          pri,
 			PodSets:           handle.genericJobExtension.PodSet(ctx, object),
+			// Parsed at creation time so a job annotated inactive is never admitted even once.
+			Active:                      activeFromAnnotation(object),
+			MaximumExecutionTimeSeconds: maxExecutionTimeFromAnnotation(object),
 		},
 		Status: v1alpha1.QueueUnitStatus{
 			Phase:          status,
@@ -318,7 +322,7 @@ func (d *GenericJobReconciler) createQueueUnit(ctx context.Context, handle JobHa
 	return d.client.Create(ctx, queueUnit)
 }
 
-func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (res ctrl.Result, reterr error) {
 	log := ctrl.LoggerFrom(ctx).WithValues("job", req.String())
 	infos := strings.Split(req.Namespace, "|")
 	if len(infos) != 2 {
@@ -401,13 +405,37 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
+	// Keep spec.active and spec.maximumExecutionTimeSeconds in sync with the job annotations
+	if updated, err := d.syncQueueUnitActivation(ctx, object, queueUnit); updated || err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
 	log = log.WithValues("queueunit", queueUnit.Name, "queueUnitStatus", queueUnit.Status.Phase, "jobStatus", jobStatus)
 	trace := trace.New("jobReconciling")
 	defer trace.LogIfLong(100 * time.Millisecond)
+
+	// A deactivated queue unit must give its resources back whatever the job status is, so this
+	// runs before the per-status handling below.
+	if handled, err := d.reconcileDeactivation(ctx, log, handle, object, queueUnit); handled || err != nil {
+		if err != nil {
+			return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, err
+		}
+		return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
+	}
+	// Deactivate the queue unit once it outlives its execution budget; the eviction itself is
+	// then carried out by reconcileDeactivation on the next round.
+	if remaining, err := d.reconcileMaxExecutionTime(ctx, log, object, queueUnit); err != nil {
+		return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, err
+	} else if remaining > 0 {
+		// Wake up no later than the deadline, whatever the status handling below decides.
+		defer func() { res = tightenRequeue(res, remaining) }()
+	}
 	switch jobStatus {
 	case Queuing:
 		if queueUnit.Status.Phase == "Preempted" {
 			log.V(0).Info("success to suspend and delete job resources, set job status to Enqueued")
+			// Preemption keeps the queue unit active, so the time it already ran is banked
+			// against its execution budget before it goes back to the queue.
+			accumulateExecutionTime(&queueUnit.Status)
 			return ctrl.Result{Requeue: true, RequeueAfter: DefaultRequeuePeriod}, util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Enqueued, "Enqueued after preempted", d.client)
 
 		}
@@ -427,12 +455,14 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			log.V(1).Info("resume generic job due to related queueunit dequeued")
 			return ctrl.Result{RequeueAfter: handle.runningTimeout}, handle.genericJobExtension.Resume(ctx, object, d.client)
 		}
-		var lastUpdateTime = time.Now()
-		if queueUnit.Status.LastUpdateTime != nil {
-			lastUpdateTime = queueUnit.Status.LastUpdateTime.Time
-		}
-		duration := time.Since(lastUpdateTime)
-		if queueUnit.Status.Phase == v1alpha1.Backoff && duration > handle.backoffTime {
+		if queueUnit.Status.Phase == v1alpha1.Backoff {
+			// The structured backoff state, when enabled, decides when the unit may return to
+			// the queue; otherwise the flat backoff time is used as before.
+			elapsed, remaining := queueutils.QueueUnitRequeueBackoffElapsed(&queueUnit.Status, handle.backoffTime, time.Now())
+			if !elapsed {
+				log.V(1).Info("job will requeue backoff timeout", "after", remaining)
+				return ctrl.Result{RequeueAfter: remaining}, nil
+			}
 			err := handle.requeueJobExtension.OnQueueUnitBackoffTimeout(ctx, object, queueUnit, d.client)
 			if err != nil {
 				return ctrl.Result{}, err
@@ -443,11 +473,9 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			queueUnit.Status.Phase = v1alpha1.Enqueued
 			queueUnit.Status.Message = "Enqueued because backoff timeout"
 			queueUnit.Status.LastUpdateTime = &v1.Time{Time: time.Now()}
+			queueutils.SyncQueueUnitConditions(&queueUnit.Status)
 			log.V(1).Info("job backoff timeout")
 			return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, d.client.SubResource("status").Update(ctx, queueUnit)
-		} else if queueUnit.Status.Phase == v1alpha1.Backoff && duration < handle.backoffTime {
-			log.V(1).Info("job will requeue backoff timeout", "after", handle.backoffTime-duration)
-			return ctrl.Result{RequeueAfter: handle.backoffTime - duration}, nil
 		}
 		// status == Enqueued
 		if queueUnit.Status.Phase == v1alpha1.Enqueued {
@@ -490,6 +518,7 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 
 			log.V(2).Info("success to suspend and delete job resources, set job status to Enqueued")
+			accumulateExecutionTime(&queueUnit.Status)
 			return ctrl.Result{Requeue: true, RequeueAfter: DefaultRequeuePeriod}, util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Enqueued, "Enqueued after preempted", d.client)
 		}
 		if handle.runningTimeout == 0 {
@@ -507,6 +536,9 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if queueUnit.Status.Phase == v1alpha1.Dequeued {
 			if duration >= handle.runningTimeout {
 				log.V(0).Info("job running timeout")
+				accumulateExecutionTime(&queueUnit.Status)
+				// Record the attempt so each successive failure waits longer.
+				backoff := queueutils.RecordQueueUnitRequeueState(&queueUnit.Status, handle.backoffTime, time.Now())
 				if err := util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Backoff, "Backoff due to running timeout", d.client); err != nil {
 					return ctrl.Result{}, client.IgnoreNotFound(err)
 				}
@@ -514,7 +546,10 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				if err != nil {
 					return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, err
 				}
-				return ctrl.Result{Requeue: true, RequeueAfter: handle.backoffTime}, nil
+				if backoff <= 0 {
+					backoff = handle.backoffTime
+				}
+				return ctrl.Result{Requeue: true, RequeueAfter: backoff}, nil
 			} else {
 				log.V(2).Info("job will requeue running timeout", "after", handle.runningTimeout-duration)
 				return ctrl.Result{RequeueAfter: handle.runningTimeout - duration}, nil
@@ -528,7 +563,8 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, err
 			}
 			// try update queue unit status
-			if duration > handle.backoffTime {
+			elapsed, remaining := queueutils.QueueUnitRequeueBackoffElapsed(&queueUnit.Status, handle.backoffTime, time.Now())
+			if elapsed {
 				log.V(0).Info("job backoff timeout")
 				err := handle.requeueJobExtension.OnQueueUnitBackoffTimeout(ctx, object, queueUnit, d.client)
 				if err != nil {
@@ -539,8 +575,8 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 				}
 				return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Enqueued, "Enqueued because backoff timeout", d.client)
 			} else {
-				log.V(2).Info("job will requeue backoff timeout", "after", handle.backoffTime-duration)
-				return ctrl.Result{RequeueAfter: handle.backoffTime - duration}, nil
+				log.V(2).Info("job will requeue backoff timeout", "after", remaining)
+				return ctrl.Result{RequeueAfter: remaining}, nil
 			}
 		}
 

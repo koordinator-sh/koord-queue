@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/features"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies/basequeue"
@@ -85,6 +86,11 @@ func (q *IntelligentQueue) findNextQueueUnit(ctx context.Context) (*framework.Qu
 			q.highNextIdx++
 			continue
 		}
+		// A deactivated queue unit is never handed to the scheduler, so it holds no quota.
+		if features.Enabled(features.QueueUnitActive) && !v1alpha1.IsQueueUnitActive(qu.Unit) {
+			q.highNextIdx++
+			continue
+		}
 		availableHighPrioQueueUnits++
 		quotas, err := q.Fw.GetQueueUnitQuotaName(qu.Unit)
 		if err == nil && len(quotas) > 0 {
@@ -104,6 +110,10 @@ func (q *IntelligentQueue) findNextQueueUnit(ctx context.Context) (*framework.Qu
 	for q.lowNextIdx < int32(len(q.lowPriorityQueue)) && (q.MaxDepth <= 0 || (q.highNextIdx+q.lowNextIdx) < q.MaxDepth) {
 		qu := q.lowPriorityQueue[q.lowNextIdx]
 		if utils.IsQueueUnitSatisfied(qu.Unit) {
+			q.lowNextIdx++
+			continue
+		}
+		if features.Enabled(features.QueueUnitActive) && !v1alpha1.IsQueueUnitActive(qu.Unit) {
 			q.lowNextIdx++
 			continue
 		}
@@ -319,7 +329,18 @@ func (q *IntelligentQueue) Update(old, new *v1alpha1.QueueUnit) error {
 		q.Lock.Unlock()
 	}()
 
-	if old.Status.Phase == new.Status.Phase && old.Spec.Priority == new.Spec.Priority && !podSetsChanged(old, new) && !isAdmissionChanged(old, new) {
+	// An activation change is not visible in the phase or the priority, so it needs its own
+	// check: rewind the scan cursors and wake the queue so a reactivated unit is reconsidered.
+	activationChanged := features.Enabled(features.QueueUnitActive) &&
+		v1alpha1.IsQueueUnitActive(old) != v1alpha1.IsQueueUnitActive(new)
+	if activationChanged {
+		q.ResetNextIdxFlag = true
+		klog.V(2).Infof("queue %s reconsiders job %v after its activation changed to %v",
+			q.Name, klog.KObj(new), v1alpha1.IsQueueUnitActive(new))
+		defer q.Cond.Broadcast()
+	}
+
+	if old.Status.Phase == new.Status.Phase && old.Spec.Priority == new.Spec.Priority && !podSetsChanged(old, new) && !isAdmissionChanged(old, new) && !activationChanged {
 		return nil
 	}
 
