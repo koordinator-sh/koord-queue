@@ -55,7 +55,10 @@ func (eq *ElasticQuota) GetDebugInfoInternal(verbose bool) map[string]*ElasticQu
 	cache.lock.RLock()
 	defer cache.lock.RUnlock()
 
-	reserved := eq.cache.GetReserved()
+	// Read the reserved map directly under the held RLock instead of calling
+	// GetReserved(), which would re-acquire the same RWMutex and deadlock
+	// once a writer is queued between the two RLock calls.
+	reserved := cache.reserved
 
 	for queueName, queueInfo := range cache.quotas {
 		result[queueName] = &ElasticQuotaDebugInfo{
