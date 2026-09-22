@@ -42,6 +42,8 @@ type MultiSchedulingQueue interface {
 	SetQueueForQueueUnit(qu *schedv1alpha1.QueueUnit, qName string)
 	// Obtain queueUnits' queue name from cache
 	GetQueueForQueueUnit(qu *schedv1alpha1.QueueUnit) string
+	// Delete queueUnit from its queue and clear its qu->queue mapping from cache
+	DeleteQueueUnit(qu *schedv1alpha1.QueueUnit)
 	Run()
 	Start(ctx context.Context)
 	Close()
