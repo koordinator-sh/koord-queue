@@ -268,6 +268,12 @@ func (d *GenericJobReconciler) createQueueUnit(ctx context.Context, handle JobHa
 
 	resources := handle.genericJobExtension.Resources(ctx, object)
 	pc, pri := handle.genericJobExtension.Priority(ctx, object)
+	// An explicit scheduling.x-k8s.io/priority annotation on the job overrides the priority
+	// derived from its PriorityClass / pod template, exactly like updateQueueUnitPriority does,
+	// so a job that carries the annotation from the start is not created at the wrong priority.
+	if annPri := priorityFromAnnotation(object); annPri != nil {
+		pri = annPri
+	}
 	suffix := handle.genericJobExtension.QueueUnitSuffix()
 	if suffix != "" {
 		suffix = "-" + suffix
