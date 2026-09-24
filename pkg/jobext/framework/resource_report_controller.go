@@ -549,7 +549,7 @@ func (d *ResourceReporter) reconcileReclaim(admission []v1alpha1.Admission, admi
 	return xorAdmit
 }
 
-// if request > admitted, then check if the number of running and pending pods is less than request
+// Reduce excess admission when neither demand nor live Pods still need it.
 func (d *ResourceReporter) reconcileOveradmission(ctx context.Context, log logr.Logger, qu *v1alpha1.QueueUnit, podsByPs map[string][]*corev1.Pod) (needRequeue bool, err error) {
 	requestPodSet := map[string]int32{}
 	for _, ps := range qu.Spec.PodSets {
@@ -573,6 +573,18 @@ func (d *ResourceReporter) reconcileOveradmission(ctx context.Context, log logr.
 			} else if runAnsPending < requestPodSet[ad.Name] && requestPodSet[ad.Name] < int32(ad.Replicas) {
 				needRequeue = true
 				qu.Status.Admissions[i].Replicas = int64(requestPodSet[ad.Name])
+			}
+			// Demand can shrink after indexes finish permanently. Any admission
+			// released here also fulfills that much of an outstanding reclaim;
+			// otherwise it would keep waiting for Pods that no longer exist.
+			released := ad.Replicas - qu.Status.Admissions[i].Replicas
+			if released > 0 && ad.ReclaimState != nil {
+				remaining := ad.ReclaimState.Replicas - released
+				if remaining <= 0 {
+					qu.Status.Admissions[i].ReclaimState = nil
+				} else {
+					qu.Status.Admissions[i].ReclaimState = &v1alpha1.ReclaimState{Replicas: remaining}
+				}
 			}
 		}
 	}

@@ -130,7 +130,51 @@ var _ = Describe("Job Controller", func() {
 			Expect(podSets[0].Name).To(Equal("test-job"))
 			Expect(podSets[0].Count).To(Equal(int32(2)))
 		})
+
+		DescribeTable("should account for permanently completed indexes",
+			func(mode batchv1.CompletionMode, completions, parallelism, succeeded int32, failedIndexes *string, expected int32) {
+				job := &batchv1.Job{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+					Spec: batchv1.JobSpec{
+						CompletionMode: &mode,
+						Completions:    &completions,
+						Parallelism:    &parallelism,
+					},
+					Status: batchv1.JobStatus{Succeeded: succeeded, FailedIndexes: failedIndexes},
+				}
+
+				podSets := jobController.PodSet(ctx, job)
+
+				Expect(podSets).To(HaveLen(1))
+				Expect(podSets[0].Count).To(Equal(expected))
+			},
+			Entry("subtracts single indexes and ranges", batchv1.IndexedCompletion, int32(8), int32(8), int32(1), ptr.To("1,3-5"), int32(3)),
+			Entry("keeps parallelism when enough indexes remain", batchv1.IndexedCompletion, int32(100), int32(5), int32(0), ptr.To("1-3"), int32(5)),
+			Entry("does not return a negative count", batchv1.IndexedCompletion, int32(4), int32(4), int32(1), ptr.To("0,2-3"), int32(0)),
+			Entry("does not subtract failures from a non-indexed Job", batchv1.NonIndexedCompletion, int32(4), int32(4), int32(0), ptr.To("0-3"), int32(4)),
+			Entry("keeps the original demand for invalid status", batchv1.IndexedCompletion, int32(4), int32(4), int32(0), ptr.To("3-1"), int32(4)),
+		)
 	})
+
+	DescribeTable("countFailedIndexes",
+		func(indexes string, completions, expected int, expectError bool) {
+			count, err := countFailedIndexes(indexes, completions)
+			if expectError {
+				Expect(err).To(HaveOccurred())
+				return
+			}
+			Expect(err).NotTo(HaveOccurred())
+			Expect(count).To(Equal(expected))
+		},
+		Entry("empty", "", 78, 0, false),
+		Entry("customer failed indexes", "31,34,61,62", 78, 4, false),
+		Entry("compressed ranges", "1,3-5,7", 10, 5, false),
+		Entry("non-numeric index", "x", 10, 0, true),
+		Entry("reversed range", "5-3", 10, 0, true),
+		Entry("overlapping ranges", "1-3,3-5", 10, 0, true),
+		Entry("out-of-order indexes", "4,2", 10, 0, true),
+		Entry("index outside completions", "10", 10, 0, true),
+	)
 
 	Context("Priority", func() {
 		It("should return correct priority", func() {
