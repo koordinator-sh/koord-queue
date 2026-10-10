@@ -92,18 +92,26 @@ func NewIntelligentQueue(name string,
 		}
 	}
 
+	// Create base queue.
+	//
+	// This must happen before the max-depth annotation is parsed: MaxDepth lives on the
+	// base queue that the IntelligentQueue actually embeds, and SortedList reads it to
+	// bound how deep the high and low priority queues are scanned. Parsing it into a
+	// separately constructed base queue builds an extra object, discards it, and silently
+	// leaves the real one at its default.
+	baseQueue := basequeue.NewBaseQueue(name, q, fw, client, queueUnitLister)
+
 	// Parse maxDepth
 	if q.Annotations != nil {
 		if maxDepthStr, ok := q.Annotations[basequeue.MaxDepthAnnotation]; ok {
 			if parsedDepth, err := strconv.ParseInt(maxDepthStr, 10, 32); err == nil {
-				baseQueue := basequeue.NewBaseQueue(name, q, fw, client, queueUnitLister)
 				baseQueue.MaxDepth = int32(parsedDepth)
+			} else {
+				klog.ErrorS(err, "failed to parse max depth annotation, keeping default",
+					"queue", name, "annotation", basequeue.MaxDepthAnnotation, "value", maxDepthStr)
 			}
 		}
 	}
-
-	// Create base queue
-	baseQueue := basequeue.NewBaseQueue(name, q, fw, client, queueUnitLister)
 
 	iq := &IntelligentQueue{
 		BaseQueue:         baseQueue,
