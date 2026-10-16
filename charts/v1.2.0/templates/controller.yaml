@@ -45,6 +45,7 @@ spec:
           - --qps={{ .Values.qps }}
           - --burst={{ .Values.burst }}
           - --config=/etc/kubernetes/ack-config/plugin.yaml
+          - --feature-gates={{ include "koord-queue.featureGates" . }}
           - --enableVisibilityServer={{ .Values.controller.enableVisibilityServer }}
           - --strictDequeueMode={{ .Values.controller.enableResourceCheckWithScheduler }}
           env:
@@ -94,6 +95,7 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
+        checksum/jobextensions-config: {{ toYaml .Values.extension.jobextensions.config | sha256sum }}
       labels:
         control-plane: job-extensions
     spec:
@@ -101,11 +103,18 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+      volumes:
+        - configMap:
+            name: koord-queue-jobextensions-config
+          name: koord-queue-jobextensions-config
       containers:
         - command:
             - /usr/bin/koord-queue-controllers
           args:
             - --leader-elect
+            - --feature-gates={{ include "koord-queue.featureGates" . }}
+            - --config=/etc/koord-queue/jobextensions/config.yaml
+            - --enable-pod-reclaim={{ .Values.extension.jobextensions.enablePodReclaim }}
             {{- $jobType := "" }}
             {{- if .Values.extension.batchjob.enable }}
             {{- $jobType = print $jobType ",job"}}
@@ -128,6 +137,10 @@ spec:
             - --enabled-extensions={{- $jobType | trimPrefix "," }}
           image: "{{ include "koord-queue.imagePrefix" . }}/{{.Values.extension.jobextensions.repository}}:{{ .Values.extension.jobextensions.tag }}"
           name: manager
+          volumeMounts:
+            - mountPath: /etc/koord-queue/jobextensions
+              name: koord-queue-jobextensions-config
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /healthz

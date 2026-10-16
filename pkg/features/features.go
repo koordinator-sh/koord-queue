@@ -1,6 +1,8 @@
 package features
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/component-base/featuregate"
@@ -79,4 +81,14 @@ var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 // Helper for `utilfeature.DefaultFeatureGate.Enabled()`
 func Enabled(f featuregate.Feature) bool {
 	return utilfeature.DefaultFeatureGate.Enabled(f)
+}
+
+func Validate() error {
+	if Enabled(MaximumExecutionTime) && (!Enabled(QueueUnitActive) || !Enabled(QueueUnitConditions)) {
+		return fmt.Errorf("MaximumExecutionTime requires QueueUnitActive and QueueUnitConditions")
+	}
+	if Enabled(QueueUnitRequeueState) && !Enabled(QueueUnitConditions) {
+		return fmt.Errorf("QueueUnitRequeueState requires QueueUnitConditions")
+	}
+	return nil
 }

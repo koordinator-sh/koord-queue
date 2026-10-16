@@ -70,3 +70,18 @@ Create the name of the service account to use
 {{- .Values.global.imagePrefix }}
 {{- end }}
 {{- end }}
+
+{{- define "koord-queue.featureGates" -}}
+{{- $gates := .Values.featureGates -}}
+{{- if and (index $gates "MaximumExecutionTime") (not (and (index $gates "QueueUnitActive") (index $gates "QueueUnitConditions"))) -}}
+{{- fail "MaximumExecutionTime requires QueueUnitActive and QueueUnitConditions" -}}
+{{- end -}}
+{{- if and (index $gates "QueueUnitRequeueState") (not (index $gates "QueueUnitConditions")) -}}
+{{- fail "QueueUnitRequeueState requires QueueUnitConditions" -}}
+{{- end -}}
+{{- $pairs := list -}}
+{{- range $name := keys $gates | sortAlpha -}}
+{{- $pairs = append $pairs (printf "%s=%t" $name (index $gates $name)) -}}
+{{- end -}}
+{{- join "," $pairs -}}
+{{- end }}

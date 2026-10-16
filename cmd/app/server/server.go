@@ -31,6 +31,7 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	"github.com/koordinator-sh/koord-queue/pkg/controller"
+	"github.com/koordinator-sh/koord-queue/pkg/features"
 	"github.com/koordinator-sh/koord-queue/pkg/utils"
 	"github.com/koordinator-sh/koord-queue/pkg/visibility"
 	jsonpatch "gomodules.xyz/jsonpatch/v2"
@@ -215,7 +216,10 @@ func Run(opt *options.ServerOption) error {
 	}
 
 	if err := utilfeature.DefaultMutableFeatureGate.Set(opt.FeatureGates); err != nil {
-		os.Exit(1)
+		return fmt.Errorf("invalid feature gates: %w", err)
+	}
+	if err := features.Validate(); err != nil {
+		return fmt.Errorf("invalid feature gates: %w", err)
 	}
 
 	cfg, err := clientcmd.BuildConfigFromFlags("", opt.KubeConfig)

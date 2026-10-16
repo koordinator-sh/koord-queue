@@ -297,12 +297,14 @@ func (j *PytorchJob) Suspend(ctx context.Context, obj client.Object, cli client.
 	if !framework.EnablePodReclaim {
 		return nil
 	}
-	if err := j.deleteJobResources(job); err.Error() == "pod has been scheduled" {
-		new.Annotations[QueueAnnotation] = "false"
-		return cli.Patch(ctx, new, client.MergeFrom(old))
-	} else {
+	if err := j.deleteJobResources(job); err != nil {
+		if err.Error() == "pod has been scheduled" {
+			new.Annotations[QueueAnnotation] = "false"
+			return cli.Patch(ctx, new, client.MergeFrom(old))
+		}
 		return err
 	}
+	return nil
 }
 
 func (r *PytorchJob) deleteJobResources(pytorchjob *commonv1.PyTorchJob) error {
@@ -455,9 +457,8 @@ func (r *PytorchJob) DeletePodGroup(job metav1.Object) error {
 	pg.Name = job.GetName()
 	pg.Namespace = job.GetNamespace()
 	err := r.c.Delete(context.Background(), &pg)
-	// Delete podGroup
-	if !errors.IsNotFound(err) {
-		return fmt.Errorf("unable to delete PodGroup: %v", err)
+	if err != nil && !errors.IsNotFound(err) {
+		return fmt.Errorf("unable to delete PodGroup: %w", err)
 	}
 	return nil
 }

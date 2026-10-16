@@ -7,6 +7,7 @@ on:
     - release-*
   pull_request: {}
   workflow_dispatch: {}
+  workflow_call: {}
 
 jobs:
   golangci-lint:
@@ -39,7 +40,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-ut-
     - name: Run unit tests
-      run: GOWORK=off go test -mod=mod ./pkg/controller/... ./pkg/queue/... ./pkg/controllers/... -count=1 -v
+      run: make unit-test
+    - name: Verify module files are unchanged
+      run: git diff --exit-code -- go.mod go.sum
 
   build:
     runs-on: ubuntu-latest
@@ -50,8 +53,8 @@ jobs:
       with:
         cache: false
         go-version-file: go.mod
-    - name: Build
-      run: GOWORK=off go build -o bin/koord-queue ./cmd
+    - name: Build both binaries
+      run: make build
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -70,23 +73,23 @@ jobs:
         key: ${{ runner.os }}-integration-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-integration-
-    - name: Setup envtest
-      run: |
-        go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
-        echo "KUBEBUILDER_ASSETS=$(setup-envtest use 1.33 -p path)" >> $GITHUB_ENV
     - name: Run integration tests
-      # Give each integration package its own `go test` process. Each brings up its own envtest
-      # control plane (etcd plus kube-apiserver); a separate process guarantees that control
-      # plane is torn down before the next package starts, and keeps one package's failure and
-      # logs isolated from the rest instead of aborting the whole run. Packages run one at a
-      # time (never in parallel) so their control planes do not contend for the runner.
-      run: |
-        set -uo pipefail
-        pkgs=$(GOWORK=off go list ./pkg/test/integration/... ./pkg/jobext/test/integration/...)
-        rc=0
-        for pkg in $pkgs; do
-          echo "::group::$pkg"
-          GOWORK=off go test -mod=mod "$pkg" -count=1 -v || rc=1
-          echo "::endgroup::"
-        done
-        exit $rc
+      run: make integration-test
+
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        cache: false
+        go-version-file: go.mod
+    - uses: azure/setup-helm@v4
+      with:
+        version: v3.18.6
+    - name: Verify CRDs
+      run: make verify-crd
+    - name: Verify Helm chart
+      run: make verify-helm
+    - name: Verify module files are unchanged
+      run: git diff --exit-code -- go.mod go.sum

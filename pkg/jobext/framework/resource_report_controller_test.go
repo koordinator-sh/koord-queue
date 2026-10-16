@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -762,7 +763,7 @@ func TestReconcilePartialRunningTimeout(t *testing.T) {
 			admissions: []v1alpha1.Admission{
 				{Name: "ps-1", Replicas: 4, Running: 2},
 			},
-			firstSeen:       map[string]time.Time{},
+			firstSeen:       map[string]time.Time{"default/test-qu/ps-1": time.Now().Add(-10 * time.Minute)},
 			expectUpdated:   false,
 			expectReplicas:  map[string]int64{"ps-1": 4},
 			expectFirstSeen: map[string]bool{"default/test-qu/ps-1": false},
@@ -786,14 +787,16 @@ func TestReconcilePartialRunningTimeout(t *testing.T) {
 				{Name: "ps-2", Replicas: 3, Running: 1}, // timed out
 			},
 			firstSeen: map[string]time.Time{
-				"default/test-qu/ps-1": time.Now().Add(-10 * time.Minute),
-				"default/test-qu/ps-2": time.Now().Add(-10 * time.Minute),
+				"default/test-qu/ps-1":    time.Now().Add(-10 * time.Minute),
+				"default/test-qu/ps-2":    time.Now().Add(-10 * time.Minute),
+				"default/test-qu/removed": time.Now().Add(-10 * time.Minute),
 			},
 			expectUpdated:  true,
 			expectReplicas: map[string]int64{"ps-1": 4, "ps-2": 1},
 			expectFirstSeen: map[string]bool{
-				"default/test-qu/ps-1": false, // cleared because Running >= Replicas
-				"default/test-qu/ps-2": false, // cleared because reclaim happened
+				"default/test-qu/ps-1":    false, // cleared because Running >= Replicas
+				"default/test-qu/ps-2":    false, // cleared because reclaim happened
+				"default/test-qu/removed": false, // cleared because the admission no longer exists
 			},
 		},
 	}
@@ -831,4 +834,30 @@ func TestReconcilePartialRunningTimeout(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPartialRunningStateIsConcurrentAndPruned(t *testing.T) {
+	reporter := &ResourceReporter{partialRunningFirstSeen: map[string]time.Time{}}
+	queueUnit := &v1alpha1.QueueUnit{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-qu", Namespace: "default"},
+		Status: v1alpha1.QueueUnitStatus{
+			Phase: v1alpha1.Running,
+			Admissions: []v1alpha1.Admission{
+				{Name: "worker", Replicas: 2, Running: 1},
+			},
+		},
+	}
+
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			reporter.reconcilePartialRunningTimeout(klog.Background(), queueUnit.DeepCopy(), time.Minute)
+		}()
+	}
+	wg.Wait()
+
+	reporter.forgetPartialRunning("default/test-qu")
+	assert.Empty(t, reporter.partialRunningFirstSeen)
 }

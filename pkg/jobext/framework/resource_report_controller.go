@@ -39,6 +39,7 @@ type ResourceReporter struct {
 
 	// partialRunningFirstSeen records, per admission, when Running first fell short of
 	// Replicas, so the shortfall can be timed out instead of held forever.
+	partialRunningMu        sync.Mutex
 	partialRunningFirstSeen map[string]time.Time
 
 	// observedPods records, per admission (keyed by "<ns>/<qu>/<podset>"), the pod
@@ -106,9 +107,9 @@ func (d *ResourceReporter) SetupWithManager(mgr ctrl.Manager, workers int, wqQPS
 			if err != nil {
 				return
 			}
-			// Forget the deleted QueueUnit's observed-pod state; it is keyed by
-			// QueueUnit and would otherwise leak once the QueueUnit is gone.
-			d.forgetObservedPods(qu.Namespace + "/" + qu.Name)
+			quKey := qu.Namespace + "/" + qu.Name
+			d.forgetObservedPods(quKey)
+			d.forgetPartialRunning(quKey)
 			if qu.Status.Phase == v1alpha1.Enqueued || qu.Status.Phase == "" {
 				return
 			}
@@ -474,6 +475,17 @@ func (d *ResourceReporter) forgetObservedPods(quKey string) {
 	}
 }
 
+func (d *ResourceReporter) forgetPartialRunning(quKey string) {
+	d.partialRunningMu.Lock()
+	defer d.partialRunningMu.Unlock()
+	prefix := quKey + "/"
+	for key := range d.partialRunningFirstSeen {
+		if strings.HasPrefix(key, prefix) {
+			delete(d.partialRunningFirstSeen, key)
+		}
+	}
+}
+
 // reconcilePartialRunningTimeout checks if Running < Replicas has persisted beyond the configured timeout.
 // If so, it reduces Replicas to Running to release unused quota.
 // Returns (updated, requeueAfter): updated=true means Replicas was changed;
@@ -483,14 +495,21 @@ func (d *ResourceReporter) reconcilePartialRunningTimeout(
 	qu *v1alpha1.QueueUnit,
 	timeout time.Duration,
 ) (bool, time.Duration) {
+	quKey := qu.Namespace + "/" + qu.Name
 	if qu.Status.Phase != v1alpha1.Running && qu.Status.Phase != v1alpha1.Dequeued {
+		d.forgetPartialRunning(quKey)
 		return false, 0
 	}
+
+	d.partialRunningMu.Lock()
+	defer d.partialRunningMu.Unlock()
+
 	updated := false
 	var minRemaining time.Duration
-	quKey := qu.Namespace + "/" + qu.Name
+	activeKeys := sets.New[string]()
 	for i, ad := range qu.Status.Admissions {
 		key := quKey + "/" + ad.Name
+		activeKeys.Insert(key)
 		if ad.Running >= ad.Replicas {
 			delete(d.partialRunningFirstSeen, key)
 			continue
@@ -514,6 +533,12 @@ func (d *ResourceReporter) reconcilePartialRunningTimeout(
 			if minRemaining == 0 || remaining < minRemaining {
 				minRemaining = remaining
 			}
+		}
+	}
+	prefix := quKey + "/"
+	for key := range d.partialRunningFirstSeen {
+		if strings.HasPrefix(key, prefix) && !activeKeys.Has(key) {
+			delete(d.partialRunningFirstSeen, key)
 		}
 	}
 	return updated, minRemaining

@@ -36,6 +36,17 @@ Koord-queue用于管理Kubernetes中的AI/ML和批处理工作负载。它允许
 | v1.21.1  | 2024年6月18日   | Queue中支持配置AdmissionCheck；Koord Queue默认安装ProvReq AdmissionCheck Controller；Job Extensions会在QueueUnits中传递PodSet|
 | v1.21.2  | 2024年7月16日   | 修复ChartTempalte中Resource渲染错误的问题 |
 | v1.22.2 | 2025年7月24日 | Koord Queue支持任务扩缩以及任务重启（需要结合调度器）；Koord Queue支持waiting-for-pods-ready特性 |
+| v1.9.0 | 待发布 | 新增QueueUnit Conditions，以及实验性的暂停恢复、持久化重排队、最大执行时间和未运行副本超时回收能力；补齐双组件Feature Gate和Job Extension配置。已验证的Koordinator基线为v1.8.0，Koordinator v1.9.0发布后需完成兼容性验证。 |
+
+### v1.9.0 Feature Gates
+
+`featureGates`会同时传递给`koord-queue`和`koord-queue-controllers`。实验性能力默认关闭：
+
+- `QueueUnitActive`：控制QueueUnit暂停和恢复。
+- `QueueUnitRequeueState`：需要同时启用`QueueUnitConditions`。
+- `MaximumExecutionTime`：需要同时启用`QueueUnitActive`和`QueueUnitConditions`。
+
+Job、TFJob和PyTorchJob的`runningTimeout`、`backoffTimeout`、`partialRunningTimeout`通过`extension.jobextensions.config`配置；Pod回收通过`extension.jobextensions.enablePodReclaim`开启。
 
 ## ProReq Admission Check Controller
 | 版本号 | 变更时间      | 变更内容                                                                      |

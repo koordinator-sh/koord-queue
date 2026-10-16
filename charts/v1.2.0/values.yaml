@@ -11,8 +11,11 @@ isNeedNotebookExtension: false
 oversellrate: 1
 qps: 50
 burst: 50
-jobRunningTimeout: "0"
-jobBackoffTime: "0"
+featureGates:
+  QueueUnitConditions: true
+  QueueUnitActive: false
+  QueueUnitRequeueState: false
+  MaximumExecutionTime: false
 
 installation:
   namespace: koord-queue
@@ -21,8 +24,8 @@ installation:
 
 controller:
   image:
-    repository: koordinatorsh/koord-queue
-    tag: latest
+    repository: koordinator-sh/koord-queue
+    tag: v1.9.0
   # resources of koord-queue-controller container
   queueGroupPlugin: elasticquotav2
   enableBlockingMode: false
@@ -40,8 +43,22 @@ controller:
 
 extension:
   jobextensions:
-    repository: koordinatorsh/jobextensions
-    tag: latest
+    repository: koordinator-sh/koord-queue-controllers
+    tag: v1.9.0
+    enablePodReclaim: false
+    config:
+      job:
+        runningTimeout: "0s"
+        backoffTimeout: "0s"
+        partialRunningTimeout: "0s"
+      tfjob:
+        runningTimeout: "0s"
+        backoffTimeout: "1m"
+        partialRunningTimeout: "0s"
+      pytorchjob:
+        runningTimeout: "0s"
+        backoffTimeout: "1m"
+        partialRunningTimeout: "0s"
     resources:
       limits:
         memory: 2Gi

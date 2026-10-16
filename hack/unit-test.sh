@@ -19,6 +19,7 @@ set -o nounset
 set -o pipefail
 
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE}")/..
+cd "${SCRIPT_ROOT}"
 
-# TODO: make args customizable.
-go test -mod=vendor ./...
+packages=$(GOWORK=off go list ./... | grep -v '/test/integration')
+GOWORK=off go test -mod=readonly ${packages} "$@"

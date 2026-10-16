@@ -18,22 +18,28 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+SCRIPT_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+cd "${SCRIPT_ROOT}"
 
 ENVTEST_K8S_VERSION=${ENVTEST_K8S_VERSION:-1.33}
+ENVTEST_VERSION=${ENVTEST_VERSION:-71f7db556ca57ce7ea6563f77d739f0d2a54233a}
+ENVTEST=${ENVTEST:-${SCRIPT_ROOT}/bin/setup-envtest}
 
-# Install setup-envtest if not present
-if ! command -v setup-envtest &> /dev/null; then
-    echo "setup-envtest not found, installing..."
-    go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+if [[ -z "${KUBEBUILDER_ASSETS:-}" ]]; then
+    if [[ ! -x "${ENVTEST}" ]]; then
+        GOWORK=off GOBIN="${SCRIPT_ROOT}/bin" go install sigs.k8s.io/controller-runtime/tools/setup-envtest@${ENVTEST_VERSION}
+    fi
+    if KUBEBUILDER_ASSETS="$(${ENVTEST} use -i "${ENVTEST_K8S_VERSION}" -p path 2>/dev/null)"; then
+        export KUBEBUILDER_ASSETS
+    else
+        KUBEBUILDER_ASSETS="$(${ENVTEST} use "${ENVTEST_K8S_VERSION}" -p path --bin-dir "${SCRIPT_ROOT}/bin/k8s")"
+        export KUBEBUILDER_ASSETS
+    fi
 fi
-
-# Download kubebuilder assets
-# Use HTTPS_PROXY/HTTP_PROXY if available (e.g. via proxy_wrapper)
-KUBEBUILDER_ASSETS="$(setup-envtest use ${ENVTEST_K8S_VERSION} -p path --bin-dir ${SCRIPT_ROOT}/bin/k8s)"
-export KUBEBUILDER_ASSETS
 
 echo "Using KUBEBUILDER_ASSETS=${KUBEBUILDER_ASSETS}"
 
-# Run integration tests
-go test -mod=vendor -count=1 ./pkg/jobext/test/integration/... ./pkg/test/integration/... "${@}"
+packages=$(GOWORK=off go list ./pkg/jobext/test/integration/... ./pkg/test/integration/...)
+for package in ${packages}; do
+    GOWORK=off go test -mod=readonly -count=1 "${package}" "$@"
+done

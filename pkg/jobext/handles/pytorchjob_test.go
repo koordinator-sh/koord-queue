@@ -34,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	kueue "sigs.k8s.io/kueue/apis/kueue/v1beta1"
+	schedulingv1alpha1 "sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
 )
 
 var _ = Describe("PytorchJob Controller", func() {
@@ -50,6 +51,7 @@ var _ = Describe("PytorchJob Controller", func() {
 		schedulingv1.AddToScheme(scheme)
 		commonv1.AddToScheme(scheme)
 		v1.AddToScheme(scheme)
+		schedulingv1alpha1.AddToScheme(scheme)
 		fakeClient = fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(&commonv1.PyTorchJob{}).Build()
 		pytorchJobController = &PytorchJob{
 			c:              fakeClient,
@@ -682,6 +684,31 @@ var _ = Describe("PytorchJob Controller", func() {
 			updatedJob := &commonv1.PyTorchJob{}
 			Expect(fakeClient.Get(ctx, types.NamespacedName{Name: "test-job", Namespace: "default"}, updatedJob)).To(Succeed())
 			Expect(updatedJob.Annotations[QueueAnnotation]).To(Equal("true"))
+		})
+
+		It("should reclaim resources without panicking when deletion succeeds", func() {
+			previous := framework.EnablePodReclaim
+			framework.EnablePodReclaim = true
+			DeferCleanup(func() {
+				framework.EnablePodReclaim = previous
+			})
+
+			job := &commonv1.PyTorchJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-job",
+					Namespace: "default",
+				},
+			}
+			podGroup := &schedulingv1alpha1.PodGroup{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      job.Name,
+					Namespace: job.Namespace,
+				},
+			}
+			Expect(fakeClient.Create(ctx, job)).To(Succeed())
+			Expect(fakeClient.Create(ctx, podGroup)).To(Succeed())
+
+			Expect(pytorchJobController.Suspend(ctx, job, fakeClient)).To(Succeed())
 		})
 	})
 

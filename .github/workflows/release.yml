@@ -6,12 +6,18 @@ on:
     - 'v*'
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 jobs:
+  verify:
+    uses: ./.github/workflows/ci.yaml
+
   build-and-push:
+    needs: verify
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
@@ -52,7 +58,7 @@ jobs:
         username: ${{ secrets.ALIYUN_USERNAME }}
         password: ${{ secrets.ALIYUN_PWD }}
 
-    - name: Build and push
+    - name: Build and push to GHCR
       uses: docker/build-push-action@v6
       with:
         context: .
@@ -66,9 +72,26 @@ jobs:
           org.opencontainers.image.revision=${{ github.sha }}
           org.opencontainers.image.created=${{ github.event.repository.updated_at}}
           org.opencontainers.image.licenses=Apache-2.0
+        tags: ${{ env.GITHUB_REG }}/${{ github.repository_owner }}/${{ matrix.target }}:${{ github.ref_name }}
+        cache-from: type=gha,scope=build-${{ matrix.target }}
+        cache-to: type=gha,mode=max,scope=build-${{ matrix.target }}
+
+    - name: Build and push to Aliyun registries
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ${{ matrix.dockerfile }}
+        platforms: linux/amd64,linux/arm64
+        push: true
+        pull: true
+        provenance: false
+        labels: |
+          org.opencontainers.image.title=${{ matrix.target }}
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.created=${{ github.event.repository.updated_at}}
+          org.opencontainers.image.licenses=Apache-2.0
         tags: |
-          ${{ env.GITHUB_REG }}/${{ github.repository_owner }}/${{ matrix.target }}:${{ github.ref_name }}
           ${{ env.ALIYUN_BJ_REG }}/${{ github.repository_owner }}/${{ matrix.target }}:${{ github.ref_name }}
           ${{ env.ALIYUN_HZ_REG }}/${{ github.repository_owner }}/${{ matrix.target }}:${{ github.ref_name }}
         cache-from: type=gha,scope=build-${{ matrix.target }}
-        cache-to: type=gha,mode=max,scope=build-${{ matrix.target }}

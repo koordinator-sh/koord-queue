@@ -6,14 +6,14 @@ GOARCH=${TARGETARCH}
 ifeq ($(GOARCH),)
 GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
 endif
-# COMMONENVVAR=GOOS=$(shell uname -s | tr A-Z a-z) GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m)))
-BUILDENVVAR=CGO_ENABLED=0
+BUILDENVVAR=CGO_ENABLED=0 GOWORK=off
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.33
+ENVTEST_VERSION = 71f7db556ca57ce7ea6563f77d739f0d2a54233a
+CONTROLLER_GEN_VERSION = v0.18.0
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
-# This is a requirement for 'setup-envtest' in the test target.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
@@ -36,36 +36,44 @@ ENVTEST ?= $(LOCALBIN)/setup-envtest
 all: build
 
 .PHONY: build
-build: build-queue
+build: build-queue build-controllers
 
 .PHONY: build-queue
-build-queue: fixcodec
-	GOOS=$(GOOS) GOARCH=$(GOARCH) $(BUILDENVVAR) go build -ldflags '-w' -o bin/koord-queue cmd/main.go
+build-queue: $(LOCALBIN)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(BUILDENVVAR) go build -mod=readonly -ldflags '-w' -o bin/koord-queue cmd/main.go
 
-.PHONY: fixcodec
-fixcodec:
-	hack/fix-codec-factory.sh
-
-.PHONY: update-vendor
-update-vendor:
-	hack/update-vendor.sh
+.PHONY: build-controllers
+build-controllers: $(LOCALBIN)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(BUILDENVVAR) go build -mod=readonly -ldflags '-w' -o bin/koord-queue-controllers ./cmd/controllers
 
 .PHONY: unit-test
-unit-test: fixcodec update-vendor
-	hack/unit-test.sh
+unit-test:
+	GOWORK=off hack/unit-test.sh
 
 .PHONY: envtest
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
-	GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+	GOWORK=off GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION)
 
 .PHONY: setup-envtest
 setup-envtest: envtest ## Download kubebuilder assets for envtest.
 	$(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path --bin-dir $(LOCALBIN)/k8s
 
 .PHONY: integration-test
-integration-test: fixcodec update-vendor setup-envtest ## Run integration tests with envtest.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path --bin-dir $(LOCALBIN)/k8s)" go test -mod=vendor ./pkg/jobext/test/integration/... ./pkg/test/integration/...
+integration-test: ## Run integration tests with envtest.
+	GOWORK=off ENVTEST=$(ENVTEST) ENVTEST_VERSION=$(ENVTEST_VERSION) ENVTEST_K8S_VERSION=$(ENVTEST_K8S_VERSION) hack/integration-test.sh
+
+.PHONY: update-crd
+update-crd:
+	GOWORK=off CONTROLLER_GEN_VERSION=$(CONTROLLER_GEN_VERSION) hack/update-crd.sh
+
+.PHONY: verify-crd
+verify-crd:
+	GOWORK=off CONTROLLER_GEN_VERSION=$(CONTROLLER_GEN_VERSION) hack/verify-crd.sh
+
+.PHONY: verify-helm
+verify-helm:
+	hack/verify-helm.sh
 
 .PHONY: clean
 clean:

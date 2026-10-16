@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
@@ -44,6 +45,7 @@ import (
 
 	koordinatorschedulerv1alpha1 "github.com/koordinator-sh/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
+	"github.com/koordinator-sh/koord-queue/pkg/features"
 	admissioncontroller "github.com/koordinator-sh/koord-queue/pkg/jobext/admission"
 	networkv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/jobext/apis/networkaware/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
@@ -74,6 +76,7 @@ type ControllerOptions struct {
 
 	LeaderElect     bool
 	LeaderNamespace string
+	FeatureGates    string
 
 	// Job Extensions options
 	EnableJobExtensions bool
@@ -118,6 +121,7 @@ func main() {
 	flag.StringVar(&opt.ProbeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to")
 	flag.BoolVar(&opt.LeaderElect, "leader-elect", false, "Enable leader election for controller manager")
 	flag.StringVar(&opt.LeaderNamespace, "leader-namespace", "koord-queue", "Namespace of the leader election resource")
+	flag.StringVar(&opt.FeatureGates, "feature-gates", "", "A set of key=value pairs that describe feature gates for alpha/experimental features")
 
 	// Job Extensions flags
 	flag.BoolVar(&opt.EnableJobExtensions, "enable-job-extensions", true, "Enable job extension controllers")
@@ -155,6 +159,10 @@ func main() {
 }
 
 func run(cfg *rest.Config, opt *ControllerOptions) error {
+	if err := applyFeatureGates(opt.FeatureGates); err != nil {
+		return fmt.Errorf("invalid feature gates: %w", err)
+	}
+
 	var arg Arguments
 	if opt.ConfigPath != "" {
 		arg = LoadArguments(opt.ConfigPath)
@@ -223,6 +231,13 @@ func run(cfg *rest.Config, opt *ControllerOptions) error {
 
 	setupLog.Info("starting controllers manager")
 	return mgr.Start(ctrl.SetupSignalHandler())
+}
+
+func applyFeatureGates(featureGates string) error {
+	if err := utilfeature.DefaultMutableFeatureGate.Set(featureGates); err != nil {
+		return err
+	}
+	return features.Validate()
 }
 
 func setupCacheIndexes(mgr ctrl.Manager) error {
