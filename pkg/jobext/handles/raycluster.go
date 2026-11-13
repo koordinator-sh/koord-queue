@@ -217,8 +217,10 @@ func (j *RayCluster) GetJobStatus(ctx context.Context, obj client.Object, client
 
 func (j *RayCluster) ManagedByQueue(ctx context.Context, obj client.Object) bool {
 	job := obj.(*rayv1.RayCluster)
-	if len(job.OwnerReferences) > 0 && job.OwnerReferences[0].Kind == "RayJob" {
-		return false
+	for _, owner := range job.OwnerReferences {
+		if owner.Kind == "RayJob" {
+			return false
+		}
 	}
 	if j.managedAllJobs {
 		return true

@@ -146,6 +146,12 @@ memory: 100Mi`,
 
 	Describe("ManagedByQueue", func() {
 		Context("When checking if managed by queue", func() {
+			It("should manage a workflow without a suspend template when managedAllJobs is true", func() {
+				workflowReconciler.managedAllJobs = true
+				Expect(workflowReconciler.ManagedByQueue(ctx, workflow)).To(BeTrue())
+				Expect(workflowReconciler.ManagedByQueue(ctx, &batchv1.Job{})).To(BeFalse())
+			})
+
 			It("should return false for workflow without koord-queue-suspend template", func() {
 				managed := workflowReconciler.ManagedByQueue(ctx, workflow)
 				Expect(managed).To(BeFalse())
@@ -317,6 +323,20 @@ memory: 100Mi`,
 
 	Describe("GetJobStatus", func() {
 		Context("When getting job status", func() {
+			It("should report a running workflow without an Enqueued condition", func() {
+				workflowReconciler.managedAllJobs = true
+				workflow.Status.Phase = wfv1.WorkflowRunning
+				status, _ := workflowReconciler.GetJobStatus(ctx, workflow, nil)
+				Expect(status).To(Equal(framework.Running))
+			})
+
+			It("should report a completed workflow without an Enqueued condition", func() {
+				workflowReconciler.managedAllJobs = true
+				workflow.Status.Phase = wfv1.WorkflowSucceeded
+				status, _ := workflowReconciler.GetJobStatus(ctx, workflow, nil)
+				Expect(status).To(Equal(framework.Succeeded))
+			})
+
 			It("should return Created for non-workflow object", func() {
 				job := &batchv1.Job{}
 				status, _ := workflowReconciler.GetJobStatus(ctx, job, nil)
