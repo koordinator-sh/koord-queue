@@ -21,10 +21,10 @@ import (
 	"os"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -91,6 +91,16 @@ var _ = Describe("RayJob Controller", func() {
 	})
 
 	Context("ManagedByQueue", func() {
+		It("should manage an already running job when managedAllJobs is true", func() {
+			now := metav1.Now()
+			rayJobController.managedAllJobs = true
+			rayJob := &rayv1.RayJob{
+				Status: rayv1.RayJobStatus{StartTime: &now},
+			}
+			Expect(rayJobController.ManagedByQueue(ctx, rayJob)).To(BeTrue())
+			Expect(rayJobController.ManagedByQueue(ctx, &batchv1.Job{})).To(BeFalse())
+		})
+
 		It("should return true when job has enqueue timestamp annotation", func() {
 			rayJob := &rayv1.RayJob{
 				ObjectMeta: metav1.ObjectMeta{

@@ -27,7 +27,8 @@ import (
 )
 
 type ArgoWorkflow struct {
-	c client.Client
+	c              client.Client
+	managedAllJobs bool
 
 	f func(ctx context.Context, namespaceName types.NamespacedName) ([]*v1.Pod, error)
 }
@@ -191,6 +192,15 @@ func (a *ArgoWorkflow) GetJobStatus(ctx context.Context, obj client.Object, clie
 	if !ok {
 		return framework.Created, time.Now()
 	}
+	if wf.Status.Phase == argov1alpha1.WorkflowSucceeded {
+		return framework.Succeeded, time.Now()
+	}
+	if wf.Status.Phase == argov1alpha1.WorkflowError || wf.Status.Phase == argov1alpha1.WorkflowFailed {
+		return framework.Failed, time.Now()
+	}
+	if a.managedAllJobs && wf.Status.Phase == argov1alpha1.WorkflowRunning {
+		return framework.Running, time.Now()
+	}
 	if !checkWfConditions(wf, argov1alpha1.ConditionType("Enqueued")) {
 		return framework.Created, time.Now()
 	}
@@ -199,12 +209,6 @@ func (a *ArgoWorkflow) GetJobStatus(ctx context.Context, obj client.Object, clie
 		return framework.Queuing, time.Now()
 	}
 
-	if wf.Status.Phase == argov1alpha1.WorkflowSucceeded {
-		return framework.Succeeded, time.Now()
-	}
-	if wf.Status.Phase == argov1alpha1.WorkflowError || wf.Status.Phase == argov1alpha1.WorkflowFailed {
-		return framework.Failed, time.Now()
-	}
 	return framework.Running, time.Now()
 }
 
@@ -255,7 +259,13 @@ func (a *ArgoWorkflow) Resume(ctx context.Context, obj client.Object, cli client
 }
 
 func (a *ArgoWorkflow) ManagedByQueue(ctx context.Context, obj client.Object) bool {
-	wf := obj.(*argov1alpha1.Workflow)
+	wf, ok := obj.(*argov1alpha1.Workflow)
+	if !ok {
+		return false
+	}
+	if a.managedAllJobs {
+		return true
+	}
 	for _, template := range wf.Spec.Templates {
 		if template.Name == "koord-queue-suspend" && template.Suspend != nil {
 			return true
@@ -292,7 +302,7 @@ func (a *ArgoWorkflow) SupportNetworkAware() (framework.NetworkAwareJobExtension
 }
 
 func NewWFReconciler(cli client.Client, config *rest.Config, scheme *runtime.Scheme, managedAllJobs bool, args string) framework.JobHandle {
-	j := &ArgoWorkflow{c: cli, f: func(ctx context.Context, namespaceName types.NamespacedName) ([]*v1.Pod, error) {
+	j := &ArgoWorkflow{c: cli, managedAllJobs: managedAllJobs, f: func(ctx context.Context, namespaceName types.NamespacedName) ([]*v1.Pod, error) {
 		qu := v1alpha1.QueueUnit{}
 		if err := cli.Get(ctx, namespaceName, &qu); err != nil {
 			return nil, err

@@ -23,8 +23,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
+	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -376,6 +376,14 @@ var _ = Describe("RayCluster Controller", func() {
 	})
 
 	Context("ManagedByQueue", func() {
+		It("should not manage a RayJob's cluster even when managing all jobs", func() {
+			rayClusterController.managedAllJobs = true
+			cluster := &rayv1.RayCluster{ObjectMeta: metav1.ObjectMeta{
+				OwnerReferences: []metav1.OwnerReference{{Kind: "Other"}, {Kind: "RayJob"}},
+			}}
+			Expect(rayClusterController.ManagedByQueue(ctx, cluster)).To(BeFalse())
+		})
+
 		It("should return false when owned by RayJob", func() {
 			cluster := &rayv1.RayCluster{
 				ObjectMeta: metav1.ObjectMeta{

@@ -277,6 +277,9 @@ func (j *RayJob) ManagedByQueue(ctx context.Context, obj client.Object) bool {
 	if !ok {
 		return false
 	}
+	if j.managedAllJobs {
+		return true
+	}
 	// TODO: rayjob with cluster selector should not be managed by queue
 	if job.Annotations["koord-queue/job-enqueue-timestamp"] != "" {
 		return true
