@@ -21,10 +21,10 @@ import (
 	"os"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"

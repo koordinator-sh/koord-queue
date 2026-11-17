@@ -71,10 +71,8 @@ func TestAddQueueUnit_DeleteQueueUnit(t *testing.T) {
 			QuotaNameLabelKey: "q1",
 		}
 
-		queueUnit1.Unit.Annotations = map[string]string{
-		}
-		queueUnit2.Unit.Annotations = map[string]string{
-		}
+		queueUnit1.Unit.Annotations = map[string]string{}
+		queueUnit2.Unit.Annotations = map[string]string{}
 
 		elasticQuotaInfo.AddQueueUnit("q1", queueUnit1)
 		elasticQuotaInfo.AddQueueUnit("q1", queueUnit1)
@@ -153,10 +151,8 @@ func TestAddQueueUnit_DeleteQueueUnit(t *testing.T) {
 			QuotaNameLabelKey: "q1",
 		}
 
-		queueUnit1.Unit.Annotations = map[string]string{
-		}
-		queueUnit2.Unit.Annotations = map[string]string{
-		}
+		queueUnit1.Unit.Annotations = map[string]string{}
+		queueUnit2.Unit.Annotations = map[string]string{}
 
 		elasticQuotaInfo.AddQueueUnit("q1", queueUnit1)
 		elasticQuotaInfo.AddQueueUnit("q1", queueUnit1)
@@ -235,10 +231,8 @@ func TestAddQueueUnit_DeleteQueueUnit(t *testing.T) {
 			QuotaNameLabelKey: "q1",
 		}
 
-		queueUnit1.Unit.Annotations = map[string]string{
-		}
-		queueUnit2.Unit.Annotations = map[string]string{
-		}
+		queueUnit1.Unit.Annotations = map[string]string{}
+		queueUnit2.Unit.Annotations = map[string]string{}
 
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
@@ -317,10 +311,8 @@ func TestAddQueueUnit_DeleteQueueUnit(t *testing.T) {
 			QuotaNameLabelKey: "q1",
 		}
 
-		queueUnit1.Unit.Annotations = map[string]string{
-		}
-		queueUnit2.Unit.Annotations = map[string]string{
-		}
+		queueUnit1.Unit.Annotations = map[string]string{}
+		queueUnit2.Unit.Annotations = map[string]string{}
 
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
@@ -399,10 +391,8 @@ func TestAddQueueUnit_DeleteQueueUnit(t *testing.T) {
 			QuotaNameLabelKey: "q1",
 		}
 
-		queueUnit1.Unit.Annotations = map[string]string{
-		}
-		queueUnit2.Unit.Annotations = map[string]string{
-		}
+		queueUnit1.Unit.Annotations = map[string]string{}
+		queueUnit2.Unit.Annotations = map[string]string{}
 
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
@@ -481,10 +471,8 @@ func TestAddQueueUnit_DeleteQueueUnit(t *testing.T) {
 			QuotaNameLabelKey: "q1",
 		}
 
-		queueUnit1.Unit.Annotations = map[string]string{
-		}
-		queueUnit2.Unit.Annotations = map[string]string{
-		}
+		queueUnit1.Unit.Annotations = map[string]string{}
+		queueUnit2.Unit.Annotations = map[string]string{}
 
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
 		elasticQuotaInfo.AddQueueUnit("q2", queueUnit1)
@@ -553,8 +541,7 @@ func TestAddQueueUnit_CheckUsage(t *testing.T) {
 	queueUnit1.Unit.Labels = map[string]string{
 		QuotaNameLabelKey: "q1",
 	}
-	queueUnit1.Unit.Annotations = map[string]string{
-	}
+	queueUnit1.Unit.Annotations = map[string]string{}
 
 	{
 		elasticQuotaInfo = NewElasticQuotaInfo(q)
@@ -585,8 +572,7 @@ func TestAddQueueUnit_CheckUsage(t *testing.T) {
 		assert.True(t, err != nil)
 	}
 
-	queueUnit1.Unit.Annotations = map[string]string{
-	}
+	queueUnit1.Unit.Annotations = map[string]string{}
 
 	{
 		elasticQuotaInfo = NewElasticQuotaInfo(q)

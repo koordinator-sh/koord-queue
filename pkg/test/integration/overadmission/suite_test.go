@@ -198,8 +198,8 @@ var _ = BeforeSuite(func() {
 
 	By("building the framework with the real elasticquotav1alpha1 (ElasticQuotaV2) plugin")
 	registry := runtime.Registry{
-		priority.Name:         priority.New,
-		"ElasticQuota":            elasticquotav1alpha1.New, // key "ElasticQuota"; plugin Name() == "ElasticQuotaV2"
+		priority.Name:  priority.New,
+		"ElasticQuota": elasticquotav1alpha1.New, // key "ElasticQuota"; plugin Name() == "ElasticQuotaV2"
 	}
 	// NewFramework only instantiates plugins listed in pluginconfig.Plugins, so enable
 	// every registry entry explicitly (a nil pluginconfig enables nothing and leaves the

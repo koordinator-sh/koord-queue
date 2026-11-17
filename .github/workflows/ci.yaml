@@ -9,6 +9,33 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  gofmt:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        cache: false
+        go-version-file: go.mod
+    - name: Check gofmt
+      run: |
+        set -euo pipefail
+        # Exclude generated client/codegen trees; fail on hand-written formatting drift.
+        dirty=$(find . -name '*.go' \
+          ! -path './vendor/*' \
+          ! -name 'zz_generated*' \
+          ! -path '*/client/*' \
+          ! -path '*/clientset/*' \
+          ! -path '*/informers/*' \
+          ! -path '*/listers/*' \
+          ! -path '*/applyconfiguration/*' \
+          -print0 | xargs -0 gofmt -l)
+        if [ -n "$dirty" ]; then
+          echo "The following files need gofmt:"
+          echo "$dirty"
+          exit 1
+        fi
+
   golangci-lint:
     continue-on-error: true
     runs-on: ubuntu-latest

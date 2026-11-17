@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
 	"github.com/stretchr/testify/assert"
-	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
