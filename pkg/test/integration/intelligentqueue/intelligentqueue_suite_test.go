@@ -20,8 +20,8 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/framework/plugins/elasticquotav1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/queue"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/multischedulingqueue"
-	"github.com/koordinator-sh/koord-queue/pkg/scheduler"
 	"github.com/koordinator-sh/koord-queue/pkg/queue/queuepolicies"
+	"github.com/koordinator-sh/koord-queue/pkg/scheduler"
 	"github.com/koordinator-sh/koord-queue/pkg/test/testutils"
 	"github.com/koordinator-sh/koord-queue/pkg/test/testutils/queueunits"
 	"github.com/koordinator-sh/koord-queue/pkg/utils"
@@ -128,7 +128,7 @@ var _ = Describe("IntelligentQueue", Ordered, func() {
 			Min(corev1.ResourceList{"cpu": resource.MustParse("100m")}).
 			Obj()
 		eqcli.SchedulingV1alpha1().ElasticQuotas("default").Create(context.Background(), eq, metav1.CreateOptions{})
-		
+
 		// Update auto-created Queue with additional annotations
 		Eventually(func() error {
 			queue, err := fw.QueueUnitClient().SchedulingV1alpha1().Queues("koord-queue").Get(context.Background(), "test-intelligent-queue", metav1.GetOptions{})

@@ -19,7 +19,7 @@ package utils
 const (
 	ControllerAgentName     = "koord-queue-controller"
 	Default                 = "default"
-	QuotaKoordQueueEnable    = "quota-koord-queue-enable"
+	QuotaKoordQueueEnable   = "quota-koord-queue-enable"
 	ParentQuotaNameLabelKey = "quota.scheduling.koordinator.sh/parent"
 
 	AnnotationParentQuotaName = "koord-queue/parent-quota-fullname"

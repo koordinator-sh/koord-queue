@@ -171,7 +171,7 @@ func TestGetQueueUnitsByQueue(t *testing.T) {
 	queueInformer := queueUnitInformerFactory.Scheduling().V1alpha1().Queues().Informer()
 
 	multiSchedulingQueue, _ := multischedulingqueue.NewMultiSchedulingQueue(fw,
-			0, 0, queueUnitLister, false, nil)
+		0, 0, queueUnitLister, false, nil)
 	controller.SetMultiSchedulingQueue(multiSchedulingQueue)
 	controller.queueUnitLister = queueUnitLister
 

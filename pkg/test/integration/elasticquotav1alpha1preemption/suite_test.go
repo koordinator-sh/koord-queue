@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/koordinator-sh/koord-queue/cmd/app/options"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/config"
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/client/clientset/versioned"
 	externalversions "github.com/koordinator-sh/koord-queue/pkg/client/informers/externalversions"
 	listerv1alpha1 "github.com/koordinator-sh/koord-queue/pkg/client/listers/scheduling/v1alpha1"
-	"github.com/koordinator-sh/koord-queue/cmd/app/options"
 	ctrl "github.com/koordinator-sh/koord-queue/pkg/controller"
 	"github.com/koordinator-sh/koord-queue/pkg/controllers"
 	"github.com/koordinator-sh/koord-queue/pkg/framework"
@@ -198,8 +198,8 @@ var _ = BeforeSuite(func() {
 	// New constructors so the plugin talks to the envtest apiserver via cfg. NewFramework only
 	// instantiates plugins listed in pluginconfig.Plugins, so enable every registry entry explicitly.
 	registry := runtime.Registry{
-		priority.Name:         priority.New,
-		"ElasticQuota":          elasticquotav1alpha1.New, // key "ElasticQuota"; plugin Name() == "ElasticQuotaV2"
+		priority.Name:  priority.New,
+		"ElasticQuota": elasticquotav1alpha1.New, // key "ElasticQuota"; plugin Name() == "ElasticQuotaV2"
 	}
 	pluginConfig := &config.KoordQueueConfiguration{
 		Plugins: []config.Plugin{{Name: priority.Name}, {Name: "ElasticQuota"}},
