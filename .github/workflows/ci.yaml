@@ -39,7 +39,23 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-ut-
     - name: Run unit tests
-      run: GOWORK=off go test -mod=mod ./pkg/controller/... ./pkg/queue/... ./pkg/controllers/... -count=1 -v
+      # Keep envtest-backed suites in the integration-tests job. Expand coverage here
+      # to packages that already ship unit tests but were previously skipped by CI.
+      run: |
+        GOWORK=off go test -mod=mod \
+          ./pkg/controller/... \
+          ./pkg/queue/... \
+          ./pkg/controllers/... \
+          ./pkg/utils/... \
+          ./pkg/framework/plugins/... \
+          ./pkg/scheduler/... \
+          ./pkg/jobext/admission/... \
+          ./pkg/jobext/framework/... \
+          ./pkg/jobext/handles/... \
+          ./pkg/jobext/reservation/... \
+          ./pkg/jobext/util/... \
+          ./pkg/jobext/registry/... \
+          -count=1 -v
 
   build:
     runs-on: ubuntu-latest
