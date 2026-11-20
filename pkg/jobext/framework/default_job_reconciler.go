@@ -11,6 +11,8 @@ import (
 	"github.com/koordinator-sh/koord-queue/pkg/apis/scheduling/v1alpha1"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
 	queueutils "github.com/koordinator-sh/koord-queue/pkg/utils"
+	rayv1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1"
+	rayv1alpha1 "github.com/ray-project/kuberay/ray-operator/apis/ray/v1alpha1"
 	"golang.org/x/time/rate"
 
 	corev1 "k8s.io/api/core/v1"
@@ -35,6 +37,9 @@ var EnableReservation bool
 var EnableNetworkAware bool
 var EnablePodReclaim bool
 var DefaultRequeuePeriod = time.Second * 60
+
+const RayJobTerminalRequeuePeriod = 5 * time.Minute
+
 var Suffix = "re"
 
 // PriorityAnnotationKey lets a job declare an explicit queue-unit priority via an annotation.
@@ -80,6 +85,32 @@ type GenericJobReconciler struct {
 	eventRecorder record.EventRecorder
 }
 
+func rayClusterOwnerRequest(cluster client.Object, version string) (reconcile.Request, bool) {
+	for _, owner := range cluster.GetOwnerReferences() {
+		if owner.APIVersion == "ray.io/"+version && owner.Kind == "RayJob" && owner.Name != "" {
+			return reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: "ray.io/" + version + "/RayJob|" + cluster.GetNamespace(),
+				Name:      owner.Name,
+			}}, true
+		}
+	}
+	return reconcile.Request{}, false
+}
+
+func rayJobTerminalRequeueAfter(object client.Object) time.Duration {
+	switch job := object.(type) {
+	case *rayv1.RayJob:
+		if job.Status.JobDeploymentStatus == rayv1.JobDeploymentStatusComplete || job.Status.JobDeploymentStatus == rayv1.JobDeploymentStatusFailed {
+			return RayJobTerminalRequeuePeriod
+		}
+	case *rayv1alpha1.RayJob:
+		if job.Status.JobDeploymentStatus == rayv1alpha1.JobDeploymentStatusComplete {
+			return RayJobTerminalRequeuePeriod
+		}
+	}
+	return 0
+}
+
 func NewJobReconcilerWithJobExtension(cli client.Client, scheme *runtime.Scheme, handles ...JobHandle) *GenericJobReconciler {
 	r := &GenericJobReconciler{
 		client: cli,
@@ -96,6 +127,43 @@ func NewJobReconcilerWithJobExtension(cli client.Client, scheme *runtime.Scheme,
 	r.eventRecorder = record.NewBroadcaster().NewRecorder(scheme, corev1.EventSource{Component: "pytorch-opeartor-extension"})
 
 	return r
+}
+
+// shouldReconcileJob keeps terminal jobs under management when their adapter's
+// transient queuing marker was lost but an owned QueueUnit still exists.
+func (d *GenericJobReconciler) shouldReconcileJob(ctx context.Context, handle JobHandle, object client.Object) (bool, error) {
+	if handle.genericJobExtension.ManagedByQueue(ctx, object) {
+		return true, nil
+	}
+	status, _ := handle.genericJobExtension.GetJobStatus(ctx, object, d.client)
+	if status != Succeeded && status != Failed {
+		return false, nil
+	}
+	qu, err := handle.genericJobExtension.GetRelatedQueueUnit(ctx, object, d.client)
+	if apierrors.IsNotFound(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if qu == nil || qu.Spec.ConsumerRef == nil {
+		return false, nil
+	}
+	ref := qu.Spec.ConsumerRef
+	if ref.APIVersion+"/"+ref.Kind != handle.typeName ||
+		ref.Namespace != object.GetNamespace() || ref.Name != object.GetName() {
+		return false, nil
+	}
+	if object.GetUID() != "" && len(qu.OwnerReferences) > 0 {
+		for _, owner := range qu.OwnerReferences {
+			if owner.APIVersion+"/"+owner.Kind == handle.typeName &&
+				owner.Name == object.GetName() && owner.UID == object.GetUID() {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	return true, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -117,7 +185,11 @@ func (d *GenericJobReconciler) SetupWithManager(mgr ctrl.Manager, workers int, w
 				}
 				jobTypeKey := gvk.Group + "/" + gvk.Version + "/" + gvk.Kind
 				if jobHandle, ok := d.jobHandles[jobTypeKey]; ok {
-					if jobHandle.genericJobExtension.ManagedByQueue(ctx, obj) {
+					managed, err := d.shouldReconcileJob(ctx, jobHandle, obj)
+					if err != nil {
+						klog.ErrorS(err, "failed to check job QueueUnit", "job", klog.KObj(obj))
+					}
+					if managed || err != nil {
 						rli.Add(ctrl.Request{NamespacedName: types.NamespacedName{Namespace: jobTypeKey + "|" + obj.GetNamespace(), Name: obj.GetName()}})
 					}
 				}
@@ -134,7 +206,11 @@ func (d *GenericJobReconciler) SetupWithManager(mgr ctrl.Manager, workers int, w
 				}
 				jobTypeKey := gvk.Group + "/" + gvk.Version + "/" + gvk.Kind
 				if jobHandle, ok := d.jobHandles[jobTypeKey]; ok {
-					if jobHandle.genericJobExtension.ManagedByQueue(ctx, obj) {
+					managed, err := d.shouldReconcileJob(ctx, jobHandle, obj)
+					if err != nil {
+						klog.ErrorS(err, "failed to check job QueueUnit", "job", klog.KObj(obj))
+					}
+					if managed || err != nil {
 						rli.Add(ctrl.Request{NamespacedName: types.NamespacedName{Namespace: jobTypeKey + "|" + obj.GetNamespace(), Name: obj.GetName()}})
 					}
 				}
@@ -151,9 +227,31 @@ func (d *GenericJobReconciler) SetupWithManager(mgr ctrl.Manager, workers int, w
 				}
 				jobTypeKey := gvk.Group + "/" + gvk.Version + "/" + gvk.Kind
 				if jobHandle, ok := d.jobHandles[jobTypeKey]; ok {
-					if jobHandle.genericJobExtension.ManagedByQueue(ctx, obj) {
+					managed, err := d.shouldReconcileJob(ctx, jobHandle, obj)
+					if err != nil {
+						klog.ErrorS(err, "failed to check job QueueUnit", "job", klog.KObj(obj))
+					}
+					if managed || err != nil {
 						rli.Add(ctrl.Request{NamespacedName: types.NamespacedName{Namespace: jobTypeKey + "|" + obj.GetNamespace(), Name: obj.GetName()}})
 					}
+				}
+			},
+		})
+	}
+	if _, ok := d.jobHandles["ray.io/v1/RayJob"]; ok {
+		build.Watches(&rayv1.RayCluster{}, handler.Funcs{
+			DeleteFunc: func(_ context.Context, evt event.TypedDeleteEvent[client.Object], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
+				if req, ok := rayClusterOwnerRequest(evt.Object, "v1"); ok {
+					q.Add(req)
+				}
+			},
+		})
+	}
+	if _, ok := d.jobHandles["ray.io/v1alpha1/RayJob"]; ok {
+		build.Watches(&rayv1alpha1.RayCluster{}, handler.Funcs{
+			DeleteFunc: func(_ context.Context, evt event.TypedDeleteEvent[client.Object], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
+				if req, ok := rayClusterOwnerRequest(evt.Object, "v1alpha1"); ok {
+					q.Add(req)
 				}
 			},
 		})
@@ -363,7 +461,11 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	if !handle.genericJobExtension.ManagedByQueue(ctx, object) {
+	managed, err := d.shouldReconcileJob(ctx, handle, object)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if !managed {
 		log.V(2).Info("job is not managed by queue", "job", object.GetName())
 		return ctrl.Result{}, nil
 	}
@@ -599,6 +701,9 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
 	case Running:
 		log.V(3).Info("job is running")
+		// A completed RayJob can still report Running while its RayCluster exists.
+		// Retry after cleanup even if the RayCluster deletion event is missed.
+		recheckAfter := rayJobTerminalRequeueAfter(object)
 		if EnableReservation && handle.reservationJobExtension != nil {
 			if queueUnit.Status.Phase == v1alpha1.SchedReady || queueUnit.Status.Phase == v1alpha1.SchedFailed {
 				return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
@@ -606,13 +711,13 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		if queueUnit.Status.Phase != v1alpha1.Running {
 			log.V(0).Info("set queue unit to running")
-			return ctrl.Result{}, util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Running, "Running", d.client)
+			return ctrl.Result{RequeueAfter: recheckAfter}, util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Running, "Running", d.client)
 		}
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: recheckAfter}, nil
 		// return ctrl.Result{RequeueAfter: DefaultRequeuePeriod}, nil
 	case Succeeded:
 		log.V(3).Info("job has succeeded")
-		if queueUnit.Status.Phase != v1alpha1.Succeed {
+		if queueUnit.Status.Phase != v1alpha1.Succeed || len(queueUnit.Status.Admissions) > 0 {
 			log.V(0).Info("set queue unit to succeeded")
 			if err := util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Succeed, "Succeeded", d.client); err != nil {
 				return ctrl.Result{}, err
@@ -621,7 +726,7 @@ func (d *GenericJobReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	case Failed:
 		log.V(3).Info("job has failed")
-		if queueUnit.Status.Phase != v1alpha1.Failed {
+		if queueUnit.Status.Phase != v1alpha1.Failed || len(queueUnit.Status.Admissions) > 0 {
 			log.V(0).Info("set queue unit to failed")
 			if err := util.UpdateQueueUnitStatus(queueUnit, v1alpha1.Failed, "Failed", d.client); err != nil {
 				return ctrl.Result{}, err
