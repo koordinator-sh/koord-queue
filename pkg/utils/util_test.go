@@ -290,7 +290,7 @@ func TestIsResourceReleased(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "different admission count - new has more",
+			name: "admission added without releasing existing replicas",
 			old: &queuev1.QueueUnit{
 				Status: queuev1.QueueUnitStatus{
 					Admissions: []queuev1.Admission{
@@ -306,7 +306,7 @@ func TestIsResourceReleased(t *testing.T) {
 					},
 				},
 			},
-			want: true,
+			want: false,
 		},
 		{
 			name: "same admission count, replica decreased",

@@ -494,19 +494,19 @@ func (q *PriorityQueue) Update(old, new *v1alpha1.QueueUnit) error {
 	defer func() {
 		key := new.Namespace + "/" + new.Name
 		qi, ok := q.queueUnits[key]
-		if !ok {
-			q.lock.Unlock()
-			return
-		}
-		if qi.Unit.ResourceVersion != new.ResourceVersion {
+		if ok && qi.Unit.ResourceVersion != new.ResourceVersion {
 			qi.Unit = new.DeepCopy()
 		}
 
+		// Running and completed units may already be outside the pending queue.
+		// Their resource releases must still rewind and wake the waiting units.
 		if utils.IsResourceReleased(old, new) {
 			// reset nextIdx
 			if new.Status.Phase != v1alpha1.SchedFailed {
 				q.resetNextIdxFlag = true
-				slices.SortFunc(q.queue, q.lessFunc)
+				if ok {
+					slices.SortFunc(q.queue, q.lessFunc)
+				}
 			}
 			klog.V(2).Infof("queue %s is released because job %v release quota", q.name, klog.KObj(new))
 			if q.blocked {
@@ -517,7 +517,7 @@ func (q *PriorityQueue) Update(old, new *v1alpha1.QueueUnit) error {
 				}
 			}
 			q.cond.Broadcast()
-		} else if podSetsChanged(old, new) {
+		} else if ok && podSetsChanged(old, new) {
 			klog.V(2).Infof("queue %s is released because job %v's request changed", q.name, klog.KObj(new))
 			q.cond.Broadcast()
 		}

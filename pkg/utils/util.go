@@ -108,21 +108,16 @@ func IsQueueUnitAssigned(qu *v1alpha1.QueueUnit) bool {
 		qu.Status.Phase == v1alpha1.Dequeued || qu.Status.Phase == v1alpha1.Reserved || qu.Status.Phase == v1alpha1.SchedReady
 }
 
+// IsResourceReleased reports whether an existing admission was removed or its
+// replicas decreased. New admissions alone do not release resources, but must
+// not hide reductions to other admissions in the same update.
 func IsResourceReleased(old, new *v1alpha1.QueueUnit) bool {
-	oldAdmission := map[string]int64{}
-	newAdmission := map[string]int64{}
-	for _, ps := range old.Status.Admissions {
-		oldAdmission[ps.Name] = ps.Replicas
+	newReplicas := make(map[string]int64, len(new.Status.Admissions))
+	for _, ad := range new.Status.Admissions {
+		newReplicas[ad.Name] = ad.Replicas
 	}
-	for _, ps := range new.Status.Admissions {
-		newAdmission[ps.Name] = ps.Replicas
-	}
-	if len(oldAdmission) != len(newAdmission) {
-		// not accurate, but enough
-		return true
-	}
-	for k, v := range oldAdmission {
-		if newAdmission[k] < v {
+	for _, ad := range old.Status.Admissions {
+		if replicas, exists := newReplicas[ad.Name]; !exists || replicas < ad.Replicas {
 			return true
 		}
 	}

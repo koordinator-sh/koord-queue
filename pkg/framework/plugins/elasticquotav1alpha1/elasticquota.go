@@ -118,7 +118,7 @@ func (eq *ElasticQuota) LoadQuotaAndQueueUnits() {
 		panic(err)
 	}
 	for _, qu := range qus {
-		if len(qu.Status.Admissions) == 0 {
+		if len(qu.Status.Admissions) == 0 || qu.Status.Phase == v1alpha1.Succeed || qu.Status.Phase == v1alpha1.Failed {
 			continue
 		}
 		eq.Reserve(context.Background(), framework.NewQueueUnitInfo(qu), nil)

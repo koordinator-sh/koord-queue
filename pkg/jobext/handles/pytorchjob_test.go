@@ -283,6 +283,26 @@ var _ = Describe("PytorchJob Controller", func() {
 			}
 			Expect(pytorchJobController.ManagedByQueue(ctx, job)).To(BeFalse())
 		})
+
+		It("should keep managing a dequeued job after its queuing condition is lost", func() {
+			now := metav1.Now()
+			job := &commonv1.PyTorchJob{
+				ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{
+					QueueAnnotation: "false", "koord-queue/job-dequeue-timestamp": "2026-11-08T07:27:02Z",
+				}},
+				Status: commonv1.JobStatus{StartTime: &now},
+			}
+			Expect(pytorchJobController.ManagedByQueue(ctx, job)).To(BeTrue())
+		})
+
+		It("should keep managing a suspended job after it starts", func() {
+			now := metav1.Now()
+			job := &commonv1.PyTorchJob{
+				ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{QueueAnnotation: "true"}},
+				Status:     commonv1.JobStatus{StartTime: &now},
+			}
+			Expect(pytorchJobController.ManagedByQueue(ctx, job)).To(BeTrue())
+		})
 	})
 
 	Context("GetJobStatus", func() {

@@ -24,6 +24,7 @@ import (
 
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/framework"
 	"github.com/koordinator-sh/koord-queue/pkg/jobext/util"
+	"github.com/koordinator-sh/koord-queue/pkg/utils/queueprefix"
 	commonv1 "github.com/kubeflow/training-operator/pkg/apis/kubeflow.org/v1"
 	v1 "k8s.io/api/core/v1"
 	schedulingv1 "k8s.io/api/scheduling/v1"
@@ -558,6 +559,12 @@ func (j *PytorchJob) ManagedByQueue(ctx context.Context, obj client.Object) bool
 		return true
 	}
 	job := obj.(*commonv1.PyTorchJob)
+	// The queuing condition is written to the Job status separately and may be
+	// lost or fail to update. Keep managing a Job after dequeue by using the
+	// annotation written when the QueueUnit was admitted.
+	if queueprefix.ValueNonEmpty(job.Annotations, "koord-queue/job-dequeue-timestamp") != "" || job.Annotations[QueueAnnotation] == "true" {
+		return true
+	}
 	for _, condition := range job.Status.Conditions {
 		if condition.Type == "Queuing" {
 			return true
